@@ -7,6 +7,9 @@ Java rewrite of c++ engine
 ## libraries
 - LWJGL
 
+## tooling
+- gradle
+
 ## style guide
 SCREAMING_SNAKE_CASE for constants and macros.
 camelCase for methods, functions, variables and class properties.
