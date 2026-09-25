@@ -9,6 +9,7 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     application
+    id("java")
 }
 
 repositories {
@@ -16,9 +17,25 @@ repositories {
     mavenCentral()
 }
 
+
+repositories {
+	mavenCentral()
+}
+
+val lwjglVersion = "3.4.3"
+val lwjglNatives = "natives-windows"
+
 dependencies {
-    // This dependency is used by the application.
-    implementation(libs.guava)
+	implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
+
+	implementation("org.lwjgl:lwjgl")
+	implementation("org.lwjgl:lwjgl-glfw")
+	implementation("org.lwjgl:lwjgl-opengl")
+	implementation("org.lwjgl:lwjgl-stb")
+	implementation("org.lwjgl:lwjgl::$lwjglNatives")
+	implementation("org.lwjgl:lwjgl-glfw::$lwjglNatives")
+	implementation("org.lwjgl:lwjgl-opengl::$lwjglNatives")
+	implementation("org.lwjgl:lwjgl-stb::$lwjglNatives")
 }
 
 testing {
@@ -40,5 +57,5 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = "org.example.App"
+    mainClass.set("App")
 }
