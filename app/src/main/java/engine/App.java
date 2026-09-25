@@ -1,16 +1,10 @@
 package engine;
 
-import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
-import org.lwjgl.system.*;
 
-import java.nio.*;
-
-import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class App {
@@ -27,7 +21,7 @@ public class App {
         window = glfwCreateWindow(width, height, title, NULL, NULL);
 
         if (window == NULL) {
-            System.out.println("unable to create window");
+            System.err.println("unable to create window");
             return false;
         }
 
@@ -53,5 +47,6 @@ public class App {
     public void close() {
         glfwDestroyWindow(window);
         glfwTerminate();
+        glfwSetErrorCallback(null).free();
     }
 }
