@@ -23,7 +23,6 @@ public class App {
         glfwInit();
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
         window = glfwCreateWindow(width, height, title, NULL, NULL);
 
@@ -32,16 +31,22 @@ public class App {
             return false;
         }
 
+        scene = new Scene(assetManager, new Vector3f(0, 0, -3));
+        scene.updateAspectRatio(width, height);
+
         glfwMakeContextCurrent(window);
         GL.createCapabilities();
 
         glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
         glViewport(0, 0, width, height);
 
-        glEnable(GL_DEPTH_TEST);
+        glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
+            glViewport(0, 0, new_width, new_height);
 
-        scene = new Scene(assetManager, new Vector3f(0, 0, -3));
-        scene.updateAspectRatio(width, height);
+            scene.updateAspectRatio(new_width, new_height);
+        });
+
+        glEnable(GL_DEPTH_TEST);
 
         return true;
     }
