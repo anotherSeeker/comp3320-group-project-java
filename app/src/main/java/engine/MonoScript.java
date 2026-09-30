@@ -1,7 +1,7 @@
 package engine;
 
 public abstract class MonoScript {
-    public AssetManager assetManager;
+    public AssetManager assetManager = AssetManager.get();
     public Scene scene;
 
     public MonoScript() {

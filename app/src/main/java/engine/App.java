@@ -12,7 +12,7 @@ import java.util.ArrayList;
 
 public class App {
     private long window;
-    private AssetManager assetManager = new AssetManager();
+    private AssetManager assetManager = AssetManager.get();
     private Scene scene;
 
     private ArrayList<MonoScript> scripts = new ArrayList<>();

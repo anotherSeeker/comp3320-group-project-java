@@ -22,6 +22,15 @@ public class AssetManager {
     private Map<Integer, Shader> shaderIndex = new HashMap<>();
     private Map<Integer, Mesh> meshIndex = new HashMap<>();
 
+    private AssetManager() {
+    }
+
+    private static AssetManager singleton = new AssetManager();
+
+    public static AssetManager get() {
+        return singleton;
+    }
+
     private String readFile(Path filePath) {
         String result = "";
 
