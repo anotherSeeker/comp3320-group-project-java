@@ -1,6 +1,5 @@
 package engine;
 
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -9,13 +8,12 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class App {
     private long window;
     private AssetManager assetManager = new AssetManager();
-    private Scene scene = new Scene(new Vector3f(0, 0, -3));
+    private Scene scene;
 
     private ArrayList<MonoScript> scripts = new ArrayList<>();
 
@@ -39,34 +37,22 @@ public class App {
 
         glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
         glViewport(0, 0, width, height);
+
+        glEnable(GL_DEPTH_TEST);
+
+        scene = new Scene(assetManager, new Vector3f(0, 0, -3));
         scene.updateAspectRatio(width, height);
 
         return true;
     }
 
     public void registerScript(MonoScript script) {
+        script.assetManager = assetManager;
+        script.scene = scene;
         scripts.add(script);
     }
 
     public void run() {
-
-        Integer shaderID = assetManager.loadShader(
-                Path.of("assets/shaders/default.vert"),
-                Path.of("assets/shaders/default.frag"));
-
-        Integer MeshID = assetManager.loadMesh(Path.of("assets/meshes/uvsphere.obj"));
-
-        Mesh mesh = assetManager.getMesh(MeshID);
-        Shader shader = assetManager.getShader(shaderID);
-
-        System.out.println(System.getProperty("user.dir"));
-
-        Matrix4f transformA = new Matrix4f().translate(new Vector3f(-0.75f, 0, 0));
-        Matrix4f transformB = new Matrix4f().translate(new Vector3f(0.75f, 0, 0));
-
-        scene.createObject(mesh, shader, transformA);
-        scene.createObject(mesh, shader, transformB);
-
         scripts.stream().forEach(script -> script.Start());
 
         double currentTime = glfwGetTime();
@@ -89,12 +75,11 @@ public class App {
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
-
-        shader.delete();
-        mesh.delete();
     }
 
     public void close() {
+        assetManager.cleanup();
+
         glfwDestroyWindow(window);
         glfwTerminate();
         glfwSetErrorCallback(null).free();
