@@ -1,5 +1,7 @@
 package engine;
 
+import static org.lwjgl.glfw.GLFW.*;
+
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -13,21 +15,19 @@ public class Scene {
         System.setProperty("dominion.show-banner", "false");
     }
 
-    public Vector3f cameraPosition = new Vector3f(0, 0, 0);
-    public Vector3f cameraLookAt = new Vector3f(0, 0, -1);
-    public Vector3f cameraUp = new Vector3f(0, 1, 0);
+    public Transform cameraTransform = new Transform(new Matrix4f());
 
     public int fov = 60;
-
     public float aspectRatio;
 
     Dominion ECS = Dominion.create();
 
-    private AssetManager assetManager;
+    private AssetManager assetManager = AssetManager.get();
+    private long window;
 
-    public Scene(AssetManager assetManager, Vector3f initPosition) {
-        this.assetManager = assetManager;
-        cameraPosition = initPosition;
+    public Scene(long window, Vector3f initPosition) {
+        this.window = window;
+        cameraTransform.setPosition(initPosition);
     }
 
     public void updateAspectRatio(int width, int height) {
@@ -35,7 +35,7 @@ public class Scene {
     }
 
     public Matrix4f computeViewportMatrix() {
-        Matrix4f view = new Matrix4f().lookAt(cameraPosition, cameraLookAt, cameraUp);
+        Matrix4f view = cameraTransform.model;
         Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
 
         return projection.mul(view);
@@ -68,5 +68,9 @@ public class Scene {
         Transform transform = new Transform(new Matrix4f());
 
         return ECS.createEntity(gameObject, transform);
+    }
+
+    public boolean isKeyDown(int key) {
+        return glfwGetKey(window, key) == GLFW_PRESS;
     }
 }

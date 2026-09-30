@@ -31,14 +31,14 @@ public class App {
             return false;
         }
 
-        scene = new Scene(assetManager, new Vector3f(0, 0, -3));
-        scene.updateAspectRatio(width, height);
-
         glfwMakeContextCurrent(window);
         GL.createCapabilities();
 
         glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
         glViewport(0, 0, width, height);
+
+        scene = new Scene(window, new Vector3f(0, 0, -3));
+        scene.updateAspectRatio(width, height);
 
         glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
             glViewport(0, 0, new_width, new_height);
