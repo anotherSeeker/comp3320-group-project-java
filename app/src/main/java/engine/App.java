@@ -8,8 +8,6 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
-import org.joml.Vector3f;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -22,13 +20,21 @@ public class App {
     private long window;
 
     private ArrayList<Vertex> vertices = new ArrayList<>(List.of(
-            new Vertex(new Vector3f(0.5f, -0.5f, 0)),
-            new Vertex(new Vector3f(0, 0.5f, 0)),
-            new Vertex(new Vector3f(-0.5f, -0.5f, 0))));
+            new Vertex(new Vector3f(-0.5f, 0.0f, 0.5f)),
+            new Vertex(new Vector3f(-0.5f, 0.0f, -0.5f)),
+            new Vertex(new Vector3f(0.5f, 0.0f, -0.5f)),
+            new Vertex(new Vector3f(0.5f, 0.0f, 0.5f)),
+            new Vertex(new Vector3f(0.0f, 1.0f, 0.0f))));
 
-    private ArrayList<Integer> indices = new ArrayList<>(List.of(0, 1, 2));
+    private ArrayList<Integer> indices = new ArrayList<>(List.of(
+            0, 1, 2,
+            0, 2, 3,
+            0, 1, 4,
+            1, 2, 4,
+            2, 3, 4,
+            3, 0, 4));
 
-    private Scene scene = new Scene(new Vector3f(0, 0, -5));
+    private Scene scene = new Scene(new Vector3f(0, 0, -3));
 
     // will remove later
     private String readFile(String filePath) {
@@ -65,6 +71,7 @@ public class App {
 
         glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
         glViewport(0, 0, width, height);
+        scene.updateAspectRatio(width, height);
 
         return true;
     }
@@ -85,6 +92,7 @@ public class App {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             shader.use();
+            shader.setMatrix4("CameraMatrix", scene.computeViewportMatrix());
             mesh.draw();
 
             glfwSwapBuffers(window);
