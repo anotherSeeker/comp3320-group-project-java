@@ -1,5 +1,6 @@
 package engine;
 
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -94,6 +95,12 @@ public class App {
 
         shader.init(vertexSource, fragmentSource);
 
+        Matrix4f transformA = new Matrix4f().translate(new Vector3f(-0.75f, 0, 0));
+        Matrix4f transformB = new Matrix4f().translate(new Vector3f(0.75f, 0, 0));
+
+        scene.createObject(mesh, shader, transformA);
+        scene.createObject(mesh, shader, transformB);
+
         scripts.stream().forEach(script -> script.Start());
 
         double currentTime = glfwGetTime();
@@ -111,9 +118,7 @@ public class App {
                 scripts.get(i).update(deltaTime);
             }
 
-            shader.use();
-            shader.setMatrix4("CameraMatrix", scene.computeViewportMatrix());
-            mesh.draw();
+            scene.draw();
 
             glfwSwapBuffers(window);
             glfwPollEvents();
