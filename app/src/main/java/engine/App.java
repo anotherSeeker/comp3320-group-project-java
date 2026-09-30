@@ -1,5 +1,6 @@
 package engine;
 
+import org.joml.Vector3f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
@@ -7,36 +8,37 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.Path;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class App {
     private long window;
 
+    private ArrayList<Vertex> vertices = new ArrayList<>(List.of(
+            new Vertex(new Vector3f(0.5f, -0.5f, 0)),
+            new Vertex(new Vector3f(0, 0.5f, 0)),
+            new Vertex(new Vector3f(-0.5f, -0.5f, 0))));
+
+    private ArrayList<Integer> indices = new ArrayList<>(List.of(0, 1, 2));
+
     // will remove later
-    private Boolean readFile(String filePath, String source) throws IOException {
-        Path path = Paths.get(filePath);
+    private String readFile(String filePath) {
+        String result = "";
 
-        if (!Files.exists(path))
-            return false;
-
-        var reader = new BufferedReader(new FileReader(filePath));
-        String line;
-
-        while ((line = reader.readLine()) != null) {
-            source += line;
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(filePath));
+            result = reader.readAllLines().stream().collect(Collectors.joining("\n"));
+            reader.close();
+        } catch (IOException err) {
+            System.out.println(err);
         }
 
-        reader.close();
-
-        return true;
+        return result;
     }
 
     public boolean init(int width, int height, CharSequence title) {
@@ -65,12 +67,28 @@ public class App {
 
     public void run() {
 
+        Mesh mesh = new Mesh(vertices, indices);
+        Shader shader = new Shader();
+
+        System.out.println(System.getProperty("user.dir"));
+
+        String vertexSource = readFile("assets/shaders/default.vert");
+        String fragmentSource = readFile("assets/shaders/default.frag");
+
+        shader.init(vertexSource, fragmentSource);
+
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glfwSwapBuffers(window);
 
+            shader.use();
+            mesh.draw();
+
+            glfwSwapBuffers(window);
             glfwPollEvents();
         }
+
+        shader.delete();
+        mesh.delete();
     }
 
     public void close() {
