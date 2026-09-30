@@ -4,6 +4,7 @@ import java.nio.IntBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
+import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL30.*;
 
@@ -46,6 +47,20 @@ public class Mesh {
         memFree(indexBuffer);
 
         glBindVertexArray(0);
+    }
+
+    public void bind() {
+        glBindVertexArray(VAO);
+    }
+
+    public void draw() {
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    }
+
+    public void delete() {
+        glDeleteVertexArrays(VAO);
+        glDeleteBuffers(VBO);
+        glDeleteBuffers(EBO);
     }
 
 }
