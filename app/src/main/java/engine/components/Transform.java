@@ -21,4 +21,19 @@ public class Transform {
 
         this.model = new Matrix4f().translationRotate(position, orientation);
     }
+
+    public void setPosition(Vector3f position) {
+        this.position = position;
+        this.model = new Matrix4f().translationRotate(position, orientation);
+    }
+
+    public void setOrientation(Quaternionf orientation) {
+        this.orientation = orientation;
+        this.model = new Matrix4f().translationRotate(position, orientation);
+    }
+
+    public void setOrientationEuler(Vector3f eulerAngles) {
+        this.orientation = new Quaternionf().rotationXYZ(eulerAngles.x, eulerAngles.y, eulerAngles.z);
+        this.model = new Matrix4f().translationRotate(position, orientation);
+    }
 }
