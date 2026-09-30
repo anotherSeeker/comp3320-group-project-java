@@ -17,11 +17,6 @@ repositories {
     mavenCentral()
 }
 
-
-repositories {
-	mavenCentral()
-}
-
 val lwjglVersion = "3.4.3"
 val lwjglNatives = "natives-windows"
 
@@ -38,6 +33,8 @@ dependencies {
 	implementation("org.lwjgl:lwjgl-stb::$lwjglNatives")
 
     implementation("org.joml:joml:1.10.9")
+
+    implementation("dev.dominion.ecs:dominion-ecs-engine:0.9.0")
 }
 
 testing {
