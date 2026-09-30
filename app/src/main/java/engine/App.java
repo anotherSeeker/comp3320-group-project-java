@@ -12,13 +12,17 @@ import static org.lwjgl.system.MemoryUtil.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class App {
     private long window;
+    private AssetManager assetManager = new AssetManager();
+    private Scene scene = new Scene(new Vector3f(0, 0, -3));
+
+    private ArrayList<MonoScript> scripts = new ArrayList<>();
 
     private ArrayList<Vertex> vertices = new ArrayList<>(List.of(
             new Vertex(new Vector3f(-0.5f, 0.0f, 0.5f)),
@@ -34,25 +38,6 @@ public class App {
             1, 2, 4,
             2, 3, 4,
             3, 0, 4));
-
-    private Scene scene = new Scene(new Vector3f(0, 0, -3));
-
-    private ArrayList<MonoScript> scripts = new ArrayList<>();
-
-    // will remove later
-    private String readFile(String filePath) {
-        String result = "";
-
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(filePath));
-            result = reader.readAllLines().stream().collect(Collectors.joining("\n"));
-            reader.close();
-        } catch (IOException err) {
-            System.out.println(err);
-        }
-
-        return result;
-    }
 
     public boolean init(int width, int height, CharSequence title) {
         GLFWErrorCallback.createPrint(System.err).set();
@@ -85,15 +70,13 @@ public class App {
 
     public void run() {
 
+        Integer shaderID = assetManager.loadShader(Path.of("assets/shaders/default.vert"),
+                Path.of("assets/shaders/default.frag"));
+
         Mesh mesh = new Mesh(vertices, indices);
-        Shader shader = new Shader();
+        Shader shader = assetManager.getShader(shaderID);
 
         System.out.println(System.getProperty("user.dir"));
-
-        String vertexSource = readFile("assets/shaders/default.vert");
-        String fragmentSource = readFile("assets/shaders/default.frag");
-
-        shader.init(vertexSource, fragmentSource);
 
         Matrix4f transformA = new Matrix4f().translate(new Vector3f(-0.75f, 0, 0));
         Matrix4f transformB = new Matrix4f().translate(new Vector3f(0.75f, 0, 0));
