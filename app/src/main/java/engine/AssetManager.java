@@ -5,8 +5,6 @@ import de.javagl.obj.ObjData;
 import de.javagl.obj.ObjReader;
 import de.javagl.obj.ObjUtils;
 
-import static org.lwjgl.system.MemoryUtil.*;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
