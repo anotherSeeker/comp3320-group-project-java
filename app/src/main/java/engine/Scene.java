@@ -31,7 +31,7 @@ public class Scene {
     }
 
     public void updateAspectRatio(int width, int height) {
-        aspectRatio = width / height;
+        aspectRatio = (float) width / height;
     }
 
     public Matrix4f computeViewportMatrix() {
