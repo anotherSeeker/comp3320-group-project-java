@@ -11,7 +11,6 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.List;
 
 public class App {
     private long window;
@@ -19,21 +18,6 @@ public class App {
     private Scene scene = new Scene(new Vector3f(0, 0, -3));
 
     private ArrayList<MonoScript> scripts = new ArrayList<>();
-
-    private ArrayList<Vertex> vertices = new ArrayList<>(List.of(
-            new Vertex(new Vector3f(-0.5f, 0.0f, 0.5f)),
-            new Vertex(new Vector3f(-0.5f, 0.0f, -0.5f)),
-            new Vertex(new Vector3f(0.5f, 0.0f, -0.5f)),
-            new Vertex(new Vector3f(0.5f, 0.0f, 0.5f)),
-            new Vertex(new Vector3f(0.0f, 1.0f, 0.0f))));
-
-    private ArrayList<Integer> indices = new ArrayList<>(List.of(
-            0, 1, 2,
-            0, 2, 3,
-            0, 1, 4,
-            1, 2, 4,
-            2, 3, 4,
-            3, 0, 4));
 
     public boolean init(int width, int height, CharSequence title) {
         GLFWErrorCallback.createPrint(System.err).set();
@@ -66,10 +50,13 @@ public class App {
 
     public void run() {
 
-        Integer shaderID = assetManager.loadShader(Path.of("assets/shaders/default.vert"),
+        Integer shaderID = assetManager.loadShader(
+                Path.of("assets/shaders/default.vert"),
                 Path.of("assets/shaders/default.frag"));
 
-        Mesh mesh = new Mesh(vertices, indices);
+        Integer MeshID = assetManager.loadMesh(Path.of("assets/meshes/uvsphere.obj"));
+
+        Mesh mesh = assetManager.getMesh(MeshID);
         Shader shader = assetManager.getShader(shaderID);
 
         System.out.println(System.getProperty("user.dir"));
