@@ -2,6 +2,11 @@ package engine;
 
 import static org.lwjgl.opengl.GL20.*;
 
+import java.nio.FloatBuffer;
+
+import org.joml.Matrix4f;
+import org.lwjgl.system.MemoryStack;
+
 public class Shader {
     private int ID;
 
@@ -22,6 +27,17 @@ public class Shader {
         return true;
     }
 
+    public void setMatrix4(String uniformName, Matrix4f matrix) {
+        MemoryStack stack = MemoryStack.stackPush();
+        FloatBuffer floatBuffer = stack.mallocFloat(16);
+
+        matrix.get(floatBuffer);
+
+        glUniformMatrix4fv(glGetUniformLocation(ID, uniformName), false, floatBuffer);
+
+        stack.pop();
+    }
+
     public void use() {
         glUseProgram(ID);
     }
@@ -29,4 +45,5 @@ public class Shader {
     public void delete() {
         glDeleteProgram(ID);
     }
+
 }
