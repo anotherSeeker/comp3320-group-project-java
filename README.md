@@ -6,6 +6,8 @@ Java rewrite of c++ engine
 
 ## libraries
 - LWJGL
+- Dominion ECS
+- javagl/obj
 
 ## tooling
 - gradle
