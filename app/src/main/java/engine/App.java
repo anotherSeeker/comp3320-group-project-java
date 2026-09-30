@@ -36,6 +36,8 @@ public class App {
 
     private Scene scene = new Scene(new Vector3f(0, 0, -3));
 
+    private ArrayList<MonoScript> scripts = new ArrayList<>();
+
     // will remove later
     private String readFile(String filePath) {
         String result = "";
@@ -76,6 +78,10 @@ public class App {
         return true;
     }
 
+    public void registerScript(MonoScript script) {
+        scripts.add(script);
+    }
+
     public void run() {
 
         Mesh mesh = new Mesh(vertices, indices);
@@ -88,8 +94,22 @@ public class App {
 
         shader.init(vertexSource, fragmentSource);
 
+        scripts.stream().forEach(script -> script.Start());
+
+        double currentTime = glfwGetTime();
+        double previousTime = glfwGetTime();
+        double deltaTime = 0.0;
+
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            currentTime = glfwGetTime();
+            deltaTime = currentTime - previousTime;
+            previousTime = currentTime;
+
+            for (int i = 0; i < scripts.size(); i++) {
+                scripts.get(i).update(deltaTime);
+            }
 
             shader.use();
             shader.setMatrix4("CameraMatrix", scene.computeViewportMatrix());

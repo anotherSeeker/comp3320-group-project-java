@@ -5,6 +5,7 @@ public class Game {
         App app = new App();
 
         if (app.init(800, 600, "sunken castle")) {
+            app.registerScript(new scripts.DemoScene());
             app.run();
         }
 
