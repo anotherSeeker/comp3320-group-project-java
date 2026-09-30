@@ -1,6 +1,8 @@
 package engine;
 
 public abstract class MonoScript {
+    public AssetManager assetManager;
+    public Scene scene;
 
     public MonoScript() {
 
