@@ -59,15 +59,14 @@ public class Scene {
         }
     }
 
-    public Entity createObject(Integer meshID, Integer shaderID, Matrix4f model) {
+    public Entity createObject(Integer meshID, Integer shaderID) {
 
         Mesh mesh = assetManager.getMesh(meshID);
         Shader shader = assetManager.getShader(shaderID);
 
         GameObject gameObject = new GameObject(mesh, shader);
-        Transform transform = new Transform(model);
+        Transform transform = new Transform(new Matrix4f());
 
         return ECS.createEntity(gameObject, transform);
     }
-
 }
