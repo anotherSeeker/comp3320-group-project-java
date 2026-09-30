@@ -8,6 +8,8 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
+import org.joml.Vector3f;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -25,6 +27,8 @@ public class App {
             new Vertex(new Vector3f(-0.5f, -0.5f, 0))));
 
     private ArrayList<Integer> indices = new ArrayList<>(List.of(0, 1, 2));
+
+    private Scene scene = new Scene(new Vector3f(0, 0, -5));
 
     // will remove later
     private String readFile(String filePath) {
