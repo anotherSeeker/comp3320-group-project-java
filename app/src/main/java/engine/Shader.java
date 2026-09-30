@@ -27,6 +27,6 @@ public class Shader {
     }
 
     public void delete() {
-        glDeleteShader(ID);
+        glDeleteProgram(ID);
     }
 }

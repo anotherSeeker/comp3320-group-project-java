@@ -4,8 +4,12 @@ import java.nio.IntBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
+import org.joml.Vector3f;
+
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
+import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.*;
 
 import static org.lwjgl.system.MemoryUtil.*;
@@ -37,16 +41,22 @@ public class Mesh {
         indexBuffer.put(indices.stream().mapToInt(Integer::intValue).toArray());
 
         vertexBuffer.flip();
+        indexBuffer.flip();
+
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
 
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * Float.BYTES, 0);
+        glEnableVertexAttribArray(0);
+
         memFree(vertexBuffer);
         memFree(indexBuffer);
 
-        glBindVertexArray(0);
+        this.vertices = vertices;
+        this.indices = indices;
     }
 
     public void bind() {
@@ -54,6 +64,7 @@ public class Mesh {
     }
 
     public void draw() {
+        bind();
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     }
 
