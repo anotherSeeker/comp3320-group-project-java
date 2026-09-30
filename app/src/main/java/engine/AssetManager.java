@@ -88,4 +88,14 @@ public class AssetManager {
     public Mesh getMesh(Integer assetID) {
         return meshIndex.get(assetID);
     }
+
+    public void cleanup() {
+        for (Mesh mesh : meshIndex.values()) {
+            mesh.delete();
+        }
+
+        for (Shader shader : shaderIndex.values()) {
+            shader.delete();
+        }
+    }
 }
