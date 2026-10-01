@@ -45,4 +45,11 @@ public class InputManager {
         return delta;
     }
 
+    public void LockMouse() {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+
+    public void UnlockMouse() {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
 }

@@ -36,6 +36,8 @@ public class DemoScene extends MonoScript {
 
         A.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
         B.get(Transform.class).setPosition(new Vector3f(-5f, 0, 0));
+
+        Input.LockMouse();
     }
 
     @Override
@@ -77,6 +79,8 @@ public class DemoScene extends MonoScript {
 
         yaw -= mouseDelta.x * mouseSens;
         pitch += mouseDelta.y * mouseSens;
+
+        pitch = Math.clamp(pitch, (float) Math.toRadians(-89), (float) Math.toRadians(89));
 
         Scene.cameraTransform.setOrientationEuler(new Vector3f(pitch, yaw, 0));
         Scene.cameraTransform.setPosition(Scene.cameraTransform.position.add(worldDirection));
