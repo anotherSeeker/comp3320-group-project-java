@@ -49,13 +49,30 @@ public class AssetManager {
         int width = 64;
         int height = 64;
 
+        int checkerSize = 8;
+
         ByteBuffer data = BufferUtils.createByteBuffer(width * height * 4);
 
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                boolean isMagenta = ((x / checkerSize) + (y / checkerSize)) % 2 == 0;
+
+                if (isMagenta) {
+                    data.put((byte) 0xFF);
+                    data.put((byte) 0x00);
+                    data.put((byte) 0xFF);
+                } else {
+                    data.put((byte) 0x00);
+                    data.put((byte) 0x00);
+                    data.put((byte) 0x00);
+
+                }
+                data.put((byte) 0xFF);
+            }
+        }
+
         for (int i = 0; i < width * height; i++) {
-            data.put((byte) 0xFF);
-            data.put((byte) 0x00);
-            data.put((byte) 0xFF);
-            data.put((byte) 0xFF);
+
         }
 
         data.flip();
