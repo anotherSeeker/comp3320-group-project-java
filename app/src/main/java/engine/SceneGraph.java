@@ -23,10 +23,8 @@ public class SceneGraph {
     Dominion ECS = Dominion.create();
 
     private AssetManager assetManager = AssetManager.get();
-    private long window;
 
-    public SceneGraph(long window, Vector3f initPosition) {
-        this.window = window;
+    public SceneGraph(Vector3f initPosition) {
         cameraTransform.setPosition(initPosition);
     }
 
@@ -75,9 +73,5 @@ public class SceneGraph {
         Transform transform = new Transform(new Matrix4f());
 
         return ECS.createEntity(gameObject, transform);
-    }
-
-    public boolean isKeyDown(int key) {
-        return glfwGetKey(window, key) == GLFW_PRESS;
     }
 }
