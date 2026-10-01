@@ -1,7 +1,5 @@
 package engine;
 
-import static org.lwjgl.glfw.GLFW.*;
-
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
