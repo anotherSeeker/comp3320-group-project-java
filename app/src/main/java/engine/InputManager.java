@@ -10,7 +10,7 @@ public class InputManager {
 
     private double previousMouseX = 0.0f;
     private double previousMouseY = 0.0f;
-    private boolean firstMouse = false;
+    private boolean firstMouse = true;
 
     public InputManager(long window) {
         this.window = window;
@@ -19,10 +19,14 @@ public class InputManager {
             if (firstMouse) {
                 previousMouseX = x;
                 previousMouseY = y;
+                firstMouse = false;
             }
 
             mouseDeltaX = (float) (x - previousMouseX);
             mouseDeltaY = (float) (previousMouseY - y);
+
+            previousMouseX = x;
+            previousMouseY = y;
         });
     }
 
