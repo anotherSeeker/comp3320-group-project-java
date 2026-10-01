@@ -19,11 +19,6 @@ public class Mesh {
     int EBO;
 
     Mesh(IntBuffer indexBuffer, FloatBuffer positionBuffer, FloatBuffer normalBuffer, FloatBuffer uvBuffer) {
-        VAO = glGenVertexArrays();
-        VBO = glGenBuffers();
-        EBO = glGenBuffers();
-
-        glBindVertexArray(VAO);
 
         int vertexCount = positionBuffer.remaining() / 3;
 
@@ -52,6 +47,17 @@ public class Mesh {
         }
 
         vertexBuffer.flip();
+        indiceCount = indexBuffer.remaining();
+
+        bindData(vertexBuffer, indexBuffer);
+    }
+
+    private void bindData(FloatBuffer vertexBuffer, IntBuffer indexBuffer) {
+        VAO = glGenVertexArrays();
+        VBO = glGenBuffers();
+        EBO = glGenBuffers();
+
+        glBindVertexArray(VAO);
 
         int stride = 8 * Float.BYTES;
 
@@ -70,8 +76,6 @@ public class Mesh {
         glEnableVertexAttribArray(2);
 
         memFree(vertexBuffer);
-
-        indiceCount = indexBuffer.remaining();
     }
 
     public void bind() {
