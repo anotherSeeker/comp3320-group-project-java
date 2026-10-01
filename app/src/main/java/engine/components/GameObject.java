@@ -1,14 +1,13 @@
 package engine.components;
 
 import engine.Mesh;
-import engine.Shader;
 
 public class GameObject {
     public Mesh mesh;
-    public Shader shader;
+    public Material material;
 
-    public GameObject(Mesh mesh, Shader shader) {
+    public GameObject(Mesh mesh, Material material) {
         this.mesh = mesh;
-        this.shader = shader;
+        this.material = material;
     }
 }

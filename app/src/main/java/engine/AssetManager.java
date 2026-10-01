@@ -4,6 +4,7 @@ import de.javagl.obj.Obj;
 import de.javagl.obj.ObjData;
 import de.javagl.obj.ObjReader;
 import de.javagl.obj.ObjUtils;
+import engine.components.Material;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -33,6 +34,16 @@ public class AssetManager {
     public Integer defaultTexture = "DEFAULT".hashCode();
 
     private AssetManager() {
+
+    }
+
+    private static AssetManager singleton = new AssetManager();
+
+    public static AssetManager get() {
+        return singleton;
+    }
+
+    public void _init() {
         STBImage.stbi_set_flip_vertically_on_load(true);
 
         int width = 64;
@@ -48,12 +59,6 @@ public class AssetManager {
         }
 
         textureIndex.put(defaultTexture, new Texture(data, width, height, GL_RGBA));
-    }
-
-    private static AssetManager singleton = new AssetManager();
-
-    public static AssetManager get() {
-        return singleton;
     }
 
     private String readFile(Path filePath) {
@@ -169,6 +174,14 @@ public class AssetManager {
 
     public Texture getTexture(Integer assetID) {
         return textureIndex.get(assetID);
+    }
+
+    public Material createMaterial(Integer shaderID, Integer albedo) {
+        Material material = new Material();
+        material.shader = getShader(shaderID);
+        material.albedo = getTexture(albedo);
+
+        return material;
     }
 
     public void cleanup() {

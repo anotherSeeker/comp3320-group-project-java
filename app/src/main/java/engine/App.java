@@ -51,6 +51,8 @@ public class App {
 
         glEnable(GL_DEPTH_TEST);
 
+        assetManager._init();
+
         return true;
     }
 

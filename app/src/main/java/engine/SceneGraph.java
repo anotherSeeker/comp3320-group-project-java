@@ -6,6 +6,7 @@ import org.joml.Vector3f;
 import dev.dominion.ecs.api.Dominion;
 import dev.dominion.ecs.api.Entity;
 import engine.components.GameObject;
+import engine.components.Material;
 import engine.components.Transform;
 
 public class SceneGraph {
@@ -53,21 +54,22 @@ public class SceneGraph {
             GameObject gameObject = object.comp1();
             Transform transform = object.comp2();
 
-            gameObject.shader.setMatrix4("Model", transform.model);
-            gameObject.shader.setMatrix4("CameraMatrix", viewportMatrix);
+            Material material = gameObject.material;
 
-            gameObject.shader.use();
+            material.shader.setMatrix4("Model", transform.model);
+            material.shader.setMatrix4("CameraMatrix", viewportMatrix);
+
+            material.shader.use();
             gameObject.mesh.bind();
             gameObject.mesh.draw();
         }
     }
 
-    public Entity createObject(Integer meshID, Integer shaderID) {
+    public Entity createObject(Integer meshID, Material material) {
 
         Mesh mesh = assetManager.getMesh(meshID);
-        Shader shader = assetManager.getShader(shaderID);
 
-        GameObject gameObject = new GameObject(mesh, shader);
+        GameObject gameObject = new GameObject(mesh, material);
         Transform transform = new Transform(new Matrix4f());
 
         return ECS.createEntity(gameObject, transform);

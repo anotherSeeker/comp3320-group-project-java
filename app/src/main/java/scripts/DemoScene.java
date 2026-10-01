@@ -10,6 +10,7 @@ import org.joml.Vector3f;
 import dev.dominion.ecs.api.Entity;
 
 import engine.*;
+import engine.components.Material;
 import engine.components.Transform;
 
 public class DemoScene extends MonoScript {
@@ -23,6 +24,8 @@ public class DemoScene extends MonoScript {
 
     Integer meshID = Assets.LoadMesh(Path.of("assets/meshes/uvsphere.obj"));
 
+    Material material = Assets.createMaterial(shaderID, Assets.defaultTexture);
+
     float yaw = 0.0f;
     float pitch = 0.0f;
 
@@ -31,8 +34,9 @@ public class DemoScene extends MonoScript {
 
     @Override
     protected void Start() {
-        A = Scene.createObject(meshID, shaderID);
-        B = Scene.createObject(meshID, shaderID);
+
+        A = Scene.createObject(meshID, material);
+        B = Scene.createObject(meshID, material);
 
         A.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
         B.get(Transform.class).setPosition(new Vector3f(-5f, 0, 0));
