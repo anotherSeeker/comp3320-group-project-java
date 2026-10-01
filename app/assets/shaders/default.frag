@@ -5,6 +5,10 @@ in vec2 UV;
 
 out vec4 fragColour;
 
+uniform sampler2D Albedo;
+
 void main() {
-    fragColour = vec4(normal * 0.5 + 0.5,1);
+    vec3 colour = texture(Albedo,UV);
+
+    fragColour = vec4(colour,1);
 }
