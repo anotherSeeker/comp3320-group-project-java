@@ -2,9 +2,11 @@ package engine;
 
 import static org.lwjgl.glfw.GLFW.*;
 
+import org.joml.Vector2f;
+
 public class InputManager {
-    public float mouseDeltaX = 0.0f;
-    public float mouseDeltaY = 0.0f;
+    private float mouseDeltaX = 0.0f;
+    private float mouseDeltaY = 0.0f;
 
     private long window;
 
@@ -32,6 +34,15 @@ public class InputManager {
 
     public boolean IsKeyDown(int key) {
         return glfwGetKey(window, key) == GLFW_PRESS;
+    }
+
+    public Vector2f GetMouseDelta() {
+        Vector2f delta = new Vector2f(mouseDeltaX, mouseDeltaY);
+
+        mouseDeltaX = 0.0f;
+        mouseDeltaY = 0.0f;
+
+        return delta;
     }
 
 }

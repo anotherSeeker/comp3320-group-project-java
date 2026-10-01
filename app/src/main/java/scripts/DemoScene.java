@@ -4,6 +4,7 @@ import static org.lwjgl.glfw.GLFW.*;
 
 import java.nio.file.Path;
 
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import dev.dominion.ecs.api.Entity;
@@ -17,7 +18,8 @@ public class DemoScene extends MonoScript {
 
     Integer shaderID = Assets.LoadShader(
             Path.of("assets/shaders/default.vert"),
-            Path.of("assets/shaders/default.frag"));
+            Path.of("assets/shaders/default.frag")
+    );
 
     Integer meshID = Assets.LoadMesh(Path.of("assets/meshes/uvsphere.obj"));
 
@@ -71,13 +73,12 @@ public class DemoScene extends MonoScript {
 
         worldDirection = worldDirection.mul((float) deltaTime);
 
-        yaw -= Input.mouseDeltaX * mouseSens;
-        pitch += Input.mouseDeltaY * mouseSens;
+        Vector2f mouseDelta = Input.GetMouseDelta();
+
+        yaw -= mouseDelta.x * mouseSens;
+        pitch += mouseDelta.y * mouseSens;
 
         Scene.cameraTransform.setOrientationEuler(new Vector3f(pitch, yaw, 0));
         Scene.cameraTransform.setPosition(Scene.cameraTransform.position.add(worldDirection));
-
-        Input.mouseDeltaY = 0;
-        Input.mouseDeltaX = 0;
     }
 }
