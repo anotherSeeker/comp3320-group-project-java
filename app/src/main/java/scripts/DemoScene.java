@@ -24,7 +24,10 @@ public class DemoScene extends MonoScript {
 
     Integer meshID = Assets.LoadMesh(Path.of("assets/meshes/uvsphere.obj"));
 
-    Material material = Assets.createMaterial(shaderID, Assets.defaultTexture);
+    Material material = Assets.createMaterial(
+            shaderID,
+            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg"))
+    );
 
     float yaw = 0.0f;
     float pitch = 0.0f;
