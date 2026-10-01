@@ -6,6 +6,7 @@ import static org.lwjgl.opengl.GL20.*;
 import java.nio.FloatBuffer;
 
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
 
 public class Shader {
@@ -45,6 +46,10 @@ public class Shader {
         glUniformMatrix4fv(glGetUniformLocation(ID, uniformName), false, floatBuffer);
 
         stack.pop();
+    }
+
+    public void setVector3(String uniformName, Vector3f vector) {
+        glUniform3f(glGetUniformLocation(ID, uniformName), vector.x, vector.y, vector.z);
     }
 
     public void setTexture(String uniformName, Texture texture, int textureSlot) {
