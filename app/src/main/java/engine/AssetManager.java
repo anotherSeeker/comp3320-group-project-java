@@ -45,7 +45,7 @@ public class AssetManager {
         return result;
     }
 
-    public Integer loadShader(Path vertexPath, Path fragmentPath) {
+    public Integer LoadShader(Path vertexPath, Path fragmentPath) {
         Integer ID = (vertexPath.toAbsolutePath().toString() + fragmentPath.toAbsolutePath().toString()).hashCode();
 
         if (shaderIndex.containsKey(ID))
@@ -62,7 +62,7 @@ public class AssetManager {
         return ID;
     }
 
-    public Integer loadMesh(Path filePath) {
+    public Integer LoadMesh(Path filePath) {
         Integer ID = filePath.toAbsolutePath().hashCode();
 
         if (meshIndex.containsKey(ID))

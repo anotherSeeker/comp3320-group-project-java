@@ -26,7 +26,7 @@ public class InputManager {
         });
     }
 
-    public boolean isKeyDown(int key) {
+    public boolean IsKeyDown(int key) {
         return glfwGetKey(window, key) == GLFW_PRESS;
     }
 

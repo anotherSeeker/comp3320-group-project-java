@@ -10,7 +10,7 @@ import dev.dominion.ecs.api.Entity;
 import engine.components.GameObject;
 import engine.components.Transform;
 
-public class Scene {
+public class SceneGraph {
     static {
         System.setProperty("dominion.show-banner", "false");
     }
@@ -25,7 +25,7 @@ public class Scene {
     private AssetManager assetManager = AssetManager.get();
     private long window;
 
-    public Scene(long window, Vector3f initPosition) {
+    public SceneGraph(long window, Vector3f initPosition) {
         this.window = window;
         cameraTransform.setPosition(initPosition);
     }

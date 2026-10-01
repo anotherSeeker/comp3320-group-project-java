@@ -13,7 +13,7 @@ import java.util.ArrayList;
 public class App {
     private long window;
     private AssetManager assetManager = AssetManager.get();
-    private Scene scene;
+    private SceneGraph scene;
     private InputManager input;
 
     private ArrayList<MonoScript> scripts = new ArrayList<>();
@@ -38,7 +38,7 @@ public class App {
         glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
         glViewport(0, 0, width, height);
 
-        scene = new Scene(window, new Vector3f(0, 0, -3));
+        scene = new SceneGraph(window, new Vector3f(0, 0, -3));
         scene.updateAspectRatio(width, height);
 
         input = new InputManager(window);
@@ -55,9 +55,9 @@ public class App {
     }
 
     public void registerScript(MonoScript script) {
-        script.assetManager = assetManager;
-        script.scene = scene;
-        script.input = input;
+        script.Assets = assetManager;
+        script.Scene = scene;
+        script.Input = input;
         scripts.add(script);
     }
 
