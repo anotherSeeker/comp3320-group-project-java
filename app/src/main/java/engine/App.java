@@ -38,7 +38,7 @@ public class App {
         glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
         glViewport(0, 0, width, height);
 
-        scene = new SceneGraph(window, new Vector3f(0, 0, -3));
+        scene = new SceneGraph(window, new Vector3f(0, 0, -5));
         scene.updateAspectRatio(width, height);
 
         input = new InputManager(window);

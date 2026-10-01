@@ -35,7 +35,14 @@ public class SceneGraph {
     }
 
     public Matrix4f computeViewportMatrix() {
-        Matrix4f view = cameraTransform.model;
+        Matrix4f view = new Matrix4f()
+                .rotate(cameraTransform.orientation.conjugate())
+                .translate(
+                        -cameraTransform.position.x,
+                        -cameraTransform.position.y,
+                        -cameraTransform.position.z
+                );
+
         Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
 
         return projection.mul(view);
