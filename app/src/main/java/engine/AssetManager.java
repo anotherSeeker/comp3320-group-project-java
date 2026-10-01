@@ -162,22 +162,21 @@ public class AssetManager {
             IntBuffer height = stack.mallocInt(1);
             IntBuffer channels = stack.mallocInt(1);
 
-            ByteBuffer data = STBImage.stbi_load(filePath.toString(), width, height, channels, 4);
+            ByteBuffer data = STBImage.stbi_load(filePath.toString(), width, height, channels, 0);
             if (data == null) {
                 throw new RuntimeException(
                         "could not load texture " + filePath.toString() + " " + STBImage.stbi_failure_reason()
                 );
             }
 
-            int channelFormat = (channels.get() == 4) ? GL_RGBA : GL_RGB;
+            int channelFormat = (channels.get(0) == 4) ? GL_RGBA : GL_RGB;
 
-            Texture texture = new Texture(data, width.get(), height.get(), channelFormat);
+            Texture texture = new Texture(data, width.get(0), height.get(0), channelFormat);
 
             textureIndex.put(ID, texture);
 
             STBImage.stbi_image_free(data);
-        } finally {
-            MemoryStack.stackPop();
+
         }
 
         return ID;
