@@ -23,8 +23,8 @@ public class SceneGraph {
 
     private AssetManager assetManager = AssetManager.get();
 
-    public SceneGraph(Vector3f initPosition) {
-        cameraTransform.setPosition(initPosition);
+    public SceneGraph() {
+        cameraTransform.setPosition(new Vector3f(0, 0, 0));
     }
 
     public void updateAspectRatio(int width, int height) {

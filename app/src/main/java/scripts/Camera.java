@@ -11,11 +11,14 @@ public class Camera extends MonoScript {
     int cameraSpeed = 10;
     float mouseSens = 0.005f;
 
-    float yaw = 0.0f;
+    float yaw = (float) Math.PI;
     float pitch = 0.0f;
 
     @Override
     protected void Start() {
+        Scene.cameraTransform.setPosition(new Vector3f(0, 0, -5));
+        Scene.cameraTransform.lookAt(new Vector3f(0, 0, 0));
+
         Input.LockMouse();
     }
 
