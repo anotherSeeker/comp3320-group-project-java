@@ -15,6 +15,7 @@ public class SceneGraph {
     }
 
     public Transform cameraTransform = new Transform(new Matrix4f());
+    public Vector3f lightDirection = new Vector3f(1, 1, 0);
 
     public int fov = 60;
     public float aspectRatio;
@@ -60,6 +61,8 @@ public class SceneGraph {
             material.shader.setMatrix4("Model", transform.model);
             material.shader.setMatrix4("CameraMatrix", viewportMatrix);
             material.shader.setTexture("Albedo", material.albedo, 0);
+            material.shader.setVector3("LightDirection", lightDirection);
+            material.shader.setVector3("ViewPosition", cameraTransform.position);
 
             gameObject.mesh.bind();
             gameObject.mesh.draw();

@@ -8,10 +8,12 @@ uniform mat4 Model;
 
 out vec3 normal;
 out vec2 UV;
+out vec3 position;
 
 void main() {
     gl_Position = CameraMatrix * Model * vec4(aPos,1);
 
+    position = (Model * vec4(aPos,1)).xyz;
     UV = aUV;
-    normal = aNormal;
+    normal = mat3(transpose(inverse(Model))) * aNormal;
 }
