@@ -6,7 +6,7 @@ import static org.lwjgl.opengl.GL30.*;
 import java.nio.ByteBuffer;
 
 public class Texture {
-    int ID;
+    public int ID;
 
     public Texture(ByteBuffer data, int width, int height, int colourFormat) {
         ID = glGenTextures();

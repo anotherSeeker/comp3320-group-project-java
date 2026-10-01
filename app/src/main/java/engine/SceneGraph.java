@@ -58,6 +58,7 @@ public class SceneGraph {
 
             material.shader.setMatrix4("Model", transform.model);
             material.shader.setMatrix4("CameraMatrix", viewportMatrix);
+            material.shader.setTexture("Albedo", material.albedo);
 
             material.shader.use();
             gameObject.mesh.bind();

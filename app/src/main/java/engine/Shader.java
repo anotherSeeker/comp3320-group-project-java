@@ -38,6 +38,11 @@ public class Shader {
         stack.pop();
     }
 
+    public void setTexture(String uniformName, Texture texture) {
+        texture.bind();
+        glUniform1i(glGetUniformLocation(ID, uniformName), texture.ID);
+    }
+
     public void use() {
         glUseProgram(ID);
     }
