@@ -90,6 +90,17 @@ public class AssetManager {
         return ID;
     }
 
+    public Integer LoadMesh(Mesh mesh, String name) {
+        Integer ID = name.hashCode();
+
+        if (meshIndex.containsKey(ID))
+            return ID;
+
+        meshIndex.put(ID, mesh);
+
+        return ID;
+    }
+
     public Shader getShader(Integer assetID) {
         return shaderIndex.get(assetID);
     }

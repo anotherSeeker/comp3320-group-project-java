@@ -1,6 +1,7 @@
 package engine;
 
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -17,6 +18,36 @@ public class Mesh {
     int VAO;
     int VBO;
     int EBO;
+
+    Mesh(ArrayList<Vertex> vertices, ArrayList<Integer> indices) {
+
+        FloatBuffer vertexBuffer = memAllocFloat(vertices.size() * 8);
+
+        for (Vertex vertex : vertices) {
+            vertexBuffer.put(vertex.position.x);
+            vertexBuffer.put(vertex.position.y);
+            vertexBuffer.put(vertex.position.z);
+
+            vertexBuffer.put(vertex.normal.x);
+            vertexBuffer.put(vertex.normal.y);
+            vertexBuffer.put(vertex.normal.z);
+
+            vertexBuffer.put(vertex.uv.x);
+            vertexBuffer.put(vertex.uv.y);
+        }
+
+        IntBuffer indexBuffer = memAllocInt(indices.size());
+        indexBuffer.put(indices.stream().mapToInt(Integer::intValue).toArray());
+
+        vertexBuffer.flip();
+        indexBuffer.flip();
+
+        indiceCount = indexBuffer.remaining();
+
+        bindData(vertexBuffer, indexBuffer);
+
+        memFree(indexBuffer);
+    }
 
     Mesh(IntBuffer indexBuffer, FloatBuffer positionBuffer, FloatBuffer normalBuffer, FloatBuffer uvBuffer) {
 
