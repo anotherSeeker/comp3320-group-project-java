@@ -55,12 +55,12 @@ public class SceneGraph {
             Transform transform = object.comp2();
 
             Material material = gameObject.material;
+            material.shader.use();
 
             material.shader.setMatrix4("Model", transform.model);
             material.shader.setMatrix4("CameraMatrix", viewportMatrix);
-            material.shader.setTexture("Albedo", material.albedo);
+            material.shader.setTexture("Albedo", material.albedo, 0);
 
-            material.shader.use();
             gameObject.mesh.bind();
             gameObject.mesh.draw();
         }

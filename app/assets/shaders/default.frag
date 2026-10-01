@@ -8,7 +8,7 @@ out vec4 fragColour;
 uniform sampler2D Albedo;
 
 void main() {
-    vec3 colour = texture(Albedo,UV);
+    vec4 colour = texture(Albedo,UV);
 
-    fragColour = vec4(colour,1);
+    fragColour = vec4(colour.rgb,1);
 }

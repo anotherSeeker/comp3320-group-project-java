@@ -58,6 +58,8 @@ public class AssetManager {
             data.put((byte) 0xFF);
         }
 
+        data.flip();
+
         textureIndex.put(defaultTexture, new Texture(data, width, height, GL_RGBA));
     }
 

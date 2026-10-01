@@ -1,5 +1,6 @@
 package engine;
 
+import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL20.*;
 
 import java.nio.FloatBuffer;
@@ -15,9 +16,17 @@ public class Shader {
         glShaderSource(vertexShader, vertexSource);
         glCompileShader(vertexShader);
 
+        if (glGetShaderi(vertexShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            System.err.println(glGetShaderInfoLog(vertexShader, 1024));
+        }
+
         int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragmentShader, fragmentSource);
         glCompileShader(fragmentShader);
+
+        if (glGetShaderi(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            System.err.println(glGetShaderInfoLog(fragmentShader, 1024));
+        }
 
         ID = glCreateProgram();
         glAttachShader(ID, vertexShader);
@@ -38,9 +47,9 @@ public class Shader {
         stack.pop();
     }
 
-    public void setTexture(String uniformName, Texture texture) {
-        texture.bind();
-        glUniform1i(glGetUniformLocation(ID, uniformName), texture.ID);
+    public void setTexture(String uniformName, Texture texture, int textureSlot) {
+        texture.use(textureSlot);
+        glUniform1i(glGetUniformLocation(ID, uniformName), textureSlot);
     }
 
     public void use() {
