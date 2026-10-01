@@ -37,4 +37,12 @@ public class Transform {
         this.model = new Matrix4f().translationRotate(position, orientation);
     }
 
+    public void lookAt(Vector3f target) {
+        Vector3f direction = target.sub(this.position).normalize();
+
+        this.orientation.identity().lookAlong(direction, new Vector3f(0, 1, 0));
+
+        model.translationRotate(this.position, this.orientation);
+    }
+
 }
