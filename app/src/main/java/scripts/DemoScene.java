@@ -27,39 +27,37 @@ public class DemoScene extends MonoScript {
         A = scene.createObject(meshID, shaderID);
 
         A.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
-
-        System.out.println("hello world");
     }
 
     @Override
     protected void Update(double deltaTime) {
 
-        if (scene.isKeyDown(GLFW_KEY_W) == true) {
+        if (input.isKeyDown(GLFW_KEY_W) == true) {
             scene.cameraTransform.setPosition(
                     scene.cameraTransform.position.add(new Vector3f(0.0f, 0.0f, cameraSpeed * (float) deltaTime)));
         }
 
-        if (scene.isKeyDown(GLFW_KEY_S) == true) {
+        if (input.isKeyDown(GLFW_KEY_S) == true) {
             scene.cameraTransform.setPosition(
                     scene.cameraTransform.position.add(new Vector3f(0.0f, 0.0f, cameraSpeed * (float) -deltaTime)));
         }
 
-        if (scene.isKeyDown(GLFW_KEY_A) == true) {
+        if (input.isKeyDown(GLFW_KEY_A) == true) {
             scene.cameraTransform.setPosition(
                     scene.cameraTransform.position.add(new Vector3f(cameraSpeed * (float) deltaTime, 0.0f, 0.0f)));
         }
 
-        if (scene.isKeyDown(GLFW_KEY_D) == true) {
+        if (input.isKeyDown(GLFW_KEY_D) == true) {
             scene.cameraTransform.setPosition(
                     scene.cameraTransform.position.add(new Vector3f(cameraSpeed * (float) -deltaTime, 0.0f, 0.0f)));
         }
 
-        if (scene.isKeyDown(GLFW_KEY_Q) == true) {
+        if (input.isKeyDown(GLFW_KEY_Q) == true) {
             scene.cameraTransform.setPosition(
                     scene.cameraTransform.position.add(new Vector3f(0.0f, cameraSpeed * (float) deltaTime, 0.0f)));
         }
 
-        if (scene.isKeyDown(GLFW_KEY_E) == true) {
+        if (input.isKeyDown(GLFW_KEY_E) == true) {
             scene.cameraTransform.setPosition(
                     scene.cameraTransform.position.add(new Vector3f(0.0f, cameraSpeed * (float) -deltaTime, 0.0f)));
         }

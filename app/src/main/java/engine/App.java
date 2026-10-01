@@ -14,6 +14,7 @@ public class App {
     private long window;
     private AssetManager assetManager = AssetManager.get();
     private Scene scene;
+    private InputManager input;
 
     private ArrayList<MonoScript> scripts = new ArrayList<>();
 
@@ -40,6 +41,8 @@ public class App {
         scene = new Scene(window, new Vector3f(0, 0, -3));
         scene.updateAspectRatio(width, height);
 
+        input = new InputManager(window);
+
         glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
             glViewport(0, 0, new_width, new_height);
 
@@ -54,6 +57,7 @@ public class App {
     public void registerScript(MonoScript script) {
         script.assetManager = assetManager;
         script.scene = scene;
+        script.input = input;
         scripts.add(script);
     }
 
