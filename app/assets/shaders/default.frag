@@ -13,6 +13,8 @@ uniform sampler2D Albedo;
 uniform vec3 LightDirection;
 uniform vec3 ViewPosition;
 
+vec3 albedoColour = pow(texture(Albedo,UV).rgb,vec3(2.2));
+
 const float roughness = 0.2;
 const float subsurface = 0;
 const float sheen = 0;
@@ -89,8 +91,6 @@ vec3 disneySpecular(vec3 halfway,vec3 viewDirection,vec3 lightDirection){
 }
 
 vec3 brdf(){
-    vec4 baseColour = texture(Albedo,UV);
-
     vec3 lightDirection = normalize(LightDirection);
     vec3 viewDirection = normalize(ViewPosition - position);
     vec3 halfway = normalize(lightDirection + viewDirection);
@@ -108,14 +108,14 @@ vec3 brdf(){
     vec3 diffuse = burleyDiffuse(nDotL,nDotV,lDotH) * diffuseColour / PI;
     vec3 specular = disneySpecular(halfway,viewDirection,lightDirection);
 
-    vec3 lighting = diffuse * pow(baseColour.rgb,vec3(2.2)) + specular;
+    vec3 lighting = diffuse * albedoColour + specular;
 
     return lighting * nDotL;
 }
 
 void main() {
     vec4 baseColour = texture(Albedo,UV);
-    vec3 ambientLight = pow(atmosphericLight * baseColour.rgb,vec3(2.2)) * ambient;
+    vec3 ambientLight = pow(atmosphericLight,vec3(2.2)) * albedoColour * ambient;
     vec3 linearColour = brdf() + ambientLight;
     vec3 gammaCorrection = pow(linearColour,vec3(1/2.2));
 
