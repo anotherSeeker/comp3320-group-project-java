@@ -16,7 +16,6 @@ public class DemoScene extends MonoScript {
             Path.of("assets/shaders/default.frag")
     );
 
-    Integer icoFlatID = Assets.LoadMesh(Path.of("assets/meshes/icoflat.obj"));
     Integer uvSmoothID = Assets.LoadMesh(Path.of("assets/meshes/uvsmooth.obj"));
 
     Material material = Assets.createMaterial(
@@ -30,11 +29,9 @@ public class DemoScene extends MonoScript {
     @Override
     protected void Start() {
 
-        A = Scene.createObject(icoFlatID, material);
-        B = Scene.createObject(uvSmoothID, material);
+        A = Scene.createObject(uvSmoothID, material);
 
         A.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
-        B.get(Transform.class).setPosition(new Vector3f(-5f, 0, 0));
 
     }
 
