@@ -255,7 +255,13 @@ public class AssetManager {
                 );
             }
 
-            int channelFormat = (channels.get(0) == 4) ? GL_RGBA : GL_RGB;
+            int channelFormat = GL_RGBA;
+
+            if (channels.get(0) == 3) {
+                channelFormat = GL_RGB;
+            } else if (channels.get(0) == 1) {
+                channelFormat = GL_RED;
+            }
 
             Texture texture = new Texture(data, width.get(0), height.get(0), channelFormat);
 
