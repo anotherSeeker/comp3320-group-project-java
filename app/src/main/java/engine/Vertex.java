@@ -8,9 +8,14 @@ public class Vertex {
     public Vector3f normal = new Vector3f(0, 0, 0);
     public Vector2f uv = new Vector2f(0, 0);
 
-    Vertex(Vector3f position, Vector3f normal, Vector2f uv) {
+    public Vector3f tangent = new Vector3f(0, 0, 0);
+    public Vector3f bitangent = new Vector3f(0, 0, 0);
+
+    Vertex(Vector3f position, Vector3f normal, Vector2f uv, Vector3f tangent, Vector3f bitangent) {
         this.position = position;
         this.normal = normal;
         this.uv = uv;
+        this.tangent = tangent;
+        this.bitangent = bitangent;
     }
 }
