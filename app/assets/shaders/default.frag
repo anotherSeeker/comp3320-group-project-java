@@ -16,7 +16,7 @@ const float specularStrength = 0.5;
 const float specularSharpness = 32;
 
 const float roughness = 0.2;
-const vec3 diffuseColour = vec3(0.39f, 0.58f, 0.93f);
+const vec3 diffuseColour = vec3(1,1,1);
 
 float schlickFresnel(float u)
 {
@@ -58,7 +58,7 @@ vec3 brdf(){
 
     vec3 lighting = (diffuse + ambient ) * baseColour.rgb + specular;
 
-    return lighting;
+    return lighting * nDotL;
 }
 
 void main() {
