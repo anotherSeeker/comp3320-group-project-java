@@ -1,17 +1,14 @@
 package engine;
 
-import de.javagl.obj.Obj;
-import de.javagl.obj.ObjData;
-import de.javagl.obj.ObjReader;
-import de.javagl.obj.ObjUtils;
 import engine.components.Material;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.system.MemoryUtil.memAllocFloat;
+import static org.lwjgl.system.MemoryUtil.memAllocInt;
+import static org.lwjgl.system.MemoryUtil.memFree;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -23,8 +20,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
+
+import org.lwjgl.assimp.*;
+import static org.lwjgl.assimp.Assimp.*;
 
 public class AssetManager {
     private Map<Integer, Shader> shaderIndex = new HashMap<>();
@@ -117,24 +118,109 @@ public class AssetManager {
         if (meshIndex.containsKey(ID))
             return ID;
 
-        try {
-            InputStream inputStream = new FileInputStream(filePath.toString());
+        AIScene scene = aiImportFile(
+                filePath.toString(),
+                aiProcess_Triangulate |
+                        aiProcess_GenSmoothNormals |
+                        aiProcess_JoinIdenticalVertices |
+                        aiProcess_CalcTangentSpace
+        );
 
-            Obj objSource = ObjReader.read(inputStream);
-            Obj renderable = ObjUtils.convertToRenderable(objSource);
-
-            IntBuffer indexBuffer = ObjData.getFaceVertexIndices(renderable, 3);
-            FloatBuffer positionBuffer = ObjData.getVertices(renderable);
-            FloatBuffer normalBuffer = ObjData.getNormals(renderable);
-            FloatBuffer uvBuffer = ObjData.getTexCoords(renderable, 2);
-
-            Mesh newMesh = new Mesh(indexBuffer, positionBuffer, normalBuffer, uvBuffer);
-
-            meshIndex.put(ID, newMesh);
-
-        } catch (IOException err) {
-            System.out.println(err);
+        if (scene == null || scene.mRootNode() == null) {
+            throw new RuntimeException("could not load model " + aiGetErrorString());
         }
+
+        PointerBuffer meshbuffer = scene.mMeshes();
+        AIMesh assimpMesh = AIMesh.create(meshbuffer.get(0));
+
+        int vertexCount = assimpMesh.mNumVertices();
+        int indexCount = assimpMesh.mNumFaces() * 3;
+
+        AIVector3D.Buffer positions = assimpMesh.mVertices();
+        AIVector3D.Buffer normals = assimpMesh.mNormals();
+        AIVector3D.Buffer uvs = assimpMesh.mTextureCoords(0);
+        AIVector3D.Buffer tangents = assimpMesh.mTangents();
+        AIVector3D.Buffer bitangents = assimpMesh.mBitangents();
+
+        int vertexSize = 14;
+
+        FloatBuffer vertices = memAllocFloat(vertexCount * vertexSize);
+        IntBuffer indices = memAllocInt(indexCount);
+
+        for (int i = 0; i < vertexCount; i++) {
+            AIVector3D position = positions.get(i);
+
+            vertices.put(position.x());
+            vertices.put(position.y());
+            vertices.put(position.z());
+
+            if (normals != null) {
+                AIVector3D normal = normals.get(i);
+                vertices.put(normal.x());
+                vertices.put(normal.y());
+                vertices.put(normal.z());
+            } else {
+                vertices.put(0);
+                vertices.put(0);
+                vertices.put(0);
+            }
+
+            if (uvs != null) {
+                AIVector3D uv = uvs.get(i);
+                vertices.put(uv.x());
+                vertices.put(uv.y());
+            } else {
+                vertices.put(0);
+                vertices.put(0);
+            }
+
+            if (tangents != null) {
+                AIVector3D tangent = tangents.get(i);
+                vertices.put(tangent.x());
+                vertices.put(tangent.y());
+                vertices.put(tangent.z());
+            } else {
+                vertices.put(0);
+                vertices.put(0);
+                vertices.put(0);
+            }
+
+            if (bitangents != null) {
+                AIVector3D bitangent = bitangents.get(i);
+                vertices.put(bitangent.x());
+                vertices.put(bitangent.y());
+                vertices.put(bitangent.z());
+            } else {
+                vertices.put(0);
+                vertices.put(0);
+                vertices.put(0);
+            }
+        }
+
+        AIFace.Buffer faces = assimpMesh.mFaces();
+
+        for (int i = 0; i < assimpMesh.mNumFaces(); i++) {
+            AIFace face = faces.get(i);
+
+            if (face.mNumIndices() != 3) {
+                throw new RuntimeException("Mesh wasn't triangulated");
+            }
+
+            IntBuffer faceIndices = face.mIndices();
+            indices.put(faceIndices.get(0));
+            indices.put(faceIndices.get(1));
+            indices.put(faceIndices.get(2));
+        }
+
+        vertices.flip();
+        indices.flip();
+
+        aiReleaseImport(scene);
+
+        meshIndex.put(ID, new Mesh(vertices, indices));
+
+        memFree(vertices);
+        memFree(indices);
 
         return ID;
     }

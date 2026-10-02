@@ -39,7 +39,6 @@ dependencies {
     implementation("org.joml:joml:1.10.9")
 
     implementation("dev.dominion.ecs:dominion-ecs-engine:0.9.0")
-    implementation("de.javagl:obj:0.4.0")
 }
 
 testing {

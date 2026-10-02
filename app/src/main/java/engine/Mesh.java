@@ -42,55 +42,20 @@ public class Mesh {
         vertexBuffer.flip();
         indexBuffer.flip();
 
-        indiceCount = indexBuffer.remaining();
+        this(vertexBuffer, indexBuffer);
 
-        bindData(vertexBuffer, indexBuffer);
-
+        memFree(vertexBuffer);
         memFree(indexBuffer);
     }
 
-    Mesh(IntBuffer indexBuffer, FloatBuffer positionBuffer, FloatBuffer normalBuffer, FloatBuffer uvBuffer) {
-
-        int vertexCount = positionBuffer.remaining() / 3;
-
-        FloatBuffer vertexBuffer = memAllocFloat(vertexCount * 8);
-
-        for (int i = 0; i < vertexCount; i++) {
-            vertexBuffer.put(positionBuffer.get(i * 3));
-            vertexBuffer.put(positionBuffer.get(i * 3 + 1));
-            vertexBuffer.put(positionBuffer.get(i * 3 + 2));
-
-            if (normalBuffer != null && normalBuffer.capacity() >= (i + 1) * 3) {
-                vertexBuffer.put(normalBuffer.get(i * 3));
-                vertexBuffer.put(normalBuffer.get(i * 3 + 1));
-                vertexBuffer.put(normalBuffer.get(i * 3 + 2));
-            } else {
-                vertexBuffer.put(0.0f).put(0.0f).put(0.0f);
-            }
-
-            if (uvBuffer != null && uvBuffer.capacity() >= (i + 1) * 2) {
-                vertexBuffer.put(uvBuffer.get(i * 2));
-                vertexBuffer.put(uvBuffer.get(i * 2 + 1));
-            } else {
-                vertexBuffer.put(0.0f).put(0.0f);
-            }
-
-        }
-
-        vertexBuffer.flip();
-        indiceCount = indexBuffer.remaining();
-
-        bindData(vertexBuffer, indexBuffer);
-    }
-
-    private void bindData(FloatBuffer vertexBuffer, IntBuffer indexBuffer) {
+    public Mesh(FloatBuffer vertexBuffer, IntBuffer indexBuffer) {
         VAO = glGenVertexArrays();
         VBO = glGenBuffers();
         EBO = glGenBuffers();
 
         glBindVertexArray(VAO);
 
-        int stride = 8 * Float.BYTES;
+        int stride = 14 * Float.BYTES;
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
@@ -101,12 +66,16 @@ public class Mesh {
         glVertexAttribPointer(0, 3, GL_FLOAT, false, stride, 0);
         glVertexAttribPointer(1, 3, GL_FLOAT, false, stride, 3 * Float.BYTES);
         glVertexAttribPointer(2, 2, GL_FLOAT, false, stride, 6 * Float.BYTES);
+        glVertexAttribPointer(3, 3, GL_FLOAT, false, stride, 8 * Float.BYTES);
+        glVertexAttribPointer(4, 3, GL_FLOAT, false, stride, 11 * Float.BYTES);
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
+        glEnableVertexAttribArray(4);
 
-        memFree(vertexBuffer);
+        indiceCount = indexBuffer.remaining();
     }
 
     public void bind() {
