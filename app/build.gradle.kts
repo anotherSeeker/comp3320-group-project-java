@@ -24,11 +24,15 @@ dependencies {
 	implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
 
 	implementation("org.lwjgl:lwjgl")
+	implementation("org.lwjgl:lwjgl-assimp")
 	implementation("org.lwjgl:lwjgl-glfw")
+	implementation("org.lwjgl:lwjgl-ktx")
 	implementation("org.lwjgl:lwjgl-opengl")
 	implementation("org.lwjgl:lwjgl-stb")
 	implementation("org.lwjgl:lwjgl::$lwjglNatives")
+	implementation("org.lwjgl:lwjgl-assimp::$lwjglNatives")
 	implementation("org.lwjgl:lwjgl-glfw::$lwjglNatives")
+	implementation("org.lwjgl:lwjgl-ktx::$lwjglNatives")
 	implementation("org.lwjgl:lwjgl-opengl::$lwjglNatives")
 	implementation("org.lwjgl:lwjgl-stb::$lwjglNatives")
 
