@@ -20,6 +20,6 @@ void main() {
     position = (Model * vec4(aPos,1)).xyz;
     UV = aUV;
     normal = normalize(mat3(transpose(inverse(Model))) * aNormal);
-    tangent = normalize(mat3(model) * tangent);
-    bitangent = normalize(mat3(model) * bitangent);
+    tangent = normalize(mat3(Model) * aTangent);
+    bitangent = normalize(mat3(Model) * aBitangent);
 }
