@@ -48,6 +48,10 @@ public class Shader {
         stack.pop();
     }
 
+    public void setInt(String uniformName, int value) {
+        glUniform1i(glGetUniformLocation(ID, uniformName), value);
+    }
+
     public void setVector3(String uniformName, Vector3f vector) {
         glUniform3f(glGetUniformLocation(ID, uniformName), vector.x, vector.y, vector.z);
     }
