@@ -18,6 +18,7 @@ public class Shader {
         glCompileShader(vertexShader);
 
         if (glGetShaderi(vertexShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            System.out.println("VERTEX");
             System.err.println(glGetShaderInfoLog(vertexShader, 1024));
         }
 
@@ -26,6 +27,7 @@ public class Shader {
         glCompileShader(fragmentShader);
 
         if (glGetShaderi(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            System.out.println("FRAGMENT");
             System.err.println(glGetShaderInfoLog(fragmentShader, 1024));
         }
 
