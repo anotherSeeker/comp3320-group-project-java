@@ -80,7 +80,6 @@ public class CubeTexture {
             glClear(GL_COLOR_BUFFER_BIT);
             cube.draw();
         }
-        glClear(GL_COLOR_BUFFER_BIT);
 
         // generating irradiance map
         irradianceID = glGenTextures();

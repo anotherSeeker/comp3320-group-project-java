@@ -20,13 +20,12 @@ const float subsurface = 0;
 const float sheen = 0;
 const float annisotropy = 0.5;
 const float specularStrength = 0.5;
+const float ambientOcclussion = 0.2;
 
 const vec3 sheenColour = vec3(1,1,1);
 const vec3 diffuseColour = vec3(1,1,1);
 
-// will remove later
-const float ambient = 0.05;
-const vec3 atmosphericLight = vec3(0.39f, 0.58f, 0.93f);
+uniform samplerCube IrradianceMap;
 
 float GTR2Aniso(float ndotH, float hdotX, float hdotY, float ax, float ay){
     return 1 / (PI * ax*ay * pow( pow(hdotX/ax,2) + pow(hdotY/ay,2) + ndotH*ndotH,2 ));
@@ -113,11 +112,25 @@ vec3 brdf(){
     return lighting * nDotL;
 }
 
-void main() {
-    vec4 baseColour = texture(Albedo,UV);
-    vec3 ambientLight = pow(atmosphericLight,vec3(2.2)) * albedoColour * ambient;
-    vec3 linearColour = brdf() + ambientLight;
-    vec3 gammaCorrection = pow(linearColour,vec3(1/2.2));
+vec3 generateAmbientLight(){
+    vec3 viewDirection = max(normalize(ViewPosition - position),0.0f);
+    float nDotV = dot(normal,viewDirection);
 
-    fragColour = vec4(gammaCorrection,1);
+    vec3 baseReflectivity = vec3(0.04);
+    vec3 kS = baseReflectivity + (1.0 - baseReflectivity) * pow((1 - nDotV),5.0);
+    vec3 kD = 1.0 - kS;
+
+    vec3 diffuse = texture(IrradianceMap,normal).rgb * albedoColour * kD;
+
+    return diffuse * ambientOcclussion;
+}
+
+void main() {
+    vec3 ambientLight = generateAmbientLight();
+
+    vec3 colour = brdf() + ambientLight;
+    colour = colour / (colour + vec3(1.0));
+    colour = pow(colour,vec3(1/2.2));
+
+    fragColour = vec4(colour,1);
 }
