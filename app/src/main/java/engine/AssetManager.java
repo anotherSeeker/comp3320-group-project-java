@@ -314,6 +314,10 @@ public class AssetManager {
         return textureIndex.get(assetID);
     }
 
+    public CubeTexture getCubeTexture(Integer assetID) {
+        return cubeTextureIndex.get(assetID);
+    }
+
     public Material createMaterial(Integer shaderID, Integer albedo) {
         Material material = new Material();
         material.shader = getShader(shaderID);
@@ -329,6 +333,14 @@ public class AssetManager {
 
         for (Shader shader : shaderIndex.values()) {
             shader.delete();
+        }
+
+        for (Texture texture : textureIndex.values()) {
+            texture.delete();
+        }
+
+        for (CubeTexture cubeTexture : cubeTextureIndex.values()) {
+            cubeTexture.delete();
         }
     }
 }
