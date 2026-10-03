@@ -11,7 +11,6 @@ import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.nio.file.Path;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
