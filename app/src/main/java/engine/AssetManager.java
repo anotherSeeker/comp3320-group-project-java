@@ -37,6 +37,7 @@ public class AssetManager {
     public Integer skyboxShader = "SKYBOX".hashCode();
     public Integer irradianceShader = "IRRADIANCE".hashCode();
     public Integer prefilterShader = "PREFILTER".hashCode();
+    public Integer brdfIntShader = "BRDF_INT".hashCode();
 
     private AssetManager() {
 
@@ -98,6 +99,12 @@ public class AssetManager {
                 prefilterShader,
                 Path.of("assets/shaders/internal/cubemap.vert"),
                 Path.of("assets/shaders/internal/prefilter.frag")
+        );
+
+        this.loadInternalShader(
+                brdfIntShader,
+                Path.of("assets/shaders/internal/brdfInt.vert"),
+                Path.of("assets/shaders/internal/brdfInt.frag")
         );
 
         data.flip();

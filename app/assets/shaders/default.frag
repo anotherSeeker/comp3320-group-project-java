@@ -15,7 +15,7 @@ uniform vec3 ViewPosition;
 
 vec3 albedoColour = pow(texture(Albedo,UV).rgb,vec3(2.2));
 
-const float roughness = 0.5;
+const float roughness = 0.2;
 const float subsurface = 0;
 const float sheen = 0;
 const float annisotropy = 0.5;
@@ -27,6 +27,7 @@ const vec3 diffuseColour = vec3(1,1,1);
 
 uniform samplerCube IrradianceMap;
 uniform samplerCube PrefilterMap;
+uniform sampler2D brdfIntMap;
 
 float GTR2Aniso(float ndotH, float hdotX, float hdotY, float ax, float ay){
     return 1 / (PI * ax*ay * pow( pow(hdotX/ax,2) + pow(hdotY/ay,2) + ndotH*ndotH,2 ));
@@ -126,8 +127,9 @@ vec3 generateAmbientLight(){
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilterColour = textureLod(PrefilterMap,reflect(-viewDirection,normal),roughness * MAX_REFLECTION_LOD).rgb;
 
-    vec3 specular = prefilterColour * kS;
+    vec2 brdfIBL = texture(brdfIntMap,vec2(nDotV,roughness)).rg;
 
+    vec3 specular = prefilterColour * (baseReflectivity * brdfIBL.r + brdfIBL.g);
 
     return (diffuse + specular) * ambientOcclussion;
 }
@@ -139,5 +141,6 @@ void main() {
     colour = colour / (colour + vec3(1.0));
     colour = pow(colour,vec3(1/2.2));
 
-    fragColour = vec4(colour,1);
+
+    fragColour = vec4(colour,1.0);
 }

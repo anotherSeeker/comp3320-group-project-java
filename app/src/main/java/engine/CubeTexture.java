@@ -20,6 +20,7 @@ public class CubeTexture {
     public int ID;
     public int irradianceID;
     public int prefilterID;
+    public int brdfIntID;
 
     public CubeTexture(FloatBuffer data, int width, int height) {
         glDisable(GL_DEPTH_TEST);
@@ -169,12 +170,37 @@ public class CubeTexture {
             }
         }
 
+        // brdf integration map creation
+        brdfIntID = glGenTextures();
+
+        glBindTexture(GL_TEXTURE_2D, brdfIntID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, (FloatBuffer) null);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+        Shader brdfIntShader = assets.getShader(assets.brdfIntShader);
+        Mesh quad = Mesh.Quad();
+
+        glViewport(0, 0, 512, 512);
+
+        brdfIntShader.use();
+        glFramebufferTexture2D(
+                GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfIntID, 0
+        );
+        glClear(GL_COLOR_BUFFER_BIT);
+        quad.draw();
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDeleteFramebuffers(FBO);
+        glDeleteTextures(hdrTexture);
 
         glEnable(GL_DEPTH_TEST);
     }
 
-    public void use(int slot, int irradianceSlot, int prefilterSlot) {
+    public void use(int slot, int irradianceSlot, int prefilterSlot, int brdfIntSlot) {
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
 
@@ -183,9 +209,12 @@ public class CubeTexture {
 
         glActiveTexture(GL_TEXTURE0 + prefilterSlot);
         glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterID);
+
+        glActiveTexture(GL_TEXTURE0 + brdfIntSlot);
+        glBindTexture(GL_TEXTURE_2D, brdfIntID);
     }
 
-    public void unbind(int slot, int irradianceSlot, int prefilterSlot) {
+    public void unbind(int slot, int irradianceSlot, int prefilterSlot, int brdfIntSlot) {
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
@@ -194,11 +223,15 @@ public class CubeTexture {
 
         glActiveTexture(GL_TEXTURE0 + prefilterSlot);
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+        glActiveTexture(GL_TEXTURE0 + brdfIntSlot);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     public void delete() {
         glDeleteTextures(ID);
         glDeleteTextures(irradianceID);
         glDeleteTextures(prefilterID);
+        glDeleteTextures(brdfIntID);
     }
 }
