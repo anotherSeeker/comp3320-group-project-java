@@ -3,7 +3,6 @@ package engine;
 import engine.components.Material;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL21.*;
 import static org.lwjgl.system.MemoryUtil.memAllocFloat;
 import static org.lwjgl.system.MemoryUtil.memAllocInt;
 import static org.lwjgl.system.MemoryUtil.memFree;
@@ -297,10 +296,10 @@ public class AssetManager {
                 );
             }
 
-            int channelFormat = GL_SRGB_ALPHA;
+            int channelFormat = GL_RGBA;
 
             if (channels.get(0) == 3) {
-                channelFormat = GL_SRGB;
+                channelFormat = GL_RGB;
             } else if (channels.get(0) == 1) {
                 channelFormat = GL_RED;
             }
