@@ -23,14 +23,17 @@ public class DemoScene extends MonoScript {
             Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg"))
     );
 
+    Integer skyboxTexture = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/qwantani_dusk_2_puresky_1k.hdr"));
+
     Entity A;
     Entity B;
 
     @Override
     protected void Start() {
 
-        A = Scene.createObject(uvSmoothID, material);
+        Scene.SetSkyboxTexture(skyboxTexture);
 
+        A = Scene.createObject(uvSmoothID, material);
         A.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
 
     }
