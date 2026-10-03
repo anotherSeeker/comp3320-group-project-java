@@ -8,7 +8,10 @@ import org.joml.Vector3f;
 import engine.*;
 
 public class Camera extends MonoScript {
-    int cameraSpeed = 10;
+    final int MAX_CAMERA_SPEED = 10;
+    final int MIN_CAMERA_SPEED = 2;
+
+    int cameraSpeed = MAX_CAMERA_SPEED;
     float mouseSens = 0.005f;
 
     float yaw = (float) Math.PI;
@@ -24,7 +27,7 @@ public class Camera extends MonoScript {
 
     @Override
     protected void Update(double deltaTime) {
-
+        int cameraSpeed = Input.IsKeyDown(GLFW_KEY_LEFT_SHIFT) ? MIN_CAMERA_SPEED : MAX_CAMERA_SPEED;
         Vector3f moveDirection = new Vector3f(0, 0, 0);
 
         if (Input.IsKeyDown(GLFW_KEY_W) == true) {
