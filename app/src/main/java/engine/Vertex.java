@@ -18,4 +18,8 @@ public class Vertex {
         this.tangent = tangent;
         this.bitangent = bitangent;
     }
+
+    Vertex(Vector3f position) {
+        this.position = position;
+    }
 }
