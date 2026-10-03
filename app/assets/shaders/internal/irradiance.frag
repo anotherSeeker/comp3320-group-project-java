@@ -9,7 +9,7 @@ uniform samplerCube EnvironmentMap;
 void main(){
     vec3 normalised = normalize(worldPosition);
 
-    vec3 upVector = abs(normalised.y) < 0.99 ? vec3(0,1,0) : vec3(1,0,0);
+    vec3 upVector = abs(normalised.y) < 0.999 ? vec3(0,1,0) : vec3(0,0,1);
 
     vec3 irradiance = vec3(0.0);
     vec3 right = normalize(cross(upVector,normalised));
@@ -24,7 +24,7 @@ void main(){
 
             vec3 sampleVector = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normalised;
 
-            irradiance += texture(EnvironmentMap,sampleVector).rgb * cos(theta) * sin(theta);
+            irradiance += textureLod(EnvironmentMap,sampleVector,4.0).rgb * cos(theta) * sin(theta);
             nrSamples++;
         }
     }

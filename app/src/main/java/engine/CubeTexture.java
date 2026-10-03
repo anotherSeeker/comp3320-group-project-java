@@ -22,6 +22,7 @@ public class CubeTexture {
     public int prefilterID;
 
     public CubeTexture(FloatBuffer data, int width, int height) {
+        glDisable(GL_DEPTH_TEST);
         // creating texture object for the input texture
         int hdrTexture = glGenTextures();
 
@@ -53,7 +54,7 @@ public class CubeTexture {
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
         Matrix4f captureProjection = new Matrix4f().perspective((float) Math.toRadians(90.0), 1.0f, 0.1f, 10.0f);
         Matrix4f[] captureViews = new Matrix4f[6];
@@ -163,12 +164,14 @@ public class CubeTexture {
                 glFramebufferTexture2D(
                         GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilterID, mip
                 );
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                glClear(GL_COLOR_BUFFER_BIT);
                 cube.draw();
             }
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glEnable(GL_DEPTH_TEST);
     }
 
     public void use(int slot, int irradianceSlot, int prefilterSlot) {
