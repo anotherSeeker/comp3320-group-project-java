@@ -22,4 +22,9 @@ public class Vertex {
     Vertex(Vector3f position) {
         this.position = position;
     }
+
+    Vertex(Vector3f position, Vector2f uv) {
+        this.position = position;
+        this.uv = uv;
+    }
 }

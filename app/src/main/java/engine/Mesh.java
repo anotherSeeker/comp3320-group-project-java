@@ -4,6 +4,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.nio.FloatBuffer;
@@ -125,6 +126,20 @@ public class Mesh {
                         5, 4, 0
                 )
         );
+
+        return new Mesh(vertices, indices);
+    }
+
+    public static Mesh Quad() {
+        ArrayList<Vertex> vertices = new ArrayList<>(
+                List.of(
+                        new Vertex(new Vector3f(-1.0f, -1.0f, 0), new Vector2f(0, 0)),
+                        new Vertex(new Vector3f(-1.0f, 1.0f, 0), new Vector2f(0, 1)),
+                        new Vertex(new Vector3f(1.0f, 1.0f, 0), new Vector2f(1, 1)),
+                        new Vertex(new Vector3f(1.0f, -1.0f, 0), new Vector2f(1, 0))
+                )
+        );
+        ArrayList<Integer> indices = new ArrayList<>(List.of(0, 1, 2, 0, 2, 3));
 
         return new Mesh(vertices, indices);
     }
