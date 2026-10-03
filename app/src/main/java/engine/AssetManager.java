@@ -6,6 +6,13 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.memAllocFloat;
 import static org.lwjgl.system.MemoryUtil.memAllocInt;
 import static org.lwjgl.system.MemoryUtil.memFree;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.PointerBuffer;
+
+import org.lwjgl.stb.STBImage;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.assimp.*;
+import static org.lwjgl.assimp.Assimp.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,18 +26,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.lwjgl.BufferUtils;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.stb.STBImage;
-import org.lwjgl.system.MemoryStack;
-
-import org.lwjgl.assimp.*;
-import static org.lwjgl.assimp.Assimp.*;
-
 public class AssetManager {
     private Map<Integer, Shader> shaderIndex = new HashMap<>();
     private Map<Integer, Mesh> meshIndex = new HashMap<>();
     private Map<Integer, Texture> textureIndex = new HashMap<>();
+    private Map<Integer, CubeTexture> cubeTextureIndex = new HashMap<>();
 
     public Integer defaultTexture = "DEFAULT".hashCode();
 
@@ -269,6 +269,34 @@ public class AssetManager {
 
             STBImage.stbi_image_free(data);
 
+        }
+
+        return ID;
+    }
+
+    // takes in a .HDR equirectangular texture and converts it to a cube map
+    public Integer LoadCubeMap(Path filePath) {
+        Integer ID = filePath.toAbsolutePath().hashCode();
+
+        if (cubeTextureIndex.containsKey(ID))
+            return ID;
+
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+
+            IntBuffer width = stack.mallocInt(1);
+            IntBuffer height = stack.mallocInt(1);
+            IntBuffer channels = stack.mallocInt(1);
+
+            FloatBuffer data = STBImage.stbi_loadf(filePath.toString(), width, height, channels, 0);
+            if (data == null) {
+                throw new RuntimeException(
+                        "could not load cubemap " + filePath.toString() + " " + STBImage.stbi_failure_reason()
+                );
+            }
+
+            cubeTextureIndex.put(ID, new CubeTexture(data, width.get(0), height.get(0)));
+
+            STBImage.stbi_image_free(data);
         }
 
         return ID;
