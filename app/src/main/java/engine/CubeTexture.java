@@ -17,8 +17,10 @@ import org.joml.Vector3f;
 
 public class CubeTexture {
     public int ID;
+    public int irradianceID;
 
     public CubeTexture(FloatBuffer data, int width, int height) {
+        // creating texture object for the input texture
         int hdrTexture = glGenTextures();
 
         glBindTexture(GL_TEXTURE_2D, hdrTexture);
@@ -30,8 +32,8 @@ public class CubeTexture {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
 
+        // generating cube map
         int FBO = glGenFramebuffers();
         glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 
@@ -78,21 +80,64 @@ public class CubeTexture {
             glClear(GL_COLOR_BUFFER_BIT);
             cube.draw();
         }
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // generating irradiance map
+        irradianceID = glGenTextures();
+        glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceID);
+        for (int i = 0; i < 6; i++) {
+            glTexImage2D(
+                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 32, 32, 0, GL_RGB, GL_FLOAT, (ByteBuffer) null
+            );
+        }
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+        Shader irradianceShader = assets.getShader(assets.irradianceShader);
+
+        irradianceShader.use();
+        irradianceShader.setInt("EnvironmentMap", 0);
+        irradianceShader.setMatrix4("Projection", captureProjection);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
+
+        glViewport(0, 0, 32, 32);
+
+        for (int i = 0; i < 6; i++) {
+            irradianceShader.setMatrix4("View", captureViews[i]);
+            glFramebufferTexture2D(
+                    GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceID, 0
+            );
+            glClear(GL_COLOR_BUFFER_BIT);
+            cube.draw();
+        }
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
     }
 
-    public void use(int slot) {
+    public void use(int slot, int irradianceSlot) {
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
+
+        glActiveTexture(GL_TEXTURE0 + irradianceSlot);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceID);
     }
 
-    public void unbind() {
+    public void unbind(int slot, int irradianceSlot) {
+        glActiveTexture(GL_TEXTURE0 + slot);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+        glActiveTexture(GL_TEXTURE0 + irradianceSlot);
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
     }
 
     public void delete() {
         glDeleteTextures(ID);
+        glDeleteTextures(irradianceID);
     }
 }

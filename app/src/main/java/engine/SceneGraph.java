@@ -75,7 +75,7 @@ public class SceneGraph {
             glDepthFunc(GL_LEQUAL);
             skyboxShader.use();
 
-            skyboxTexture.use(0);
+            skyboxTexture.use(0, 1);
 
             skyboxShader.setMatrix4("CameraMatrix", computeSkyboxMatrix());
             skyboxShader.setInt("Skybox", 0);
@@ -83,7 +83,7 @@ public class SceneGraph {
             skyboxMesh.bind();
             skyboxMesh.draw();
 
-            skyboxTexture.unbind();
+            skyboxTexture.unbind(0, 1);
 
             glDepthFunc(GL_LESS);
             glDepthMask(true);
@@ -97,15 +97,20 @@ public class SceneGraph {
 
             Material material = gameObject.material;
             material.shader.use();
+            skyboxTexture.use(0, 1);
 
             material.shader.setMatrix4("Model", transform.model);
             material.shader.setMatrix4("CameraMatrix", viewportMatrix);
-            material.shader.setTexture("Albedo", material.albedo, 0);
+            material.shader.setTexture("Albedo", material.albedo, 2);
             material.shader.setVector3("LightDirection", lightDirection);
             material.shader.setVector3("ViewPosition", cameraTransform.position);
 
+            material.shader.setInt("EnvironmentMap", 1);
+
             gameObject.mesh.bind();
             gameObject.mesh.draw();
+
+            skyboxTexture.unbind(0, 1);
         }
     }
 

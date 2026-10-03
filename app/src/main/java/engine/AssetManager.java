@@ -35,6 +35,7 @@ public class AssetManager {
     public Integer defaultTexture = "DEFAULT".hashCode();
     public Integer cubemapShader = "CUBEMAP".hashCode();
     public Integer skyboxShader = "SKYBOX".hashCode();
+    public Integer irradianceShader = "IRRADIANCE".hashCode();
 
     private AssetManager() {
 
@@ -84,6 +85,12 @@ public class AssetManager {
                 skyboxShader,
                 Path.of("assets/shaders/skybox.vert"),
                 Path.of("assets/shaders/skybox.frag")
+        );
+
+        this.loadInternalShader(
+                irradianceShader,
+                Path.of("assets/shaders/internal/cubemap.vert"),
+                Path.of("assets/shaders/internal/irradiance.frag")
         );
 
         data.flip();
