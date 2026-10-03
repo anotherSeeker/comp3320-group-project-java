@@ -11,21 +11,24 @@ out vec4 fragColour;
 
 uniform sampler2D Albedo;
 uniform sampler2D RoughnessMap;
+uniform sampler2D AmbientOcclusionMap;
 
 uniform vec3 LightDirection;
 uniform vec3 ViewPosition;
 
 uniform float Roughness = 0.2;
+uniform float AmbientOcclusion = 0.5;
+
 const float subsurface = 0;
 const float sheen = 0;
 const float annisotropy = 0.5;
 const float specularStrength = 0.5;
-const float ambientOcclussion = 0.3;
 
 const vec3 sheenColour = vec3(1,1,1);
 const vec3 diffuseColour = vec3(1,1,1);
 
 float roughnessValue = texture(RoughnessMap,UV).r * Roughness;
+float ambientOcclusionValue = texture(AmbientOcclusionMap,UV).r * AmbientOcclusion;
 vec3 albedoColour = pow(texture(Albedo,UV).rgb,vec3(2.2));
 
 uniform samplerCube IrradianceMap;
@@ -134,7 +137,7 @@ vec3 generateAmbientLight(){
 
     vec3 specular = prefilterColour * (baseReflectivity * brdfIBL.r + brdfIBL.g);
 
-    return (diffuse + specular) * (1.0 - ambientOcclussion);
+    return (diffuse + specular) * ambientOcclusionValue;
 }
 
 void main() {
@@ -143,7 +146,6 @@ void main() {
     vec3 colour = brdf() + ambientLight;
     colour = colour / (colour + vec3(1.0));
     colour = pow(colour,vec3(1/2.2));
-
 
     fragColour = vec4(colour,1.0);
 }

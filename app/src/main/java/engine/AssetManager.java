@@ -3,6 +3,7 @@ package engine;
 import engine.components.Material;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL21.*;
 import static org.lwjgl.system.MemoryUtil.memAllocFloat;
 import static org.lwjgl.system.MemoryUtil.memAllocInt;
 import static org.lwjgl.system.MemoryUtil.memFree;
@@ -296,10 +297,10 @@ public class AssetManager {
                 );
             }
 
-            int channelFormat = GL_RGBA;
+            int channelFormat = GL_SRGB_ALPHA;
 
             if (channels.get(0) == 3) {
-                channelFormat = GL_RGB;
+                channelFormat = GL_SRGB;
             } else if (channels.get(0) == 1) {
                 channelFormat = GL_RED;
             }
@@ -359,11 +360,14 @@ public class AssetManager {
         return cubeTextureIndex.get(assetID);
     }
 
-    public Material createMaterial(Integer shaderID, Integer albedoID, Integer roughnessID) {
+    public Material createMaterial(
+            Integer shaderID, Integer albedoID, Integer roughnessID, Integer ambientOcclusionID
+    ) {
         Material material = new Material();
         material.shader = getShader(shaderID);
         material.albedoMap = getTexture(albedoID);
         material.roughnessMap = getTexture(roughnessID);
+        material.ambientOcclusionMap = getTexture(ambientOcclusionID);
 
         return material;
     }

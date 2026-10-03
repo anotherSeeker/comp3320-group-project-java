@@ -99,6 +99,7 @@ public class SceneGraph {
             material.shader.setMatrix4("CameraMatrix", viewportMatrix);
             material.shader.setTexture("Albedo", material.albedoMap, 4);
             material.shader.setTexture("RoughnessMap", material.roughnessMap, 5);
+            material.shader.setTexture("AmbientOcclusionMap", material.ambientOcclusionMap, 6);
             material.shader.setVector3("LightDirection", lightDirection);
             material.shader.setVector3("ViewPosition", cameraTransform.position);
 
@@ -107,6 +108,7 @@ public class SceneGraph {
             material.shader.setInt("brdfIntMap", 3);
 
             material.shader.setFloat("Roughness", material.roughness);
+            material.shader.setFloat("AmbientOcclusion", material.ambientOcclusion);
 
             gameObject.mesh.bind();
             gameObject.mesh.draw();

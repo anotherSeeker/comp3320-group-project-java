@@ -21,7 +21,8 @@ public class DemoScene extends MonoScript {
     Material material = Assets.createMaterial(
             shaderID,
             Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg"))
+            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")),
+            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg"))
     );
 
     Integer skyboxTexture = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/warm_restaurant_night_1k.hdr"));
@@ -36,7 +37,6 @@ public class DemoScene extends MonoScript {
 
         A = Scene.createObject(uvSmoothID, material);
         A.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
-
     }
 
     @Override
