@@ -9,16 +9,18 @@ uniform samplerCube EnvironmentMap;
 void main(){
     vec3 normalised = normalize(worldPosition);
 
+    vec3 upVector = abs(normalised.y) < vec3(0,1,0) ? vec3(1,0,0) :
+
     vec3 irradiance = vec3(0.0);
-    vec3 right = cross(vec3(0,1,0),normalised);
+    vec3 right = cross(upVector,normalised);
     vec3 up = cross(normalised,right);
 
     float sampleDelta = 0.025;
     float nrSamples = 0.0;
 
-    for(int phi = 0; phi < 2.0 * PI; phi += sampleDelta){
-        for(int theta = 0; theta < 0.5 * PI; theta += sampleDelta){
-            vec3 tangentSample = vec3(sin(theta) * cos(phi), sin(theta) * sin(phi) - cos(theta));
+    for(float phi = 0; phi < 2.0 * PI; phi += sampleDelta){
+        for(float theta = 0; theta < 0.5 * PI; theta += sampleDelta){
+            vec3 tangentSample = vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
 
             vec3 sampleVector = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normalised;
 
@@ -29,5 +31,5 @@ void main(){
 
     irradiance *= PI / nrSamples;
 
-    fragColour = vec4(irradiance,1.0)
+    fragColour = vec4(irradiance,1.0);
 }
