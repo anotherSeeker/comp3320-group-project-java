@@ -83,6 +83,8 @@ public class SceneGraph {
             skyboxMesh.bind();
             skyboxMesh.draw();
 
+            skyboxTexture.unbind();
+
             glDepthFunc(GL_LESS);
             glDepthMask(true);
 
