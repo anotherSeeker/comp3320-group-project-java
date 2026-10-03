@@ -8,6 +8,7 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL32.*;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -36,7 +37,7 @@ public class CubeTexture {
         // generating cube map
         int FBO = glGenFramebuffers();
         glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-
+        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
         ID = glGenTextures();
         glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
         for (int i = 0; i < 6; i++) {
@@ -86,7 +87,7 @@ public class CubeTexture {
         glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceID);
         for (int i = 0; i < 6; i++) {
             glTexImage2D(
-                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 32, 32, 0, GL_RGB, GL_FLOAT, (ByteBuffer) null
+                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 64, 64, 0, GL_RGB, GL_FLOAT, (ByteBuffer) null
             );
         }
 
@@ -96,6 +97,7 @@ public class CubeTexture {
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
         Shader irradianceShader = assets.getShader(assets.irradianceShader);
 
@@ -105,7 +107,7 @@ public class CubeTexture {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
 
-        glViewport(0, 0, 32, 32);
+        glViewport(0, 0, 64, 64);
 
         for (int i = 0; i < 6; i++) {
             irradianceShader.setMatrix4("View", captureViews[i]);
