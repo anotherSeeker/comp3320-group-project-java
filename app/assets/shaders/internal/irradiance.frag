@@ -9,7 +9,7 @@ uniform samplerCube EnvironmentMap;
 void main(){
     vec3 normalised = normalize(worldPosition);
 
-    vec3 upVector = abs(normalised.y) < vec3(0,1,0) ? vec3(1,0,0) :
+    vec3 upVector = abs(normalised.y) < 0.99 ? vec3(0,1,0) : vec3(1,0,0);
 
     vec3 irradiance = vec3(0.0);
     vec3 right = cross(upVector,normalised);

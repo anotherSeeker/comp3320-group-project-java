@@ -113,8 +113,8 @@ vec3 brdf(){
 }
 
 vec3 generateAmbientLight(){
-    vec3 viewDirection = max(normalize(ViewPosition - position),0.0f);
-    float nDotV = dot(normal,viewDirection);
+    vec3 viewDirection = normalize(ViewPosition - position);
+    float nDotV = max(dot(normal,viewDirection),0.0f);
 
     vec3 baseReflectivity = vec3(0.04);
     vec3 kS = baseReflectivity + (1.0 - baseReflectivity) * pow((1 - nDotV),5.0);
