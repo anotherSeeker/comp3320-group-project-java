@@ -2,6 +2,10 @@ package engine;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.List;
+
+import org.joml.Vector3f;
+
 import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -76,6 +80,44 @@ public class Mesh {
         glEnableVertexAttribArray(4);
 
         indiceCount = indexBuffer.remaining();
+    }
+
+    public static Mesh Cube() {
+        ArrayList<Vertex> vertices = new ArrayList<>(
+                List.of(
+                        new Vertex(new Vector3f(-0.5f, 0.5f, 0.5f)),
+                        new Vertex(new Vector3f(0.5f, -0.5f, 0.5f)),
+                        new Vertex(new Vector3f(0.5f, 0.5f, 0.5f)),
+                        new Vertex(new Vector3f(-0.5f, 0.5f, 0.5f)),
+                        new Vertex(new Vector3f(0.5f, -0.5f, 0.5f)),
+                        new Vertex(new Vector3f(0.5f, -0.5f, -0.5f)),
+                        new Vertex(new Vector3f(0.5f, 0.5f, -0.5f)),
+                        new Vertex(new Vector3f(-0.5f, 0.5f, -0.5f))
+                )
+        );
+        ArrayList<Integer> indices = new ArrayList<>(
+                List.of(
+                        0, 1, 2,
+                        2, 3, 0,
+
+                        5, 4, 7,
+                        7, 6, 5,
+
+                        4, 0, 3,
+                        3, 7, 4,
+
+                        1, 5, 6,
+                        6, 2, 1,
+
+                        3, 2, 6,
+                        6, 7, 3,
+
+                        4, 5, 1,
+                        1, 0, 4
+                )
+        );
+
+        return new Mesh(vertices, indices);
     }
 
     public void bind() {
