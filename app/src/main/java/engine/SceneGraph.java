@@ -97,13 +97,16 @@ public class SceneGraph {
 
             material.shader.setMatrix4("Model", transform.model);
             material.shader.setMatrix4("CameraMatrix", viewportMatrix);
-            material.shader.setTexture("Albedo", material.albedo, 4);
+            material.shader.setTexture("Albedo", material.albedoMap, 4);
+            material.shader.setTexture("RoughnessMap", material.roughnessMap, 5);
             material.shader.setVector3("LightDirection", lightDirection);
             material.shader.setVector3("ViewPosition", cameraTransform.position);
 
             material.shader.setInt("IrradianceMap", 1);
             material.shader.setInt("PrefilterMap", 2);
             material.shader.setInt("brdfIntMap", 3);
+
+            material.shader.setFloat("Roughness", material.roughness);
 
             gameObject.mesh.bind();
             gameObject.mesh.draw();

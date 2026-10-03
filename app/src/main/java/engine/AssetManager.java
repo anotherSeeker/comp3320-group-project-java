@@ -359,10 +359,11 @@ public class AssetManager {
         return cubeTextureIndex.get(assetID);
     }
 
-    public Material createMaterial(Integer shaderID, Integer albedo) {
+    public Material createMaterial(Integer shaderID, Integer albedoID, Integer roughnessID) {
         Material material = new Material();
         material.shader = getShader(shaderID);
-        material.albedo = getTexture(albedo);
+        material.albedoMap = getTexture(albedoID);
+        material.roughnessMap = getTexture(roughnessID);
 
         return material;
     }

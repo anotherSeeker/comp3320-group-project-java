@@ -4,6 +4,9 @@ import engine.Shader;
 import engine.Texture;
 
 public class Material {
+    public float roughness = 1;
+
     public Shader shader;
-    public Texture albedo;
+    public Texture albedoMap;
+    public Texture roughnessMap;
 }
