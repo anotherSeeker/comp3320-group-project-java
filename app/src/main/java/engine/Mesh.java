@@ -25,7 +25,7 @@ public class Mesh {
 
     Mesh(ArrayList<Vertex> vertices, ArrayList<Integer> indices) {
 
-        FloatBuffer vertexBuffer = memAllocFloat(vertices.size() * 8);
+        FloatBuffer vertexBuffer = memAllocFloat(vertices.size() * 14);
 
         for (Vertex vertex : vertices) {
             vertexBuffer.put(vertex.position.x);
@@ -38,6 +38,14 @@ public class Mesh {
 
             vertexBuffer.put(vertex.uv.x);
             vertexBuffer.put(vertex.uv.y);
+
+            vertexBuffer.put(vertex.tangent.x);
+            vertexBuffer.put(vertex.tangent.y);
+            vertexBuffer.put(vertex.tangent.z);
+
+            vertexBuffer.put(vertex.bitangent.x);
+            vertexBuffer.put(vertex.bitangent.y);
+            vertexBuffer.put(vertex.bitangent.z);
         }
 
         IntBuffer indexBuffer = memAllocInt(indices.size());
@@ -85,35 +93,36 @@ public class Mesh {
     public static Mesh Cube() {
         ArrayList<Vertex> vertices = new ArrayList<>(
                 List.of(
-                        new Vertex(new Vector3f(-0.5f, 0.5f, 0.5f)),
-                        new Vertex(new Vector3f(0.5f, -0.5f, 0.5f)),
-                        new Vertex(new Vector3f(0.5f, 0.5f, 0.5f)),
-                        new Vertex(new Vector3f(-0.5f, 0.5f, 0.5f)),
-                        new Vertex(new Vector3f(0.5f, -0.5f, 0.5f)),
-                        new Vertex(new Vector3f(0.5f, -0.5f, -0.5f)),
-                        new Vertex(new Vector3f(0.5f, 0.5f, -0.5f)),
-                        new Vertex(new Vector3f(-0.5f, 0.5f, -0.5f))
+                        new Vertex(new Vector3f(-10.0f, -10.0f, -10.0f)),
+                        new Vertex(new Vector3f(10.0f, -10.0f, -10.0f)),
+                        new Vertex(new Vector3f(10.0f, 10.0f, -10.0f)),
+                        new Vertex(new Vector3f(-10.0f, 10.0f, -10.0f)),
+
+                        new Vertex(new Vector3f(-10.0f, -10.0f, 10.0f)),
+                        new Vertex(new Vector3f(10.0f, -10.0f, 10.0f)),
+                        new Vertex(new Vector3f(10.0f, 10.0f, 10.0f)),
+                        new Vertex(new Vector3f(-10.0f, 10.0f, 10.0f))
                 )
         );
         ArrayList<Integer> indices = new ArrayList<>(
                 List.of(
-                        0, 1, 2,
-                        2, 3, 0,
+                        4, 5, 6,
+                        6, 7, 4,
 
-                        5, 4, 7,
-                        7, 6, 5,
+                        1, 0, 3,
+                        3, 2, 1,
 
-                        4, 0, 3,
-                        3, 7, 4,
+                        0, 4, 7,
+                        7, 3, 0,
 
-                        1, 5, 6,
-                        6, 2, 1,
+                        5, 1, 2,
+                        2, 6, 5,
 
-                        3, 2, 6,
-                        6, 7, 3,
+                        3, 7, 6,
+                        6, 2, 3,
 
-                        4, 5, 1,
-                        1, 0, 4
+                        0, 1, 5,
+                        5, 4, 0
                 )
         );
 
