@@ -36,6 +36,7 @@ public class AssetManager {
     public Integer cubemapShader = "CUBEMAP".hashCode();
     public Integer skyboxShader = "SKYBOX".hashCode();
     public Integer irradianceShader = "IRRADIANCE".hashCode();
+    public Integer prefilterShader = "PREFILTER".hashCode();
 
     private AssetManager() {
 
@@ -91,6 +92,12 @@ public class AssetManager {
                 irradianceShader,
                 Path.of("assets/shaders/internal/cubemap.vert"),
                 Path.of("assets/shaders/internal/irradiance.frag")
+        );
+
+        this.loadInternalShader(
+                prefilterShader,
+                Path.of("assets/shaders/internal/cubemap.vert"),
+                Path.of("assets/shaders/internal/prefilter.frag")
         );
 
         data.flip();

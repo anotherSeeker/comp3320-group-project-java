@@ -19,6 +19,7 @@ import org.joml.Vector3f;
 public class CubeTexture {
     public int ID;
     public int irradianceID;
+    public int prefilterID;
 
     public CubeTexture(FloatBuffer data, int width, int height) {
         // creating texture object for the input texture
@@ -38,6 +39,7 @@ public class CubeTexture {
         int FBO = glGenFramebuffers();
         glBindFramebuffer(GL_FRAMEBUFFER, FBO);
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
         ID = glGenTextures();
         glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
         for (int i = 0; i < 6; i++) {
@@ -82,6 +84,8 @@ public class CubeTexture {
             cube.draw();
         }
 
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
         // generating irradiance map
         irradianceID = glGenTextures();
         glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceID);
@@ -118,27 +122,80 @@ public class CubeTexture {
             cube.draw();
         }
 
+        // generating prefilter map
+        prefilterID = glGenTextures();
+        glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterID);
+        for (int i = 0; i < 6; i++) {
+            glTexImage2D(
+                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 128, 128, 0, GL_RGB, GL_FLOAT, (ByteBuffer) null
+            );
+        }
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+        Shader prefilterShader = assets.getShader(assets.prefilterShader);
+
+        prefilterShader.use();
+        prefilterShader.setInt("EnvironmentMap", 0);
+        prefilterShader.setMatrix4("Projection", captureProjection);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
+        int maxMipLevels = 5;
+
+        for (int mip = 0; mip < maxMipLevels; mip++) {
+            int mipWidth = 128 >> mip;
+            int mipHeight = 128 >> mip;
+
+            glViewport(0, 0, mipWidth, mipHeight);
+
+            float roughness = (float) mip / (float) (maxMipLevels - 1);
+
+            prefilterShader.setFloat("Roughness", roughness);
+            for (int i = 0; i < 6; i++) {
+                prefilterShader.setMatrix4("View", captureViews[i]);
+                glFramebufferTexture2D(
+                        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilterID, mip
+                );
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                cube.draw();
+            }
+        }
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    public void use(int slot, int irradianceSlot) {
+    public void use(int slot, int irradianceSlot, int prefilterSlot) {
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
 
         glActiveTexture(GL_TEXTURE0 + irradianceSlot);
         glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceID);
+
+        glActiveTexture(GL_TEXTURE0 + prefilterSlot);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterID);
     }
 
-    public void unbind(int slot, int irradianceSlot) {
+    public void unbind(int slot, int irradianceSlot, int prefilterSlot) {
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
         glActiveTexture(GL_TEXTURE0 + irradianceSlot);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+        glActiveTexture(GL_TEXTURE0 + prefilterSlot);
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
     }
 
     public void delete() {
         glDeleteTextures(ID);
         glDeleteTextures(irradianceID);
+        glDeleteTextures(prefilterID);
     }
 }
