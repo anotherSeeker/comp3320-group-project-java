@@ -77,14 +77,14 @@ public class AssetManager {
 
         this.loadInternalShader(
                 cubemapShader,
-                Path.of("assets/shaders/cubemap.vert"),
-                Path.of("assets/shaders/cubemap.frag")
+                Path.of("assets/shaders/internal/cubemap.vert"),
+                Path.of("assets/shaders/internal/cubemap.frag")
         );
 
         this.loadInternalShader(
                 skyboxShader,
-                Path.of("assets/shaders/skybox.vert"),
-                Path.of("assets/shaders/skybox.frag")
+                Path.of("assets/shaders/internal/skybox.vert"),
+                Path.of("assets/shaders/internal/skybox.frag")
         );
 
         this.loadInternalShader(

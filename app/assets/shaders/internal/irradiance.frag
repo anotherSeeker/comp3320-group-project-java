@@ -12,8 +12,8 @@ void main(){
     vec3 upVector = abs(normalised.y) < 0.99 ? vec3(0,1,0) : vec3(1,0,0);
 
     vec3 irradiance = vec3(0.0);
-    vec3 right = cross(upVector,normalised);
-    vec3 up = cross(normalised,right);
+    vec3 right = normalize(cross(upVector,normalised));
+    vec3 up = normalize(cross(normalised,right));
 
     float sampleDelta = 0.025;
     float nrSamples = 0.0;
