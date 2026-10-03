@@ -2,6 +2,7 @@ package engine;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
+import static org.lwjgl.opengl.GL12.GL_TEXTURE_WRAP_R;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X;
@@ -29,7 +30,7 @@ public class CubeTexture {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB16F, GL_FLOAT, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
         int FBO = glGenFramebuffers();
@@ -45,25 +46,22 @@ public class CubeTexture {
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
         Matrix4f captureProjection = new Matrix4f().perspective((float) Math.toRadians(90.0), 1.0f, 0.1f, 10.0f);
         Matrix4f[] captureViews = new Matrix4f[6];
-        captureViews[0] = new Matrix4f().lookAt(new Vector3f(0, 0, 0), new Vector3f(1, 0, 0), new Vector3f(0, 1, 0));
+        captureViews[0] = new Matrix4f().lookAt(new Vector3f(0, 0, 0), new Vector3f(1, 0, 0), new Vector3f(0, -1, 0));
         captureViews[1] = new Matrix4f().lookAt(new Vector3f(0, 0, 0), new Vector3f(-1, 0, 0), new Vector3f(0, -1, 0));
         captureViews[2] = new Matrix4f().lookAt(new Vector3f(0, 0, 0), new Vector3f(0, 1, 0), new Vector3f(0, 0, 1));
         captureViews[3] = new Matrix4f().lookAt(new Vector3f(0, 0, 0), new Vector3f(0, -1, 0), new Vector3f(0, 0, -1));
-        captureViews[4] = new Matrix4f().lookAt(new Vector3f(0, 0, 0), new Vector3f(0, 0, 1), new Vector3f(0, 1, 0));
+        captureViews[4] = new Matrix4f().lookAt(new Vector3f(0, 0, 0), new Vector3f(0, 0, 1), new Vector3f(0, -1, 0));
         captureViews[5] = new Matrix4f().lookAt(new Vector3f(0, 0, 0), new Vector3f(0, 0, -1), new Vector3f(0, -1, 0));
 
         AssetManager assets = AssetManager.get();
-        Integer cubemapShaderID = assets.LoadShader(
-                Path.of("assets/shaders/cubemap.vert"),
-                Path.of("assets/shaders/cubemap.frag")
-        );
-        Shader cubemapShader = assets.getShader(cubemapShaderID);
+        Shader cubemapShader = assets.getShader(assets.cubemapShader);
         Mesh cube = Mesh.Cube();
 
         cubemapShader.use();
@@ -88,11 +86,11 @@ public class CubeTexture {
 
     public void use(int slot) {
         glActiveTexture(GL_TEXTURE0 + slot);
-        glBindTexture(GL_TEXTURE_2D, ID);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
     }
 
     public void unbind() {
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
     }
 
     public void delete() {

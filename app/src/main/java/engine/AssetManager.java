@@ -33,6 +33,8 @@ public class AssetManager {
     private Map<Integer, CubeTexture> cubeTextureIndex = new HashMap<>();
 
     public Integer defaultTexture = "DEFAULT".hashCode();
+    public Integer cubemapShader = "CUBEMAP".hashCode();
+    public Integer skyboxShader = "SKYBOX".hashCode();
 
     private AssetManager() {
 
@@ -72,9 +74,17 @@ public class AssetManager {
             }
         }
 
-        for (int i = 0; i < width * height; i++) {
+        this.loadInternalShader(
+                cubemapShader,
+                Path.of("assets/shaders/cubemap.vert"),
+                Path.of("assets/shaders/cubemap.frag")
+        );
 
-        }
+        this.loadInternalShader(
+                skyboxShader,
+                Path.of("assets/shaders/skybox.vert"),
+                Path.of("assets/shaders/skybox.frag")
+        );
 
         data.flip();
 
@@ -93,6 +103,16 @@ public class AssetManager {
         }
 
         return result;
+    }
+
+    private void loadInternalShader(Integer ID, Path vertexPath, Path fragmentPath) {
+        String vertexSource = readFile(vertexPath);
+        String fragmentSource = readFile(fragmentPath);
+
+        Shader shader = new Shader();
+        shader.init(vertexSource, fragmentSource);
+
+        shaderIndex.put(ID, shader);
     }
 
     public Integer LoadShader(Path vertexPath, Path fragmentPath) {

@@ -37,6 +37,8 @@ public class App {
         glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
         glViewport(0, 0, width, height);
 
+        assetManager._init();
+
         scene = new SceneGraph();
         scene.updateAspectRatio(width, height);
 
@@ -49,8 +51,6 @@ public class App {
         });
 
         glEnable(GL_DEPTH_TEST);
-
-        assetManager._init();
 
         return true;
     }
