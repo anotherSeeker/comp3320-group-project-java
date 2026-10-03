@@ -15,17 +15,18 @@ uniform vec3 ViewPosition;
 
 vec3 albedoColour = pow(texture(Albedo,UV).rgb,vec3(2.2));
 
-const float roughness = 0.2;
+const float roughness = 0.5;
 const float subsurface = 0;
 const float sheen = 0;
 const float annisotropy = 0.5;
 const float specularStrength = 0.5;
-const float ambientOcclussion = 0.2;
+const float ambientOcclussion = 0.5;
 
 const vec3 sheenColour = vec3(1,1,1);
 const vec3 diffuseColour = vec3(1,1,1);
 
 uniform samplerCube IrradianceMap;
+uniform samplerCube PrefilterMap;
 
 float GTR2Aniso(float ndotH, float hdotX, float hdotY, float ax, float ay){
     return 1 / (PI * ax*ay * pow( pow(hdotX/ax,2) + pow(hdotY/ay,2) + ndotH*ndotH,2 ));
@@ -117,12 +118,18 @@ vec3 generateAmbientLight(){
     float nDotV = max(dot(normal,viewDirection),0.0f);
 
     vec3 baseReflectivity = vec3(0.04);
-    vec3 kS = baseReflectivity + (1.0 - baseReflectivity) * pow((1 - nDotV),5.0);
+    vec3 kS = baseReflectivity + (max(vec3(1.0 - roughness),baseReflectivity) - baseReflectivity) * pow((1 - nDotV),5.0);
     vec3 kD = 1.0 - kS;
 
     vec3 diffuse = texture(IrradianceMap,normal).rgb * albedoColour * kD;
 
-    return diffuse * ambientOcclussion;
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilterColour = textureLod(PrefilterMap,reflect(-viewDirection,normal),roughness * MAX_REFLECTION_LOD).rgb;
+
+    vec3 specular = prefilterColour * kS;
+
+
+    return (diffuse + specular) * ambientOcclussion;
 }
 
 void main() {
