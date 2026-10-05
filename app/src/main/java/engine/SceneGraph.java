@@ -100,6 +100,7 @@ public class SceneGraph {
             material.shader.setTexture("Albedo", material.albedoMap, 4);
             material.shader.setTexture("RoughnessMap", material.roughnessMap, 5);
             material.shader.setTexture("AmbientOcclusionMap", material.ambientOcclusionMap, 6);
+            material.shader.setTexture("NormalMap", material.normalMap, 7);
             material.shader.setVector3("LightDirection", lightDirection);
             material.shader.setVector3("ViewPosition", cameraTransform.position);
 

@@ -360,13 +360,14 @@ public class AssetManager {
     }
 
     public Material createMaterial(
-            Integer shaderID, Integer albedoID, Integer roughnessID, Integer ambientOcclusionID
+            Integer shaderID, Integer albedoID, Integer roughnessID, Integer ambientOcclusionID, Integer normalID
     ) {
         Material material = new Material();
         material.shader = getShader(shaderID);
         material.albedoMap = getTexture(albedoID);
         material.roughnessMap = getTexture(roughnessID);
         material.ambientOcclusionMap = getTexture(ambientOcclusionID);
+        material.normalMap = getTexture(normalID);
 
         return material;
     }

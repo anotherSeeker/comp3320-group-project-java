@@ -11,4 +11,5 @@ public class Material {
     public Texture albedoMap;
     public Texture roughnessMap;
     public Texture ambientOcclusionMap;
+    public Texture normalMap;
 }
