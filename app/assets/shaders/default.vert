@@ -14,6 +14,8 @@ out vec2 UV;
 out vec3 tangent;
 out vec3 bitangent;
 
+out mat3 TBN;
+
 void main() {
     gl_Position = CameraMatrix * Model * vec4(aPos,1);
 
@@ -22,4 +24,6 @@ void main() {
     normal = normalize(mat3(transpose(inverse(Model))) * aNormal);
     tangent = normalize(mat3(Model) * aTangent);
     bitangent = normalize(mat3(Model) * aBitangent);
+
+    TBN = mat3(tangent,bitangent,normal);
 }

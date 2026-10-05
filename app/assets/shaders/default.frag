@@ -7,11 +7,14 @@ in vec2 UV;
 in vec3 tangent;
 in vec3 bitangent;
 
+in mat3 TBN;
+
 out vec4 fragColour;
 
 uniform sampler2D Albedo;
 uniform sampler2D RoughnessMap;
 uniform sampler2D AmbientOcclusionMap;
+uniform sampler2D NormalMap;
 
 uniform vec3 LightDirection;
 uniform vec3 ViewPosition;
@@ -27,13 +30,25 @@ const float specularStrength = 0.5;
 const vec3 sheenColour = vec3(1,1,1);
 const vec3 diffuseColour = vec3(1,1,1);
 
-float roughnessValue = texture(RoughnessMap,UV).r * Roughness;
-float ambientOcclusionValue = texture(AmbientOcclusionMap,UV).r * AmbientOcclusion;
-vec3 albedoColour = pow(texture(Albedo,UV).rgb,vec3(2.2));
+struct Material {
+    float roughness;
+    float ambientOcclusion;
+    vec3 albedo;
+};
 
 uniform samplerCube IrradianceMap;
 uniform samplerCube PrefilterMap;
 uniform sampler2D brdfIntMap;
+
+Material getMaterial(){
+    Material material;
+
+    material.roughness = texture(RoughnessMap,UV).r * Roughness;
+    material.ambientOcclusion = texture(AmbientOcclusionMap,UV).r * AmbientOcclusion;
+    material.albedo = pow(texture(Albedo,UV).rgb,vec3(2.2));
+
+    return material;
+}
 
 float GTR2Aniso(float ndotH, float hdotX, float hdotY, float ax, float ay){
     return 1 / (PI * ax*ay * pow( pow(hdotX/ax,2) + pow(hdotY/ay,2) + ndotH*ndotH,2 ));
@@ -43,22 +58,21 @@ float smithG_GGX_aniso(float NdotV, float VdotX, float VdotY, float ax, float ay
     return 1 / (NdotV + sqrt( pow(VdotX*ax,2) + pow(VdotY*ay,2) + pow(NdotV,2) ));
 }
 
-
 float schlickFresnel(float u){
     float m = clamp(1-u, 0, 1);
     float m2 = m * m;
     return m2 * m2 * m;
 }
 
-vec3 burleyDiffuse(float nDotL,float nDotV,float lDotH){
+vec3 burleyDiffuse(Material material,float nDotL,float nDotV,float lDotH){
     float fresnelLight = schlickFresnel(nDotL);
     float fresnelView = schlickFresnel(nDotV);
 
-    float fd90 = 0.5 + 2 * lDotH * lDotH * roughnessValue;
+    float fd90 = 0.5 + 2 * lDotH * lDotH * material.roughness;
 
     float diffuse = mix(1.0,fd90,fresnelLight) * mix(1.0,fd90,fresnelView);
 
-    float fresnelSubSurface90 = lDotH * lDotH * roughnessValue;
+    float fresnelSubSurface90 = lDotH * lDotH * material.roughness;
     float fresnelSubSurface = mix(1.0,fresnelSubSurface90,fresnelLight) * mix(1.0,fresnelSubSurface90,fresnelView);
 
     float ss = 1.25 * (fresnelSubSurface * (1 / (nDotL + nDotV) - 0.5) + 0.5);
@@ -68,14 +82,14 @@ vec3 burleyDiffuse(float nDotL,float nDotV,float lDotH){
     return mix(diffuse,ss,subsurface) + fresnelSheen;
 }
 
-vec3 disneySpecular(vec3 halfway,vec3 viewDirection,vec3 lightDirection){
+vec3 disneySpecular(Material material,vec3 norm,vec3 halfway,vec3 viewDirection,vec3 lightDirection){
     float lDotH = max(dot(lightDirection,halfway),0.0f);
-    float nDotH = max(dot(normal,halfway),0.0f);
+    float nDotH = max(dot(norm,halfway),0.0f);
     float xDotH = dot(tangent,halfway);
     float yDotH = dot(bitangent,halfway);
 
-    float nDotL = max(dot(normal,lightDirection),0.0f);
-    float nDotV = max(dot(normal,viewDirection),0.0f);
+    float nDotL = max(dot(norm,lightDirection),0.0f);
+    float nDotV = max(dot(norm,viewDirection),0.0f);
 
     float xDotL = dot(tangent,lightDirection);
     float yDotL = dot(bitangent,lightDirection);
@@ -84,8 +98,8 @@ vec3 disneySpecular(vec3 halfway,vec3 viewDirection,vec3 lightDirection){
     float yDotV = dot(bitangent,viewDirection);
 
     float aspect = sqrt(1 - annisotropy * 0.9);
-    float ax = max(0.001,(roughnessValue * roughnessValue) / aspect);
-    float ay = max(0.001,(roughnessValue * roughnessValue) * aspect);
+    float ax = max(0.001,(material.roughness * material.roughness) / aspect);
+    float ay = max(0.001,(material.roughness * material.roughness) * aspect);
 
     float distribution = GTR2Aniso(nDotH,xDotH,yDotH,ax,ay);
     float fresnelHalfWay = schlickFresnel(lDotH);
@@ -97,13 +111,13 @@ vec3 disneySpecular(vec3 halfway,vec3 viewDirection,vec3 lightDirection){
     return (distribution * fresnelResponse * geometricAttenuation) ;
 }
 
-vec3 brdf(){
+vec3 brdf(Material material,vec3 norm){
     vec3 lightDirection = normalize(LightDirection);
     vec3 viewDirection = normalize(ViewPosition - position);
     vec3 halfway = normalize(lightDirection + viewDirection);
 
-    float nDotL = dot(normal,lightDirection);
-    float nDotV = dot(normal,viewDirection);
+    float nDotL = dot(norm,lightDirection);
+    float nDotV = dot(norm,viewDirection);
 
     if(nDotL < 0 || nDotV < 0) return vec3(0.0f);
 
@@ -112,38 +126,45 @@ vec3 brdf(){
 
     float lDotH = max(dot(lightDirection,halfway),0.0f);
 
-    vec3 diffuse = burleyDiffuse(nDotL,nDotV,lDotH) * diffuseColour / PI;
-    vec3 specular = disneySpecular(halfway,viewDirection,lightDirection);
+    vec3 diffuse = burleyDiffuse(material,nDotL,nDotV,lDotH) * diffuseColour / PI;
+    vec3 specular = disneySpecular(material,norm,halfway,viewDirection,lightDirection);
 
-    vec3 lighting = diffuse * albedoColour + specular;
+    vec3 lighting = diffuse * material.albedo + specular;
 
     return lighting * nDotL;
 }
 
-vec3 generateAmbientLight(){
+vec3 generateAmbientLight(Material material,vec3 norm){
+
     vec3 viewDirection = normalize(ViewPosition - position);
-    float nDotV = max(dot(normal,viewDirection),0.0f);
+    float nDotV = max(dot(norm,viewDirection),0.0f);
 
     vec3 baseReflectivity = vec3(0.04);
-    vec3 kS = baseReflectivity + (max(vec3(1.0 - roughnessValue),baseReflectivity) - baseReflectivity) * pow((1 - nDotV),5.0);
+    vec3 kS = baseReflectivity + (max(vec3(1.0 - material.roughness),baseReflectivity) - baseReflectivity) * pow((1 - nDotV),5.0);
     vec3 kD = 1.0 - kS;
 
-    vec3 diffuse = texture(IrradianceMap,normal).rgb * albedoColour * kD;
+    vec3 diffuse = texture(IrradianceMap,norm).rgb * material.albedo * kD;
 
     const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilterColour = textureLod(PrefilterMap,reflect(-viewDirection,normal),roughnessValue * MAX_REFLECTION_LOD).rgb;
+    vec3 prefilterColour = textureLod(PrefilterMap,reflect(-viewDirection,norm),material.roughness * MAX_REFLECTION_LOD).rgb;
 
-    vec2 brdfIBL = texture(brdfIntMap,vec2(nDotV,roughnessValue)).rg;
+    vec2 brdfIBL = texture(brdfIntMap,vec2(nDotV,material.roughness)).rg;
 
     vec3 specular = prefilterColour * (baseReflectivity * brdfIBL.r + brdfIBL.g);
 
-    return (diffuse + specular) * ambientOcclusionValue;
+    return (diffuse + specular) * material.ambientOcclusion;
 }
 
 void main() {
-    vec3 ambientLight = generateAmbientLight();
 
-    vec3 colour = brdf() + ambientLight;
+    Material material = getMaterial();
+
+    vec3 norm = texture(NormalMap,UV).rgb * 2 - 1;
+    norm = normalize(TBN * norm);
+
+    vec3 ambientLight = generateAmbientLight(material,norm);
+
+    vec3 colour = brdf(material,norm) + ambientLight;
     colour = colour / (colour + vec3(1.0));
     colour = pow(colour,vec3(1/2.2));
 
