@@ -1,44 +1,33 @@
 package scripts;
 
-import org.joml.Vector2f;
+import static org.lwjgl.glfw.GLFW.*;
 
-import engine.*;
+public class WaterFFT 
+{
+    //noise texture parameters
+    int textureWidth = 4096;
+    int textureHeight = 4096;
 
-public class WaterFFT extends MonoScript {
+    
     public WaterFFT() {
-        
+
     }
 
-    private class WaveData 
+    public void noiseSetup()
     {
-        float frequency;
-        float amplitude;
-        Vector2f direction;
-        float speed;
-        float steepness;
+        //we want to use the frame buffer to generate and save a noise texture to be used in the fft shader on startup 
 
-        public WaveData(float frequency, float amplitude, Vector2f direction, float speed, float steepness) 
-        {
-            this.frequency = frequency;
-            this.amplitude = amplitude;
-            this.direction = direction;
-            this.speed = speed;
-            this.steepness = steepness;
-        }
-    }
+        GLuint frameBuffer = 0;
+        glGenFramebuffers(1, frameBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 
-    @Override
-    public void onStart() {
-        // Initialization code here
-    }
+        GLuint texture = 0;
+        glGenTextures(1, texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 
-    @Override
-    public void onUpdate() {
-        // Update logic here
-    }
-
-    @Override
-    public void onStop() {
-        // Cleanup code here
+        // Poor filtering. Needed !
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
 }
