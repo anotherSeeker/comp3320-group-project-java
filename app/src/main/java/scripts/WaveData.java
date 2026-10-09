@@ -49,4 +49,10 @@ public class WaveData
     public float getSteepness() {
         return steepness;
     }
+    public Vector2f getWindDirection() {
+        return windDirection;
+    }
+    public float getWindStrength() {
+        return windStrength;
+    }
 }
