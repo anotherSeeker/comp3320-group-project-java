@@ -81,6 +81,7 @@ public class App {
             }
 
             scene.draw();
+            scene.drawParticles();
 
             glfwSwapBuffers(window);
             glfwPollEvents();

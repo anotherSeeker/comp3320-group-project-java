@@ -1,23 +1,31 @@
 package engine;
 
+import static org.lwjgl.opengl.GL11.GL_BLEND;
 import static org.lwjgl.opengl.GL11.GL_LEQUAL;
 import static org.lwjgl.opengl.GL11.GL_LESS;
+import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
+import static org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA;
+import static org.lwjgl.opengl.GL11.glBlendFunc;
 import static org.lwjgl.opengl.GL11.glDepthFunc;
 import static org.lwjgl.opengl.GL11.glDepthMask;
+import static org.lwjgl.opengl.GL11.glDisable;
+import static org.lwjgl.opengl.GL11.glEnable;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import dev.dominion.ecs.api.Dominion;
 import dev.dominion.ecs.api.Entity;
-import engine.components.GameObject;
-import engine.components.Material;
-import engine.components.Transform;
+import engine.components.*;
+import engine.particles.ExampleParticleEmitter;
+import engine.particles.Particle;
 
 public class SceneGraph {
     static {
         System.setProperty("dominion.show-banner", "false");
     }
+
+    private ExampleParticleEmitter[] particleEmitters;
 
     private CubeTexture skyboxTexture = null;
     private Shader skyboxShader;
@@ -128,5 +136,53 @@ public class SceneGraph {
 
     public void SetSkyboxTexture(Integer cubeTexture) {
         skyboxTexture = assetManager.getCubeTexture(cubeTexture);
+    }
+
+    // Particle methods
+    
+    public void drawParticles () {
+        var emitters = ECS.findEntitiesWith(ExampleParticleEmitter.class); 
+    
+        glDepthMask(false);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        for (var iter = emitters.iterator(); iter.hasNext() != false;) {
+            var object = iter.next();
+            for (Particle p : object.comp().particles) {
+                Matrix4f viewportMatrix = computeViewportMatrix();
+                p.material.shader.use();
+                p.mesh.bind();
+                p.material.shader.setMatrix4("CameraMatrix", viewportMatrix);
+                p.material.shader.setTexture("Albedo", p.material.albedoMap, 0);
+                p.material.shader.setMatrix4("Model", p.transform.model);
+                p.mesh.drawParticles();
+            }
+        }
+
+        glDepthFunc(GL_LESS);
+        glDisable(GL_BLEND);
+        glDepthMask(true);
+    }
+
+    public void setParticleEmitters (ExampleParticleEmitter[] particleEmitters) {
+        this.particleEmitters = particleEmitters;
+    }
+
+    public ExampleParticleEmitter[] getParticleEmitters () {
+        return particleEmitters;
+    }
+
+    public Entity createParticleEmitter (Integer meshID, Material material, float scale, int maxParticles, long creationPeriodMillis, Vector3f velocity, long ttl) {
+        Mesh mesh = assetManager.getMesh(meshID);
+
+        Transform transform = new Transform(new Matrix4f());
+
+        transform.model.scale(scale);
+
+        Particle baseParticle = new Particle(mesh, material.shader, material.albedoMap, transform.model, velocity, ttl);
+        ExampleParticleEmitter particleEmitter = new ExampleParticleEmitter(baseParticle, maxParticles, creationPeriodMillis);
+
+        return ECS.createEntity(particleEmitter);
     }
 }

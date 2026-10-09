@@ -39,6 +39,8 @@ public class AssetManager {
     public Integer prefilterShader = "PREFILTER".hashCode();
     public Integer brdfIntShader = "BRDF_INT".hashCode();
 
+    public String pathPrefix = "app/";
+
     private AssetManager() {
 
     }
@@ -79,32 +81,32 @@ public class AssetManager {
 
         this.loadInternalShader(
                 cubemapShader,
-                Path.of("assets/shaders/internal/cubemap.vert"),
-                Path.of("assets/shaders/internal/cubemap.frag")
+                Path.of(pathPrefix + "assets/shaders/internal/cubemap.vert"),
+                Path.of(pathPrefix + "assets/shaders/internal/cubemap.frag")
         );
 
         this.loadInternalShader(
                 skyboxShader,
-                Path.of("assets/shaders/internal/skybox.vert"),
-                Path.of("assets/shaders/internal/skybox.frag")
+                Path.of(pathPrefix + "assets/shaders/internal/skybox.vert"),
+                Path.of(pathPrefix + "assets/shaders/internal/skybox.frag")
         );
 
         this.loadInternalShader(
                 irradianceShader,
-                Path.of("assets/shaders/internal/cubemap.vert"),
-                Path.of("assets/shaders/internal/irradiance.frag")
+                Path.of(pathPrefix + "assets/shaders/internal/cubemap.vert"),
+                Path.of(pathPrefix + "assets/shaders/internal/irradiance.frag")
         );
 
         this.loadInternalShader(
                 prefilterShader,
-                Path.of("assets/shaders/internal/cubemap.vert"),
-                Path.of("assets/shaders/internal/prefilter.frag")
+                Path.of(pathPrefix + "assets/shaders/internal/cubemap.vert"),
+                Path.of(pathPrefix + "assets/shaders/internal/prefilter.frag")
         );
 
         this.loadInternalShader(
                 brdfIntShader,
-                Path.of("assets/shaders/internal/brdfInt.vert"),
-                Path.of("assets/shaders/internal/brdfInt.frag")
+                Path.of(pathPrefix + "assets/shaders/internal/brdfInt.vert"),
+                Path.of(pathPrefix + "assets/shaders/internal/brdfInt.frag")
         );
 
         data.flip();
@@ -368,6 +370,14 @@ public class AssetManager {
         material.roughnessMap = getTexture(roughnessID);
         material.ambientOcclusionMap = getTexture(ambientOcclusionID);
         material.normalMap = getTexture(normalID);
+
+        return material;
+    }
+
+    public Material createMaterial (Integer shaderID, Integer albedoID) {
+        Material material = new Material();
+        material.shader = getShader(shaderID);
+        material.albedoMap = getTexture(albedoID);
 
         return material;
     }

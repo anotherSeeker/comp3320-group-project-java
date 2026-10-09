@@ -153,6 +153,10 @@ public class Mesh {
         glDrawElements(GL_TRIANGLES, indiceCount, GL_UNSIGNED_INT, 0);
     }
 
+    public void drawParticles () {
+        glDrawElements(GL_TRIANGLES, indiceCount, GL_UNSIGNED_INT, 0);
+    }
+
     public void delete() {
         glDeleteVertexArrays(VAO);
         glDeleteBuffers(VBO);
