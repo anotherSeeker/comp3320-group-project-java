@@ -4,7 +4,6 @@ import static org.lwjgl.opengl.GL11.GL_BLEND;
 import static org.lwjgl.opengl.GL11.GL_LEQUAL;
 import static org.lwjgl.opengl.GL11.GL_LESS;
 import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
-import static org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA;
 import static org.lwjgl.opengl.GL11.glBlendFunc;
 import static org.lwjgl.opengl.GL11.glDepthFunc;
 import static org.lwjgl.opengl.GL11.glDepthMask;
@@ -139,16 +138,15 @@ public class SceneGraph {
     }
 
     // Particle methods
-    
     public void drawParticles () {
         var emitters = ECS.findEntitiesWith(ExampleParticleEmitter.class); 
     
         glDepthMask(false);
         glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+        
         for (var iter = emitters.iterator(); iter.hasNext() != false;) {
             var object = iter.next();
+            glBlendFunc(GL_SRC_ALPHA, object.comp().baseParticle.blendFunction);
             for (Particle p : object.comp().particles) {
                 Matrix4f viewportMatrix = computeViewportMatrix();
                 p.material.shader.use();
@@ -173,14 +171,14 @@ public class SceneGraph {
         return particleEmitters;
     }
 
-    public Entity createParticleEmitter (Integer meshID, Material material, float scale, int maxParticles, long creationPeriodMillis, Vector3f velocity, long ttl) {
+    public Entity createParticleEmitter (Integer meshID, Material material, float scale, int maxParticles, long creationPeriodMillis, Vector3f velocity, long ttl, int blendFunction) {
         Mesh mesh = assetManager.getMesh(meshID);
 
         Transform transform = new Transform(new Matrix4f());
 
         transform.model.scale(scale);
 
-        Particle baseParticle = new Particle(mesh, material.shader, material.albedoMap, transform.model, velocity, ttl);
+        Particle baseParticle = new Particle(mesh, material.shader, material.albedoMap, transform.model, velocity, ttl, blendFunction);
         ExampleParticleEmitter particleEmitter = new ExampleParticleEmitter(baseParticle, maxParticles, creationPeriodMillis);
 
         return ECS.createEntity(particleEmitter);
