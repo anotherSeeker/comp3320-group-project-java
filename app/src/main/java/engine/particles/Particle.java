@@ -12,14 +12,16 @@ public class Particle extends GameObject {
     public Transform transform;
     public Vector3f velocity;
     public long ttl;
+    public int blendFunction;
 
-    public Particle (Mesh mesh, Shader shader, Texture texture, Matrix4f model, Vector3f velocity, long ttl) {
+    public Particle (Mesh mesh, Shader shader, Texture texture, Matrix4f model, Vector3f velocity, long ttl, int blendFunction) {
         super(mesh, new Material());
         this.material.shader = shader;
         this.material.albedoMap = texture;
         transform = new Transform(model);
         this.velocity = new Vector3f(velocity);
         this.ttl = ttl;
+        this.blendFunction = blendFunction;
     }
 
     public Particle (Particle baseParticle) {
@@ -27,6 +29,7 @@ public class Particle extends GameObject {
         this.transform = new Transform(baseParticle.transform.model);
         this.velocity = new Vector3f(baseParticle.velocity);
         this.ttl = baseParticle.ttl;
+        this.blendFunction = baseParticle.blendFunction;
     }
 
     public Vector3f getVelocity () {
