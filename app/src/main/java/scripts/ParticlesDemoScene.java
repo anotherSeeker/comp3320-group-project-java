@@ -20,21 +20,7 @@ public class ParticlesDemoScene extends MonoScript {
             Path.of(pathPrefix + "assets/shaders/particles/particleShader.frag")
     );
 
-    Integer shaderID = Assets.LoadShader(
-            Path.of(pathPrefix + "assets/shaders/default.vert"),
-            Path.of(pathPrefix + "assets/shaders/default.frag")
-    );
-
-    Integer sphereID = Assets.LoadMesh(Path.of(pathPrefix + "assets/meshes/uvsmooth.obj"));
     Integer particleID = Assets.LoadMesh(Mesh.Quad(), "particle_mesh");
-    
-    Material material = Assets.createMaterial(
-            shaderID,
-            Assets.LoadTexture(Path.of(pathPrefix + "assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")),
-            Assets.LoadTexture(Path.of(pathPrefix + "assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")),
-            Assets.LoadTexture(Path.of(pathPrefix + "assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")),
-            Assets.LoadTexture(Path.of(pathPrefix + "assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg"))
-    );
 
     Material particle1Material = Assets.createMaterial(
             particleShaderID,
@@ -73,7 +59,7 @@ public class ParticlesDemoScene extends MonoScript {
         P1.get(ExampleParticleEmitter.class).setActive(true);
         P1.get(ExampleParticleEmitter.class).setAllRndRange(P1_range);
 
-        P1.get(ExampleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(1.5f, 0, 0));
+        P1.get(ExampleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(2f, 0, 0));
 
 
         P2 = Scene.createParticleEmitter(particleID, particle2Material, P2_scale, P2_maxParticles, P2_creationPeriodMillis, P2_particleVelocity, P2_ttl, P2_blendFunction);
@@ -81,7 +67,7 @@ public class ParticlesDemoScene extends MonoScript {
         P2.get(ExampleParticleEmitter.class).setActive(true);
         P2.get(ExampleParticleEmitter.class).setAllRndRange(P2_range);
 
-        P2.get(ExampleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(-1.5f, 0, 0));
+        P2.get(ExampleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(-2f, 0, 0));
 
 
         Scene.setParticleEmitters(new ExampleParticleEmitter[] {P1.get(ExampleParticleEmitter.class), P2.get(ExampleParticleEmitter.class)});
