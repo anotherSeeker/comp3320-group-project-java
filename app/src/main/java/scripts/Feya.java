@@ -16,7 +16,7 @@ public class Feya extends MonoScript {
             Path.of("assets/shaders/default.frag")
     );
 
-    Integer character = Assets.LoadMesh(Path.of("assets/meshes/character.obj"));
+    Integer character = Assets.LoadMesh(Path.of("assets/meshes/character_combined.obj"));
 
     Material material = Assets.createMaterial(
             shaderID,
@@ -37,7 +37,7 @@ public class Feya extends MonoScript {
         Scene.SetSkyboxTexture(skyboxTexture);
 
         A = Scene.createObject(character, material);
-        A.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
+        A.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
     }
 
     @Override
