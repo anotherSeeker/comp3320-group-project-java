@@ -64,22 +64,6 @@ public class SceneGraph {
         return projection.mul(view);
     }
 
-    // computing the orientation conjugate flipped every second emitters movement direction.
-    // i.e. when turning right, every second set of particles would move right on the screen. 
-    public Matrix4f computeViewportMatrixParticles () {
-        Matrix4f view = new Matrix4f()
-                .rotate(cameraTransform.orientation)
-                .translate(
-                        -cameraTransform.position.x,
-                        -cameraTransform.position.y,
-                        -cameraTransform.position.z
-                );
-
-        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
-
-        return projection.mul(view);
-    }
-
     public Matrix4f computeSkyboxMatrix() {
         Matrix4f view = new Matrix4f()
                 .rotate(cameraTransform.orientation.conjugate()).invert();
@@ -159,11 +143,11 @@ public class SceneGraph {
     
         glDepthMask(false);
         glEnable(GL_BLEND);
-
+        Matrix4f viewportMatrix = computeViewportMatrix();
         for (var iter = emitters.iterator(); iter.hasNext() != false;) {
             var object = iter.next();
             glBlendFunc(GL_SRC_ALPHA, object.comp().baseParticle.blendFunction);
-            Matrix4f viewportMatrix = computeViewportMatrixParticles();
+            
             for (Particle p : object.comp().particles) {
                 p.material.shader.use();
                 p.mesh.bind();
