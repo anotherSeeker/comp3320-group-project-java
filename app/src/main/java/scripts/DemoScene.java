@@ -1,5 +1,7 @@
 package scripts;
 
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_F;
+
 import java.nio.file.Path;
 
 import org.joml.Vector3f;
@@ -29,20 +31,36 @@ public class DemoScene extends MonoScript {
     Integer skyboxTexture = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/qwantani_dusk_2_puresky_1k.hdr"));
     Integer barSkybox = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/warm_restaurant_night_1k.hdr"));
 
+    boolean swapped = false;
+    boolean pressed = false;
+
     Entity A;
     Entity B;
 
     @Override
     protected void Start() {
-
         Scene.SetSkyboxTexture(skyboxTexture);
 
         A = Scene.createObject(uvSmoothID, material);
         A.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
     }
 
+    private void swapSkybox() {
+        if (swapped) {
+            Scene.SetSkyboxTexture(skyboxTexture);
+        } else {
+            Scene.SetSkyboxTexture(barSkybox);
+        }
+        swapped = !swapped;
+    }
+
     @Override
     protected void Update(double deltaTime) {
-
+        if (pressed == false && Input.IsKeyDown(GLFW_KEY_F)) {
+            pressed = true;
+            swapSkybox();
+        } else if (!Input.IsKeyDown(GLFW_KEY_F)) {
+            pressed = false;
+        }
     }
 }
