@@ -25,6 +25,17 @@ public class Camera extends MonoScript {
         Input.LockMouse();
     }
 
+    private void rotateCamera() {
+        Vector2f mouseDelta = Input.GetMouseDelta();
+
+        yaw -= mouseDelta.x * mouseSens;
+        pitch += mouseDelta.y * mouseSens;
+
+        pitch = Math.clamp(pitch, (float) Math.toRadians(-89), (float) Math.toRadians(89));
+
+        Scene.cameraTransform.setOrientationEuler(new Vector3f(pitch, yaw, 0));
+    }
+
     @Override
     protected void Update(double deltaTime) {
         int cameraSpeed = Input.IsKeyDown(GLFW_KEY_LEFT_SHIFT) ? MIN_CAMERA_SPEED : MAX_CAMERA_SPEED;
@@ -60,14 +71,13 @@ public class Camera extends MonoScript {
 
         worldDirection = worldDirection.mul((float) deltaTime);
 
-        Vector2f mouseDelta = Input.GetMouseDelta();
+        if (Input.IsMouse2Down()) {
+            Input.LockMouse();
+            rotateCamera();
+        } else {
+            Input.UnlockMouse();
+        }
 
-        yaw -= mouseDelta.x * mouseSens;
-        pitch += mouseDelta.y * mouseSens;
-
-        pitch = Math.clamp(pitch, (float) Math.toRadians(-89), (float) Math.toRadians(89));
-
-        Scene.cameraTransform.setOrientationEuler(new Vector3f(pitch, yaw, 0));
         Scene.cameraTransform.setPosition(Scene.cameraTransform.position.add(worldDirection));
     }
 }
