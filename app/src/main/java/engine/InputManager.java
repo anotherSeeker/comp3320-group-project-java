@@ -36,6 +36,14 @@ public class InputManager {
         return glfwGetKey(window, key) == GLFW_PRESS;
     }
 
+    public boolean IsMouse1Down() {
+        return glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    }
+
+    public boolean IsMouse2Down() {
+        return glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+    }
+
     public Vector2f GetMouseDelta() {
         Vector2f delta = new Vector2f(mouseDeltaX, mouseDeltaY);
 
