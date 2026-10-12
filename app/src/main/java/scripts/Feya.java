@@ -16,7 +16,7 @@ public class Feya extends MonoScript {
             Path.of("assets/shaders/default.frag")
     );
 
-    Integer character = Assets.LoadMesh(Path.of("assets/meshes/character_combined.obj"));
+    Integer characterMesh = Assets.LoadMesh(Path.of("assets/meshes/character_combined.obj"));
 
     Material material = Assets.createMaterial(
             shaderID,
@@ -26,18 +26,13 @@ public class Feya extends MonoScript {
             Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg"))
     );
 
-    Integer skyboxTexture = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/qwantani_dusk_2_puresky_1k.hdr"));
-
-    Entity A;
-    Entity B;
+    Entity character;
 
     @Override
     protected void Start() {
 
-        Scene.SetSkyboxTexture(skyboxTexture);
-
-        A = Scene.createObject(character, material);
-        A.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
+        character = Scene.createObject(characterMesh, material);
+        character.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
     }
 
     @Override
