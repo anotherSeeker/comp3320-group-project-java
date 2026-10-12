@@ -23,6 +23,7 @@ public class Camera extends MonoScript {
         Scene.cameraTransform.lookAt(new Vector3f(0, 0, 0));
 
         Input.LockMouse();
+        Scene.cameraTransform.setOrientationEuler(new Vector3f(pitch, yaw, 0));
     }
 
     private void rotateCamera() {
