@@ -11,10 +11,42 @@ Java rewrite of c++ engine
 ## tooling
 - gradle
 
-## style guide
-SCREAMING_SNAKE_CASE for constants and macros.
-camelCase for methods, functions, variables and class properties.
-PascalCase for everything else (classes).
 
-Services provided to native scripts such as those used for Asset management or Input management should be in PascalCase.
-The methods provided by those services should also be in PascalCase.
+## how to run project
+
+to run the project you can run:
+```pwsh
+gradle run
+```
+
+if you dont have gradle then theres bash and batch scripts that run gradle for you
+```pwsh
+./gradlew.bat run
+
+# or for macOS/linux
+./gradle run
+```
+
+## how to make a script
+
+first create a class that inherits from monoscript inside the `scripts` folder
+```java
+package scripts;
+public class MyGame extends MonoScript {
+    @Override
+    protected void Start() {
+        System.out.println("hello world");
+    }
+
+    @Override
+    protected void Update(double deltaTime) {
+
+    }
+}
+```
+
+then register that script to the engine
+
+```java
+app.registerScript(new scripts.MyGame());
+```
