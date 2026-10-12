@@ -22,13 +22,13 @@ uniform vec3 ViewPosition;
 uniform float Roughness = 0.2;
 uniform float AmbientOcclusion = 0.5;
 
-const float subsurface = 0;
-const float sheen = 0;
-const float annisotropy = 0.5;
-const float specularStrength = 0.5;
+uniform float Subsurface = 0;
+uniform float Sheen = 0;
+uniform float Annisotropy = 0.5;
+uniform float SpecularStrength = 0.5;
 
-const vec3 sheenColour = vec3(1,1,1);
-const vec3 diffuseColour = vec3(1,1,1);
+uniform vec3 SheenColour = vec3(1,1,1);
+uniform vec3 DiffuseColour = vec3(1,1,1);
 
 struct Material {
     float roughness;
@@ -77,9 +77,9 @@ vec3 burleyDiffuse(Material material,float nDotL,float nDotV,float lDotH){
 
     float ss = 1.25 * (fresnelSubSurface * (1 / (nDotL + nDotV) - 0.5) + 0.5);
 
-    vec3 fresnelSheen = schlickFresnel(lDotH) * sheen * pow(sheenColour,vec3(2.2));
+    vec3 fresnelSheen = schlickFresnel(lDotH) * Sheen * pow(SheenColour,vec3(2.2));
 
-    return mix(diffuse,ss,subsurface) + fresnelSheen;
+    return mix(diffuse,ss,Subsurface) + fresnelSheen;
 }
 
 vec3 disneySpecular(Material material,vec3 norm,vec3 halfway,vec3 viewDirection,vec3 lightDirection){
@@ -97,13 +97,13 @@ vec3 disneySpecular(Material material,vec3 norm,vec3 halfway,vec3 viewDirection,
     float xDotV = dot(tangent,viewDirection);
     float yDotV = dot(bitangent,viewDirection);
 
-    float aspect = sqrt(1 - annisotropy * 0.9);
+    float aspect = sqrt(1 - Annisotropy * 0.9);
     float ax = max(0.001,(material.roughness * material.roughness) / aspect);
     float ay = max(0.001,(material.roughness * material.roughness) * aspect);
 
     float distribution = GTR2Aniso(nDotH,xDotH,yDotH,ax,ay);
     float fresnelHalfWay = schlickFresnel(lDotH);
-    vec3 fresnelResponse = mix(specularStrength * vec3(0.8),vec3(1.0),fresnelHalfWay);
+    vec3 fresnelResponse = mix(SpecularStrength * vec3(0.8),vec3(1.0),fresnelHalfWay);
 
     float geometricAttenuation = smithG_GGX_aniso(nDotL,xDotL,yDotL,ax,ay);
     geometricAttenuation *= smithG_GGX_aniso(nDotV,xDotV,yDotV,ax,ay);
@@ -126,7 +126,7 @@ vec3 brdf(Material material,vec3 norm){
 
     float lDotH = max(dot(lightDirection,halfway),0.0f);
 
-    vec3 diffuse = burleyDiffuse(material,nDotL,nDotV,lDotH) * diffuseColour / PI;
+    vec3 diffuse = burleyDiffuse(material,nDotL,nDotV,lDotH) * DiffuseColour / PI;
     vec3 specular = disneySpecular(material,norm,halfway,viewDirection,lightDirection);
 
     vec3 lighting = diffuse * material.albedo + specular;
