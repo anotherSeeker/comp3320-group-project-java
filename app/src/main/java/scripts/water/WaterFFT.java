@@ -24,9 +24,7 @@ public class WaterFFT
     //noise texture parameters
     static int textureSize = 256;
     
-    public WaterFFT() {
-
-    }
+    public WaterFFT() {}
 
     public static void noiseSetup()
     {
@@ -57,13 +55,40 @@ public class WaterFFT
         System.out.println("Generating 2D Gaussian Noise Texture for waves");
 
         java.util.Random r = new java.util.Random();
-        double noiseX = 0;
-        double noiseY = 0;
+        double noiseX;
+        double noiseY;
 
         ArrayList<NoiseVector> noiseList = new ArrayList<>();
 
         for (int i = 0; i < textureSize*textureSize; i++)
         {
+            //using 0.5 0.5 will get us a gaussian distribution between 0 and 1
+            //this is exactly the same as if we didn't use variance and mean.
+            noiseX = r.nextGaussian() * variance + mean;
+            noiseY = r.nextGaussian() * variance + mean;
+
+            NoiseVector noiseVector = new NoiseVector(noiseX, noiseY);
+            noiseList.add(noiseVector);
+        }
+
+        System.out.println("Finished Generating 2D Gaussian Noise Texture");
+
+        return noiseList;
+    }
+
+    public static ArrayList<NoiseVector> GaussianNoise2D()
+    {
+        System.out.println("Generating 2D Gaussian Noise Texture for waves");
+
+        java.util.Random r = new java.util.Random();
+        double noiseX;
+        double noiseY;
+
+        ArrayList<NoiseVector> noiseList = new ArrayList<>();
+
+        for (int i = 0; i < textureSize*textureSize; i++)
+        {
+            //We are skipping the variance and mean as the intended use will just be between 0 and 1 anyway
             noiseX = r.nextGaussian();
             noiseY = r.nextGaussian();
 
