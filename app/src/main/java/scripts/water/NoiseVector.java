@@ -2,8 +2,8 @@ package scripts.water;
 
 public class NoiseVector
 {
-    double x;
-    double y;
+    public double x;
+    public double y;
 
     public NoiseVector(double x, double y)
     {

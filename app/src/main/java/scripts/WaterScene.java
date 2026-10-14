@@ -11,11 +11,11 @@ import engine.components.Transform;
 
 public class WaterScene extends MonoScript {
     Integer shaderID = Assets.LoadShader(
-            Path.of("assets/shaders/default.vert"),
-            Path.of("assets/shaders/default.frag")
+            Path.of("assets/shaders/water/water.vert"),
+            Path.of("assets/shaders/water/water.frag")
     );
 
-    Integer uvSmoothID = Assets.LoadMesh(Path.of("assets/meshes/WaterTestMesh.obj"));
+    Integer uvSmoothID = Assets.LoadMesh(Path.of("assets/meshes/WaterTestMesh_Bigger.obj"));
 
     Material material = Assets.createMaterial(
             shaderID,

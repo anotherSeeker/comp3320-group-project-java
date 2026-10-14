@@ -50,9 +50,9 @@ public class WaterFFT
 
     }
 
-    public static ArrayList<NoiseVector> GaussianNoise2D(int variance, int mean)
+    public static ArrayList<NoiseVector> genGaussianNoise2D(int variance, int mean)
     {
-        System.out.println("Generating 2D Gaussian Noise Texture for waves");
+        System.out.println("Generating 2D Gaussian Noise Texture for our waves");
 
         java.util.Random r = new java.util.Random();
         double noiseX;
@@ -62,10 +62,9 @@ public class WaterFFT
 
         for (int i = 0; i < textureSize*textureSize; i++)
         {
-            //using 0.5 0.5 will get us a gaussian distribution between 0 and 1
-            //this is exactly the same as if we didn't use variance and mean.
-            noiseX = r.nextGaussian() * variance + mean;
-            noiseY = r.nextGaussian() * variance + mean;
+            //our intended values here are 1 and 0 and so we don't need to do all this
+            noiseX = r.nextGaussian() * Math.sqrt(variance) + mean;
+            noiseY = r.nextGaussian() * Math.sqrt(variance) + mean;
 
             NoiseVector noiseVector = new NoiseVector(noiseX, noiseY);
             noiseList.add(noiseVector);
@@ -76,9 +75,9 @@ public class WaterFFT
         return noiseList;
     }
 
-    public static ArrayList<NoiseVector> GaussianNoise2D()
+    public static ArrayList<NoiseVector> genGaussianNoise2D()
     {
-        System.out.println("Generating 2D Gaussian Noise Texture for waves");
+        System.out.println("Generating 2D Gaussian Noise Texture for our waves");
 
         java.util.Random r = new java.util.Random();
         double noiseX;
@@ -88,7 +87,7 @@ public class WaterFFT
 
         for (int i = 0; i < textureSize*textureSize; i++)
         {
-            //We are skipping the variance and mean as the intended use will just be between 0 and 1 anyway
+            //"two random values with mean 0 and dispersion 1", so we can just use nextGaussian without any extras and it should be correct?
             noiseX = r.nextGaussian();
             noiseY = r.nextGaussian();
 
