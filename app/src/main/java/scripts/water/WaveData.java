@@ -1,4 +1,4 @@
-package scripts;
+package scripts.water;
 
 import org.joml.Vector2f;
 
