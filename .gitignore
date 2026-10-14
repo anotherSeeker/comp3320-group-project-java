@@ -4,5 +4,8 @@
 # Ignore Gradle build output directory
 build
 
+#bin is full of .class files, we don't need to commit those
+bin
+
 # Ignore Kotlin plugin data
 .kotlin
