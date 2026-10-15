@@ -2,46 +2,50 @@ package scripts;
 
 import java.nio.file.Path;
 
-import org.joml.Vector3f;
-
 import dev.dominion.ecs.api.Entity;
+import engine.Mesh;
 import engine.MonoScript;
 import engine.components.Material;
-import engine.components.Transform;
+import scripts.water.WaterFFT;
 
 public class WaterScene extends MonoScript {
-    Integer shaderID = Assets.LoadShader(
-            Path.of("assets/shaders/water/water.vert"),
-            Path.of("assets/shaders/water/water.frag")
+    Integer quadShader = Assets.LoadShader(
+            Path.of("assets/shaders/water/noiseTest.vert"),
+            Path.of("assets/shaders/water/noiseTest.frag")
     );
 
-    Integer uvSmoothID = Assets.LoadMesh(Path.of("assets/meshes/WaterTestMesh_Bigger.obj"));
-
-    Material material = Assets.createMaterial(
-            shaderID,
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg"))
+    Material quadMat = Assets.createMaterial(
+            quadShader,
+            0,
+            0,
+            0,
+            0
     );
+
+    Mesh quadMesh = Mesh.Quad();
 
     Integer skyboxTexture = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/qwantani_dusk_2_puresky_1k.hdr"));
 
     Entity A;
-    Entity B;
+    //Entity B;
 
     @Override
     protected void Start() {
 
-        Scene.SetSkyboxTexture(skyboxTexture);
+        //Scene.SetSkyboxTexture(skyboxTexture);
+        //A = Scene.createObject(uvSmoothID, material);
+        //A.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
 
-        A = Scene.createObject(uvSmoothID, material);
-        A.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
+        //Generate our Gaussian noise array
+        WaterFFT.noiseSetup();
+        
+
     }
 
     @Override
     protected void Update(double deltaTime) {
-
+        //Render it to the screen as a testing step
+        WaterFFT.noiseTestDraw();  
     }
 }
 
