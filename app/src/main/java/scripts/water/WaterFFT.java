@@ -32,7 +32,7 @@ public class WaterFFT
 {
     //noise texture parameters
 
-    public static int textureSize = 4;
+    public static int textureSize = 256;
     //public static int textureSize = 16;
     public static int noiseTexId;
 
@@ -44,32 +44,6 @@ public class WaterFFT
     
 
     public WaterFFT() {}
-
-    public static boolean noiseSetupOld()
-    {
-        genGaussianNoise2D();
-
-        //we want to generate a normally distributed 2d noise texture, we don't need to render this out we just need to generate it and write it to screen with nearest mapping
-        noiseTexId = glGenTextures();
-        glBindTexture(GL_TEXTURE_2D, noiseTexId);
-
-        //texture is clamped in its range
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);	
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        //texture is pure blue outside that range
-        float borderColor[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor); 
-
-        //we are using nearest filtering as this should just be individual pixels of different colours 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-        //actually generating the thing
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, textureSize, textureSize, 0, GL_RG, GL_DOUBLE, noiseArray);
-        glGenerateMipmap(GL_TEXTURE_2D);
-        
-        return true;
-    }
 
     public static boolean noiseSetup()
     {
@@ -104,7 +78,7 @@ public class WaterFFT
             noiseFloats.put(noiseX);
             noiseFloats.put(noiseY);
 
-            System.out.println(noiseX + " : " + noiseY);
+            //System.out.println(noiseX + " : " + noiseY);
         }
 
         noiseBytes.rewind();

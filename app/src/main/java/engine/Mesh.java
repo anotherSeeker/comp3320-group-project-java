@@ -68,7 +68,7 @@ public class Mesh {
 
         glBindVertexArray(VAO);
 
-        int stride = 14 * Float.BYTES;
+        int stride = 14 * Float.BYTES; 
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
