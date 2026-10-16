@@ -1,19 +1,5 @@
 package engine;
 
-import engine.components.Material;
-
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.system.MemoryUtil.memAllocFloat;
-import static org.lwjgl.system.MemoryUtil.memAllocInt;
-import static org.lwjgl.system.MemoryUtil.memFree;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.PointerBuffer;
-
-import org.lwjgl.stb.STBImage;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.assimp.*;
-import static org.lwjgl.assimp.Assimp.*;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,10 +7,33 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.lwjgl.BufferUtils;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.assimp.AIFace;
+import org.lwjgl.assimp.AIMesh;
+import org.lwjgl.assimp.AIScene;
+import org.lwjgl.assimp.AIVector3D;
+import static org.lwjgl.assimp.Assimp.aiGetErrorString;
+import static org.lwjgl.assimp.Assimp.aiImportFile;
+import static org.lwjgl.assimp.Assimp.aiProcess_CalcTangentSpace;
+import static org.lwjgl.assimp.Assimp.aiProcess_GenSmoothNormals;
+import static org.lwjgl.assimp.Assimp.aiProcess_JoinIdenticalVertices;
+import static org.lwjgl.assimp.Assimp.aiProcess_Triangulate;
+import static org.lwjgl.assimp.Assimp.aiReleaseImport;
+import static org.lwjgl.opengl.GL11.GL_RED;
+import static org.lwjgl.opengl.GL11.GL_RGB;
+import static org.lwjgl.opengl.GL11.GL_RGBA;
+import org.lwjgl.stb.STBImage;
+import org.lwjgl.system.MemoryStack;
+import static org.lwjgl.system.MemoryUtil.memAllocFloat;
+import static org.lwjgl.system.MemoryUtil.memAllocInt;
+import static org.lwjgl.system.MemoryUtil.memFree;
+
+import engine.components.Material;
 
 public class AssetManager {
     private Map<Integer, Shader> shaderIndex = new HashMap<>();
@@ -311,6 +320,16 @@ public class AssetManager {
             STBImage.stbi_image_free(data);
 
         }
+
+        return ID;
+    }
+
+    //Sol: I need to create a 2d noise texture that's only using the red and green channels, 
+    public Integer createTexture(ByteBuffer data, int textureSize, int textureFormat, String name) {
+        Integer ID = name.hashCode();
+
+        Texture texture = new Texture(data, textureSize, textureFormat);
+        textureIndex.put(ID, texture);
 
         return ID;
     }
