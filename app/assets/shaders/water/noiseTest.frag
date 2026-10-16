@@ -11,5 +11,10 @@ layout(location = 0) out vec4 color;
 void main() 
 {
     //color = vec4(1,1,0,1);
+
     color = texture(Albedo, outTexCoord);
+
+    //vec4 texColour = texture(Albedo, outTexCoord);
+    color = color.x < 0.0f ? color.z -= color.x; : color;
+    color = color.y < 0.0f ? color.z -= color.y; : color;
 }

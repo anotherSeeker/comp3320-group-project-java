@@ -2,24 +2,7 @@ package scripts.water;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
-import org.lwjgl.BufferUtils;
-
-import static org.lwjgl.opengl.GL11.GL_DOUBLE;
-import static org.lwjgl.opengl.GL11.GL_NEAREST;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_BORDER_COLOR;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
-import static org.lwjgl.opengl.GL11.glBindTexture;
-import static org.lwjgl.opengl.GL11.glGenTextures;
-import static org.lwjgl.opengl.GL11.glTexImage2D;
-import static org.lwjgl.opengl.GL11.glTexParameterfv;
-import static org.lwjgl.opengl.GL11.glTexParameteri;
-import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
-import static org.lwjgl.opengl.GL30.GL_RG;
-import static org.lwjgl.opengl.GL30.glGenerateMipmap;
+import static org.lwjgl.opengl.GL30.*;
 
 import engine.AssetManager;
 
@@ -32,7 +15,7 @@ public class WaterFFT
 {
     //noise texture parameters
 
-    public static int textureSize = 256;
+    public static int textureSize = 128;
     //public static int textureSize = 16;
     public static int noiseTexId;
 
@@ -72,8 +55,8 @@ public class WaterFFT
         for (int i = 0; i < textureSize*textureSize; i++)
         {
             //values between -1 and 1 normally distributed
-            noiseX = (float) r.nextGaussian();
-            noiseY = (float) r.nextGaussian();
+            noiseX = (float) (r.nextGaussian());
+            noiseY = (float) (r.nextGaussian());
 
             noiseFloats.put(noiseX);
             noiseFloats.put(noiseY);
@@ -88,31 +71,8 @@ public class WaterFFT
         return noiseFloats;
     }
 
-    // public static double[] genGaussianNoise2D()
-    // {
-    //     System.out.println("Generating 2D Gaussian Noise values for our waves");
+    public void calculateJonswap()
+    {
 
-    //     java.util.Random r = new java.util.Random();
-    //     double noiseX;
-    //     double noiseY;
-
-    //     noiseArray = new double[textureSize*textureSize*2];
-
-    //     for (int i = 0; i < textureSize*textureSize; i++)
-    //     {
-    //         //values between -1 and 1 normally distributed
-    //         noiseX = r.nextGaussian();
-    //         noiseY = r.nextGaussian();
-
-    //         //rendering this as a texture will have a lot of low values due to our distribution, test it scaled as well later and we probably don't want to treat this data as a texture anyway?
-    //         noiseArray[i*2] = noiseX;
-    //         noiseArray[i*2 + 1] = noiseY;
-
-    //         System.out.println(noiseX + " : " + noiseY);
-    //     }
-
-    //     System.out.println("Finished Generating 2D Gaussian Noise values");
-
-    //     return noiseArray;
-    // }
+    }
 }

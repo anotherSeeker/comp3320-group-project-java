@@ -26,7 +26,7 @@ public class WaterScene extends MonoScript {
         //Generate our Gaussian noise array
         WaterFFT.noiseSetup();
         genNoiseQuad();
-        //makeWaterPlane();
+        makeWaterPlane();
 
         Scene.SetSkyboxTexture(skyboxTexture);
     }
@@ -78,7 +78,7 @@ public class WaterScene extends MonoScript {
         );
 
         WaterPlane = Scene.createObject(waterMeshID, waterMat);
-        WaterPlane.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
+        WaterPlane.get(Transform.class).setPosition(new Vector3f(0, 0, 0));
     }
 }
 
