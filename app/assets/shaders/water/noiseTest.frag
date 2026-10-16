@@ -10,6 +10,6 @@ layout(location = 0) out vec4 color;
 
 void main() 
 {
-    //color = vec3(1,1,0,1);
-    color = texture(Albedo, outTexCoord);
+    color = vec3(1,1,0,1);
+    //color = texture(Albedo, outTexCoord);
 }
