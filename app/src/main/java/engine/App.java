@@ -15,9 +15,15 @@ public class App {
     private SceneGraph scene;
     private InputManager input;
 
+    int initWidth = 0;
+    int initHeight = 0;
+
     private ArrayList<MonoScript> scripts = new ArrayList<>();
 
     public boolean init(int width, int height, CharSequence title) {
+        initWidth = width;
+        initHeight = height;
+
         GLFWErrorCallback.createPrint(System.err).set();
 
         glfwInit();
@@ -63,6 +69,7 @@ public class App {
     }
 
     public void run() {
+        glViewport(0, 0, initWidth, initHeight);
         scripts.stream().forEach(script -> script.Start());
 
         double currentTime = glfwGetTime();
