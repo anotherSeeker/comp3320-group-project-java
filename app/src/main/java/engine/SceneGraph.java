@@ -64,6 +64,21 @@ public class SceneGraph {
         return projection.mul(view);
     }
 
+    public Matrix4f computeViewMatrix () {
+        Matrix4f view = new Matrix4f()
+                .rotate(cameraTransform.orientation.conjugate())
+                .translate(-cameraTransform.position.x,
+                           -cameraTransform.position.y,
+                           -cameraTransform.position.z
+                );
+        return view;
+    }
+
+    public Matrix4f computeViewportMatrix (Matrix4f viewMatrix) {
+        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
+        return projection.mul(viewMatrix);
+    }
+
     public Matrix4f computeSkyboxMatrix() {
         Matrix4f view = new Matrix4f()
                 .rotate(cameraTransform.orientation.conjugate()).invert();
@@ -143,13 +158,21 @@ public class SceneGraph {
     
         glDepthMask(false);
         glEnable(GL_BLEND);
-        Matrix4f viewportMatrix = computeViewportMatrix();
+
+        Matrix4f viewMatrix = computeViewMatrix();
+        Matrix4f viewportMatrix = computeViewportMatrix(viewMatrix);
+
         for (var iter = emitters.iterator(); iter.hasNext() != false;) {
             var object = iter.next();
             glBlendFunc(GL_SRC_ALPHA, object.comp().baseParticle.blendFunction);
-            
+
+            object.comp().baseParticle.material.shader.use();
+
             for (Particle p : object.comp().particles) {
-                p.material.shader.use();
+
+                viewMatrix.transpose3x3(p.transform.model);
+                p.setScale();
+
                 p.mesh.bind();
                 p.material.shader.setMatrix4("CameraMatrix", viewportMatrix);
                 p.material.shader.setTexture("Albedo", p.material.albedoMap, 0);
@@ -176,9 +199,7 @@ public class SceneGraph {
 
         Transform transform = new Transform(new Matrix4f());
 
-        transform.model.scale(scale);
-
-        Particle baseParticle = new Particle(mesh, material.shader, material.albedoMap, transform.model, velocity, ttl, blendFunction);
+        Particle baseParticle = new Particle(mesh, material.shader, material.albedoMap, transform.model, velocity, ttl, scale, blendFunction);
         ExampleParticleEmitter particleEmitter = new ExampleParticleEmitter(baseParticle, maxParticles, creationPeriodMillis);
 
         return ECS.createEntity(particleEmitter);
