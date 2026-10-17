@@ -11,17 +11,19 @@ import org.joml.Matrix4f;
 public class Particle extends GameObject {
     public Transform transform;
     public float scale;
+    public float scaleFinal;
     public Vector3f velocity;
     public long ttl;
     public int blendFunction;
 
-    public Particle (Mesh mesh, Shader shader, Texture texture, Matrix4f model, Vector3f velocity, long ttl, float scale, int blendFunction) {
+    public Particle (Mesh mesh, Shader shader, Texture texture, Matrix4f model, Vector3f velocity, long ttl, float scale, float scaleMax, int blendFunction) {
         super(mesh, new Material());
         this.material.shader = shader;
         this.material.albedoMap = texture;
         transform = new Transform(model);
         this.velocity = new Vector3f(velocity);
         this.scale = scale;
+        this.scaleFinal = scaleMax;
         setScale(scale);
         this.ttl = ttl;
         this.blendFunction = blendFunction;
@@ -32,6 +34,7 @@ public class Particle extends GameObject {
         this.transform = new Transform(baseParticle.transform.model);
         this.velocity = new Vector3f(baseParticle.velocity);
         this.scale = baseParticle.scale;
+        this.scaleFinal = baseParticle.scaleFinal;
         this.ttl = baseParticle.ttl;
         this.blendFunction = baseParticle.blendFunction;
     }
