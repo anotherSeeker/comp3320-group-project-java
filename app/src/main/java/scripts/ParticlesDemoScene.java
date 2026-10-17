@@ -13,23 +13,21 @@ import engine.components.*;
 import engine.particles.*;
 
 public class ParticlesDemoScene extends MonoScript {
-    public String pathPrefix = "app/";
-
     Integer particleShaderID = Assets.LoadShader(
-            Path.of(pathPrefix + "assets/shaders/particles/particleShader.vert"),
-            Path.of(pathPrefix + "assets/shaders/particles/particleShader.frag")
+            Path.of("assets/shaders/particles/particleShader.vert"),
+            Path.of("assets/shaders/particles/particleShader.frag")
     );
 
     Integer particleID = Assets.LoadMesh(Mesh.Quad(), "particle_mesh");
 
     Material particle1Material = Assets.createMaterial(
             particleShaderID,
-            Assets.LoadTexture(Path.of(pathPrefix + "assets/textures/particles/particle.png"))
+            Assets.LoadTexture(Path.of("assets/textures/particles/particle.png"))
     );
 
     Material particle2Material = Assets.createMaterial(
             particleShaderID,
-            Assets.LoadTexture(Path.of(pathPrefix + "assets/textures/particles/particle_tmp.png"))
+            Assets.LoadTexture(Path.of("assets/textures/particles/particle_tmp.png"))
     );
 
     Entity P1;
@@ -46,7 +44,7 @@ public class ParticlesDemoScene extends MonoScript {
         float P1_scale = 0.3f;
         int P1_blendFunction = GL_ONE_MINUS_SRC_ALPHA;
 
-        Vector3f P2_particleVelocity = new Vector3f(0.1f, 0.4f, 0.0f);
+        Vector3f P2_particleVelocity = new Vector3f(0.0f, 1.0f, 0.0f);
         long P2_ttl = 20000;
         int P2_maxParticles = 15;
         long P2_creationPeriodMillis = 300;
@@ -71,12 +69,10 @@ public class ParticlesDemoScene extends MonoScript {
 
 
         Scene.setParticleEmitters(new ExampleParticleEmitter[] {P1.get(ExampleParticleEmitter.class), P2.get(ExampleParticleEmitter.class)});
-
     }
 
     @Override
     protected void Update(double deltaTime) {
-        //Scene.getParticleEmitters()[0].update((long)(deltaTime * 10000));
         for (ExampleParticleEmitter PE : Scene.getParticleEmitters()) {
             PE.update((long)(deltaTime * 10000));
         }
