@@ -49,7 +49,7 @@ public class ParticlesDemoScene extends MonoScript {
         int P2_maxParticles = 15;
         long P2_creationPeriodMillis = 300;
         float P2_range = 0.3f;
-        float P2_scale = 0.5f;
+        float P2_scale = 0.1f;
         int P2_blendFunction = GL_ONE_MINUS_SRC_ALPHA;
 
         P1 = Scene.createParticleEmitter(particleID, particle1Material, P1_scale, P1_maxParticles, P1_creationPeriodMillis, P1_particleVelocity, P1_ttl, P1_blendFunction);
