@@ -80,10 +80,10 @@ public class ExampleParticleEmitter extends ParticleEmitter {
         float scaleInc = sign * (float)Math.random() * this.scaleRndRange;
         particle.transform.position.add(positionInc, positionInc, positionInc);
         particle.velocity.add(velocityInc, velocityInc, velocityInc);
-        particle.transform.model.scale(scaleInc);
+        particle.scale = scaleInc;
         particles.add(particle);                                                          
     }
-
+    
     @Override 
     public void cleanup () {
         for (Particle p : getParticles()) {
