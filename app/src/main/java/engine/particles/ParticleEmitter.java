@@ -9,9 +9,11 @@ public abstract class ParticleEmitter {
     public boolean active;
     public long creationPeriodMillis;
     public long LastCreationTime;
-    public float velocityRndRange;
+    public float velocityRndRangeMin;
+    public float velocityRndRangeMax;
     public float positionRndRange;
-    public float scaleRndRange;
+    public float scaleRndRangeMin;
+    public float scaleRndRangeMax;
 
     
 
@@ -27,22 +29,26 @@ public abstract class ParticleEmitter {
         this.creationPeriodMillis = creationPeriodMillis;
     }
 
-    public void setAllRndRange (float rndRange) {
-        this.velocityRndRange = rndRange;
-        this.positionRndRange = rndRange;
-        this.scaleRndRange = rndRange;
+    public void setAllRndRange (float rndRangeMin, float rndRangeMax) {
+        this.velocityRndRangeMin = rndRangeMin;
+        this.velocityRndRangeMax = rndRangeMax;
+        this.positionRndRange = rndRangeMax;
+        this.scaleRndRangeMin = rndRangeMin;
+        this.scaleRndRangeMax = rndRangeMax;
     }
 
-    public void setSpeedRndRange (float speedRndRange) {
-        this.velocityRndRange = speedRndRange;
+    public void setVelocityRndRange (float velocityRndRangeMin, float velocityRndRangeMax) {
+        this.velocityRndRangeMin = velocityRndRangeMin;
+        this.velocityRndRangeMax = velocityRndRangeMax;
     }
 
     public void setPositionRndRange (float positionRndRange) {
         this.positionRndRange = positionRndRange;
     }
 
-    public void setScaleRndRange (float scaleRndRange) {
-        this.scaleRndRange = scaleRndRange;
+    public void setScaleRndRange (float scaleRndRangeMin, float scaleRndRangeMax) {
+        this.scaleRndRangeMin = scaleRndRangeMin;
+        this.scaleRndRangeMax = scaleRndRangeMax;
     }
 
     public void update () {};
