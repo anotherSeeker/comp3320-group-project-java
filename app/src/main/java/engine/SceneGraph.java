@@ -16,7 +16,8 @@ import org.joml.Vector3f;
 import dev.dominion.ecs.api.Dominion;
 import dev.dominion.ecs.api.Entity;
 import engine.components.*;
-import engine.particles.ExampleParticleEmitter;
+import engine.particles.BubbleParticleEmitter;
+import engine.particles.GenericParticleEmitter;
 import engine.particles.Particle;
 
 public class SceneGraph {
@@ -24,7 +25,13 @@ public class SceneGraph {
         System.setProperty("dominion.show-banner", "false");
     }
 
-    private ExampleParticleEmitter[] particleEmitters;
+    public enum EmitterType {
+        GENERIC, BUBBLE
+    }
+
+    private int numOfEmitterTypes = EmitterType.values().length;
+    private GenericParticleEmitter[] genericParticleEmitters;
+    private BubbleParticleEmitter[] bubbleParticleEmitters;
 
     private CubeTexture skyboxTexture = null;
     private Shader skyboxShader;
@@ -154,30 +161,53 @@ public class SceneGraph {
 
     // Particle methods
     public void drawParticles () {
-        var emitters = ECS.findEntitiesWith(ExampleParticleEmitter.class); 
-    
+        var genericEmitters = ECS.findEntitiesWith(GenericParticleEmitter.class);
+        var bubbleEmitters = ECS.findEntitiesWith(BubbleParticleEmitter.class);
+
         glDepthMask(false);
         glEnable(GL_BLEND);
 
         Matrix4f viewMatrix = computeViewMatrix();
         Matrix4f viewportMatrix = computeViewportMatrix(viewMatrix);
 
-        for (var iter = emitters.iterator(); iter.hasNext() != false;) {
-            var object = iter.next();
-            glBlendFunc(GL_SRC_ALPHA, object.comp().baseParticle.blendFunction);
+        for (int i = 0; i < numOfEmitterTypes; i++) {
+            if (i == 0) {
+                for (var iter = genericEmitters.iterator(); iter.hasNext() != false;) {
+                    var object = iter.next();
+                    glBlendFunc(GL_SRC_ALPHA, object.comp().baseParticle.blendFunction);
 
-            object.comp().baseParticle.material.shader.use();
+                    object.comp().baseParticle.material.shader.use();
 
-            for (Particle p : object.comp().particles) {
+                    for (Particle p : object.comp().particles) {
+                        viewMatrix.transpose3x3(p.transform.model);
+                        p.setScale();
 
-                viewMatrix.transpose3x3(p.transform.model);
-                p.setScale();
+                        p.mesh.bind();
+                        p.material.shader.setMatrix4("CameraMatrix", viewportMatrix);
+                        p.material.shader.setTexture("Albedo", p.material.albedoMap, 0);
+                        p.material.shader.setMatrix4("Model", p.transform.model);
+                        p.mesh.drawParticles();
+                    }
+                }   
+            }
+            else if (i == 1) {
+                for (var iter = bubbleEmitters.iterator(); iter.hasNext() != false;) {
+                    var object = iter.next();
+                    glBlendFunc(GL_SRC_ALPHA, object.comp().baseParticle.blendFunction);
 
-                p.mesh.bind();
-                p.material.shader.setMatrix4("CameraMatrix", viewportMatrix);
-                p.material.shader.setTexture("Albedo", p.material.albedoMap, 0);
-                p.material.shader.setMatrix4("Model", p.transform.model);
-                p.mesh.drawParticles();
+                    object.comp().baseParticle.material.shader.use();
+
+                    for (Particle p : object.comp().particles) {
+                        viewMatrix.transpose3x3(p.transform.model);
+                        p.setScale();
+
+                        p.mesh.bind();
+                        p.material.shader.setMatrix4("CameraMatrix", viewportMatrix);
+                        p.material.shader.setTexture("Albedo", p.material.albedoMap, 0);
+                        p.material.shader.setMatrix4("Model", p.transform.model);
+                        p.mesh.drawParticles();
+                    }
+                }   
             }
         }
 
@@ -186,22 +216,41 @@ public class SceneGraph {
         glDepthMask(true);
     }
 
-    public void setParticleEmitters (ExampleParticleEmitter[] particleEmitters) {
-        this.particleEmitters = particleEmitters;
+    // Generic particle emitters
+    public void setGenericParticleEmitters (GenericParticleEmitter[] particleEmitters) {
+        this.genericParticleEmitters = particleEmitters;
+    }
+    public GenericParticleEmitter[] getGenericParticleEmitters () {
+        return genericParticleEmitters;
+    }
+    // Bubble particle emiiters
+    public void setBubbleParticleEmitters (BubbleParticleEmitter[] particleEmitters) {
+        this.bubbleParticleEmitters = particleEmitters;
+    }
+    public BubbleParticleEmitter[] getBubbleParticleEmitters () {
+        return bubbleParticleEmitters;
     }
 
-    public ExampleParticleEmitter[] getParticleEmitters () {
-        return particleEmitters;
-    }
-
-    public Entity createParticleEmitter (Integer meshID, Material material, float scale, int maxParticles, long creationPeriodMillis, Vector3f velocity, long ttl, int blendFunction) {
+    public Entity createParticleEmitter (EmitterType emitterType, Integer meshID, Material material, float initScale, float scale, int maxParticles, long creationPeriodMillis, Vector3f velocity, long ttl, int blendFunction) {
         Mesh mesh = assetManager.getMesh(meshID);
 
         Transform transform = new Transform(new Matrix4f());
 
-        Particle baseParticle = new Particle(mesh, material.shader, material.albedoMap, transform.model, velocity, ttl, scale, blendFunction);
-        ExampleParticleEmitter particleEmitter = new ExampleParticleEmitter(baseParticle, maxParticles, creationPeriodMillis);
-
-        return ECS.createEntity(particleEmitter);
+        switch (emitterType) {
+            case GENERIC: {
+                Particle baseParticle = new Particle(mesh, material.shader, material.albedoMap, transform.model, velocity, ttl, initScale, scale, blendFunction);
+                GenericParticleEmitter particleEmitter = new GenericParticleEmitter(baseParticle, maxParticles, creationPeriodMillis);
+                return ECS.createEntity(particleEmitter);
+            }
+            case BUBBLE: {
+                BubbleParticleEmitter particleEmitter = new BubbleParticleEmitter(mesh, material.shader, material.albedoMap, transform.model, ttl, velocity, initScale, scale, blendFunction, maxParticles, creationPeriodMillis);
+                return ECS.createEntity(particleEmitter);
+            }
+            default: {
+                Particle baseParticle = new Particle(mesh, material.shader, material.albedoMap, transform.model, velocity, ttl, initScale, scale, blendFunction);
+                GenericParticleEmitter particleEmitter = new GenericParticleEmitter(baseParticle, maxParticles, creationPeriodMillis);
+                return ECS.createEntity(particleEmitter);
+            }
+        }
     }
 }
