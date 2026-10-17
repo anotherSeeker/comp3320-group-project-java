@@ -39,8 +39,6 @@ public class AssetManager {
     public Integer prefilterShader = "PREFILTER".hashCode();
     public Integer brdfIntShader = "BRDF_INT".hashCode();
 
-    public String pathPrefix = "app/";
-
     private AssetManager() {
 
     }
@@ -81,32 +79,32 @@ public class AssetManager {
 
         this.loadInternalShader(
                 cubemapShader,
-                Path.of(pathPrefix + "assets/shaders/internal/cubemap.vert"),
-                Path.of(pathPrefix + "assets/shaders/internal/cubemap.frag")
+                Path.of("assets/shaders/internal/cubemap.vert"),
+                Path.of("assets/shaders/internal/cubemap.frag")
         );
 
         this.loadInternalShader(
                 skyboxShader,
-                Path.of(pathPrefix + "assets/shaders/internal/skybox.vert"),
-                Path.of(pathPrefix + "assets/shaders/internal/skybox.frag")
+                Path.of("assets/shaders/internal/skybox.vert"),
+                Path.of("assets/shaders/internal/skybox.frag")
         );
 
         this.loadInternalShader(
                 irradianceShader,
-                Path.of(pathPrefix + "assets/shaders/internal/cubemap.vert"),
-                Path.of(pathPrefix + "assets/shaders/internal/irradiance.frag")
+                Path.of("assets/shaders/internal/cubemap.vert"),
+                Path.of("assets/shaders/internal/irradiance.frag")
         );
 
         this.loadInternalShader(
                 prefilterShader,
-                Path.of(pathPrefix + "assets/shaders/internal/cubemap.vert"),
-                Path.of(pathPrefix + "assets/shaders/internal/prefilter.frag")
+                Path.of("assets/shaders/internal/cubemap.vert"),
+                Path.of("assets/shaders/internal/prefilter.frag")
         );
 
         this.loadInternalShader(
                 brdfIntShader,
-                Path.of(pathPrefix + "assets/shaders/internal/brdfInt.vert"),
-                Path.of(pathPrefix + "assets/shaders/internal/brdfInt.frag")
+                Path.of("assets/shaders/internal/brdfInt.vert"),
+                Path.of("assets/shaders/internal/brdfInt.frag")
         );
 
         data.flip();
