@@ -9,11 +9,22 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 import java.util.ArrayList;
 
+import imgui.ImGui;
+import imgui.ImGuiIO;
+import imgui.gl3.ImGuiImplGl3;
+import imgui.glfw.ImGuiImplGlfw;
+
+import static imgui.gl3.ImGuiImplGl3.*;
+import static imgui.glfw.ImGuiImplGlfw.*;
+
 public class App {
     private long window;
     private AssetManager assetManager = AssetManager.get();
     private SceneGraph scene;
     private InputManager input;
+
+    private ImGuiImplGlfw imGuiGlfw;
+    private ImGuiImplGl3 imGuiGL3;
 
     private ArrayList<MonoScript> scripts = new ArrayList<>();
 
@@ -33,6 +44,13 @@ public class App {
 
         glfwMakeContextCurrent(window);
         GL.createCapabilities();
+
+        ImGui.createContext();
+        imGuiGlfw = new ImGuiImplGlfw();
+        imGuiGL3 = new ImGuiImplGl3();
+
+        imGuiGlfw.init(window, true);
+        imGuiGL3.init("#version 430 core");
 
         glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
         glViewport(0, 0, width, height);
@@ -76,11 +94,21 @@ public class App {
             deltaTime = currentTime - previousTime;
             previousTime = currentTime;
 
+            imGuiGlfw.newFrame();
+            ImGui.newFrame();
+
             for (int i = 0; i < scripts.size(); i++) {
                 scripts.get(i).update(deltaTime);
             }
 
+            ImGui.begin("hi!!");
+
+            ImGui.end();
+
             scene.draw();
+
+            ImGui.render();
+            imGuiGL3.renderDrawData(ImGui.getDrawData());
 
             glfwSwapBuffers(window);
             glfwPollEvents();
@@ -89,6 +117,10 @@ public class App {
 
     public void close() {
         assetManager.cleanup();
+
+        imGuiGL3.dispose();
+        imGuiGlfw.dispose();
+        ImGui.destroyContext();
 
         glfwDestroyWindow(window);
         glfwTerminate();

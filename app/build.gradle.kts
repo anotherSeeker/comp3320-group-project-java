@@ -20,6 +20,8 @@ repositories {
 val lwjglVersion = "3.4.3"
 val lwjglNatives = "natives-windows"
 
+val imguiVersion = "1.86.10"
+
 dependencies {
 	implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
 
@@ -39,6 +41,11 @@ dependencies {
     implementation("org.joml:joml:1.10.9")
 
     implementation("dev.dominion.ecs:dominion-ecs-engine:0.9.0")
+
+    implementation("io.github.spair:imgui-java-binding:$imguiVersion")
+    implementation("io.github.spair:imgui-java-lwjgl3:$imguiVersion")
+    
+    implementation("io.github.spair:imgui-java-natives-windows:$imguiVersion")
 }
 
 testing {
