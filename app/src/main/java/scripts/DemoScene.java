@@ -10,6 +10,7 @@ import dev.dominion.ecs.api.Entity;
 
 import engine.*;
 import engine.components.Material;
+import engine.components.MaterialEntry;
 import engine.components.Transform;
 
 import imgui.ImGui;
@@ -23,21 +24,31 @@ public class DemoScene extends MonoScript {
 
     Integer uvSmoothID = Assets.LoadMesh(Path.of("assets/meshes/uvsmooth.obj"));
 
-    Material tile_material = Assets.createMaterial(
-            shaderID,
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg"))
+    //@formatter:off
+    Material tile_material = Assets.createMaterial(new MaterialEntry()
+        .add("SHADER", shaderID)
+        .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")))
+        .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")))
+        .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")))
+        .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg")))
     );
 
-    Material brick_Material = Assets.createMaterial(
-            shaderID,
-            Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_Color.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_Roughness.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_AmbientOcclusion.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_NormalGL.jpg"))
+    Material brick_Material = Assets.createMaterial(new MaterialEntry()
+        .add("SHADER", shaderID)
+        .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_Color.jpg")))
+        .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_Roughness.jpg")))
+        .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_AmbientOcclusion.jpg")))
+        .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_NormalGL.jpg")))
     );
+
+    Material concrete_Material = Assets.createMaterial(new MaterialEntry()
+        .add("SHADER", shaderID)
+        .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_Color.jpg")))
+        .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_Roughness.jpg")))
+        .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_AmbientOcclusion.jpg")))
+        .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_NormalGL.jpg")))
+    );
+    //@formatter:on
 
     Integer skyboxTexture = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/qwantani_dusk_2_puresky_1k.hdr"));
     Integer barSkybox = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/warm_restaurant_night_1k.hdr"));
@@ -47,6 +58,8 @@ public class DemoScene extends MonoScript {
 
     Entity A;
     Entity B;
+    Entity C;
+    Entity D;
 
     @Override
     protected void Start() {
@@ -57,6 +70,11 @@ public class DemoScene extends MonoScript {
 
         B = Scene.createObject(uvSmoothID, brick_Material);
         B.get(Transform.class).setPosition(new Vector3f(-5f, 0, 0));
+
+        C = Scene.createObject(uvSmoothID, concrete_Material);
+        C.get(Transform.class).setPosition(new Vector3f(-10f, 0, 0));
+
+        ImGui.setNextWindowPos(0.5f, 0.5f);
     }
 
     private void swapSkybox() {
@@ -81,6 +99,19 @@ public class DemoScene extends MonoScript {
 
     float[] lightDirection = new float[] { 1, 1, 1 };
 
+    void updateMaterial(Material material) {
+        material.roughness = roughness[0];
+        material.ambientOcclusion = ambientOcclusion[0];
+        material.subsurface = subsurface[0];
+        material.sheen = sheen[0];
+        material.annisotropy = annisotropy[0];
+        material.specularStrength = specularStrength[0];
+
+        material.sheenColour.x = sheenColour[0];
+        material.sheenColour.y = sheenColour[1];
+        material.sheenColour.z = sheenColour[2];
+    }
+
     @Override
     protected void Update(double deltaTime) {
         if (pressed == false && Input.IsKeyDown(GLFW_KEY_F)) {
@@ -95,36 +126,18 @@ public class DemoScene extends MonoScript {
         ImGui.sliderFloat("roughness", roughness, 0, 1);
         ImGui.sliderFloat("ambientOcclusion", ambientOcclusion, 0, 1);
         ImGui.sliderFloat("subsurface", subsurface, 0, 1);
-        ImGui.sliderFloat("sheen", sheen, 0, 1);
+        ImGui.sliderFloat("sheen", sheen, 0, 200);
         ImGui.sliderFloat("annisotropy", annisotropy, 0, 1);
         ImGui.sliderFloat("specularStrength", specularStrength, 0, 1);
 
         ImGui.colorEdit3("sheenColour", sheenColour);
         ImGui.colorEdit3("lightColour", lightColour);
 
-        ImGui.sliderFloat3("lightDirection", lightDirection, -1, 1);
+        ImGui.sliderFloat3("normalised light position", lightDirection, -1, 1);
 
-        tile_material.roughness = roughness[0];
-        tile_material.ambientOcclusion = ambientOcclusion[0];
-        tile_material.subsurface = subsurface[0];
-        tile_material.sheen = sheen[0];
-        tile_material.annisotropy = annisotropy[0];
-        tile_material.specularStrength = specularStrength[0];
-
-        tile_material.sheenColour.x = sheenColour[0];
-        tile_material.sheenColour.y = sheenColour[1];
-        tile_material.sheenColour.z = sheenColour[2];
-
-        brick_Material.roughness = roughness[0];
-        brick_Material.ambientOcclusion = ambientOcclusion[0];
-        brick_Material.subsurface = subsurface[0];
-        brick_Material.sheen = sheen[0];
-        brick_Material.annisotropy = annisotropy[0];
-        brick_Material.specularStrength = specularStrength[0];
-
-        brick_Material.sheenColour.x = sheenColour[0];
-        brick_Material.sheenColour.y = sheenColour[1];
-        brick_Material.sheenColour.z = sheenColour[2];
+        updateMaterial(tile_material);
+        updateMaterial(brick_Material);
+        updateMaterial(concrete_Material);
 
         Scene.lightColour.x = lightColour[0];
         Scene.lightColour.y = lightColour[1];

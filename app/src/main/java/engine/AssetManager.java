@@ -1,6 +1,7 @@
 package engine;
 
 import engine.components.Material;
+import engine.components.MaterialEntry;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.memAllocFloat;
@@ -33,6 +34,10 @@ public class AssetManager {
     private Map<Integer, CubeTexture> cubeTextureIndex = new HashMap<>();
 
     public Integer defaultTexture = "DEFAULT".hashCode();
+    public Integer whiteTexture = "WHITE".hashCode();
+    public Integer blackTexture = "BLACK".hashCode();
+    public Integer normalTexture = "NORMAL".hashCode();
+
     public Integer cubemapShader = "CUBEMAP".hashCode();
     public Integer skyboxShader = "SKYBOX".hashCode();
     public Integer irradianceShader = "IRRADIANCE".hashCode();
@@ -77,6 +82,26 @@ public class AssetManager {
             }
         }
 
+        ByteBuffer whiteData = BufferUtils.createByteBuffer(width * height);
+
+        for (int i = 0; i < width * height; i++) {
+            whiteData.put((byte) 0xFF);
+        }
+
+        ByteBuffer blackData = BufferUtils.createByteBuffer(width * height);
+
+        for (int i = 0; i < width * height; i++) {
+            blackData.put((byte) 0xFF);
+        }
+
+        ByteBuffer normalData = BufferUtils.createByteBuffer(width * height * 3);
+
+        for (int i = 0; i < width * height; i++) {
+            normalData.put((byte) 0x80);
+            normalData.put((byte) 0x80);
+            normalData.put((byte) 0xFF);
+        }
+
         this.loadInternalShader(
                 cubemapShader,
                 Path.of("assets/shaders/internal/cubemap.vert"),
@@ -110,6 +135,9 @@ public class AssetManager {
         data.flip();
 
         textureIndex.put(defaultTexture, new Texture(data, width, height, GL_RGBA));
+        textureIndex.put(whiteTexture, new Texture(whiteData, width, height, GL_R));
+        textureIndex.put(blackTexture, new Texture(blackData, width, height, GL_R));
+        textureIndex.put(normalTexture, new Texture(normalData, width, height, GL_RGB));
     }
 
     private String readFile(Path filePath) {
@@ -359,15 +387,17 @@ public class AssetManager {
         return cubeTextureIndex.get(assetID);
     }
 
-    public Material createMaterial(
-            Integer shaderID, Integer albedoID, Integer roughnessID, Integer ambientOcclusionID, Integer normalID
-    ) {
+    public Material createMaterial(MaterialEntry materialEntry) {
+
         Material material = new Material();
-        material.shader = getShader(shaderID);
-        material.albedoMap = getTexture(albedoID);
-        material.roughnessMap = getTexture(roughnessID);
-        material.ambientOcclusionMap = getTexture(ambientOcclusionID);
-        material.normalMap = getTexture(normalID);
+        material.shader = getShader(materialEntry.shaderID);
+
+        // @formatter:off
+        material.albedoMap              = getTexture(materialEntry.albedoID           != null ? materialEntry.albedoID : defaultTexture);
+        material.roughnessMap           = getTexture(materialEntry.roughnessID        != null ? materialEntry.roughnessID : blackTexture);
+        material.ambientOcclusionMap    = getTexture(materialEntry.ambientOcclusionID != null ? materialEntry.ambientOcclusionID : whiteTexture);
+        material.normalMap              = getTexture(materialEntry.normalID           != null ? materialEntry.normalID : normalTexture);
+        // @formatter:on
 
         return material;
     }
