@@ -1,7 +1,6 @@
 package scripts;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_F;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_X;
 
 import java.nio.file.Path;
 

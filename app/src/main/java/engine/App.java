@@ -10,12 +10,8 @@ import static org.lwjgl.system.MemoryUtil.*;
 import java.util.ArrayList;
 
 import imgui.ImGui;
-import imgui.ImGuiIO;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
-
-import static imgui.gl3.ImGuiImplGl3.*;
-import static imgui.glfw.ImGuiImplGlfw.*;
 
 public class App {
     private long window;
@@ -28,7 +24,12 @@ public class App {
 
     private ArrayList<MonoScript> scripts = new ArrayList<>();
 
+    private int initWidth;
+    private int initHeight;
+
     public boolean init(int width, int height, CharSequence title) {
+        initWidth = width;
+        initHeight = height;
         GLFWErrorCallback.createPrint(System.err).set();
 
         glfwInit();
@@ -81,6 +82,7 @@ public class App {
     }
 
     public void run() {
+        glViewport(0, 0, initWidth, initHeight);
         scripts.stream().forEach(script -> script.Start());
 
         double currentTime = glfwGetTime();
