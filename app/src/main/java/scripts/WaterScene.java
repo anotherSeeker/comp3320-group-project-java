@@ -26,7 +26,7 @@ public class WaterScene extends MonoScript {
         //Generate our Gaussian noise array
         WaterFFT.noiseSetup();
         genNoiseQuad();
-        makeWaterPlane();
+        //makeWaterPlane();
 
         Scene.SetSkyboxTexture(skyboxTexture);
     }
