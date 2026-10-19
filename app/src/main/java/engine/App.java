@@ -70,6 +70,8 @@ public class App {
                 height
         );
 
+        pipeline.attach(assetManager.getShader(assetManager.edgePreprocess));
+
         glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
             glViewport(0, 0, new_width, new_height);
             pipeline.onResize(new_width, new_height);
@@ -115,6 +117,7 @@ public class App {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             scene.draw();
 
+            pipeline.process();
             pipeline.render();
 
             ImGui.render();

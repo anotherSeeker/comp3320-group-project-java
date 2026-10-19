@@ -2,6 +2,8 @@ package engine;
 
 import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL43.*;
+import static org.lwjgl.opengl.GL40.*;
 
 import java.nio.FloatBuffer;
 
@@ -20,6 +22,7 @@ public class Shader {
         if (glGetShaderi(vertexShader, GL_COMPILE_STATUS) == GL_FALSE) {
             System.out.println("VERTEX");
             System.err.println(glGetShaderInfoLog(vertexShader, 1024));
+            return false;
         }
 
         int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -29,12 +32,37 @@ public class Shader {
         if (glGetShaderi(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE) {
             System.out.println("FRAGMENT");
             System.err.println(glGetShaderInfoLog(fragmentShader, 1024));
+            return false;
         }
 
         ID = glCreateProgram();
         glAttachShader(ID, vertexShader);
         glAttachShader(ID, fragmentShader);
         glLinkProgram(ID);
+
+        return true;
+    }
+
+    public boolean initCompute(String computeSource) {
+        int computeShader = glCreateShader(GL_COMPUTE_SHADER);
+        glShaderSource(computeShader, computeSource);
+        glCompileShader(computeShader);
+
+        if (glGetShaderi(computeShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            System.out.println("COMPUTE");
+            System.err.println(glGetShaderInfoLog(computeShader, 1024));
+            return false;
+        }
+
+        ID = glCreateProgram();
+        glAttachShader(ID, computeShader);
+        glLinkProgram(ID);
+
+        if (glGetShaderi(ID, GL_LINK_STATUS) == GL_FALSE) {
+            System.out.println("PROGRAM");
+            System.err.println(glGetProgramInfoLog(ID, 1024));
+            return false;
+        }
 
         return true;
     }
@@ -73,6 +101,11 @@ public class Shader {
 
     public void delete() {
         glDeleteProgram(ID);
+    }
+
+    public void dispatchCompute(int groupsX, int groupsY, int groupsZ) {
+        glDispatchCompute(groupsX, groupsY, groupsZ);
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
     }
 
 }

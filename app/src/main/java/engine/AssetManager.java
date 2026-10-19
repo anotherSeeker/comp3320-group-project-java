@@ -45,6 +45,7 @@ public class AssetManager {
     public Integer brdfIntShader = "BRDF_INT".hashCode();
 
     public Integer framebufferShader = "FRAMEBUFFER".hashCode();
+    public Integer edgePreprocess = "EDGE".hashCode();
 
     private AssetManager() {
 
@@ -140,6 +141,8 @@ public class AssetManager {
                 Path.of("assets/shaders/internal/framebuffer.frag")
         );
 
+        this.loadInternalComputeShader(edgePreprocess, Path.of("assets/shaders/internal/edge.glsl"));
+
         data.flip();
 
         textureIndex.put(defaultTexture, new Texture(data, width, height, GL_RGBA));
@@ -168,6 +171,15 @@ public class AssetManager {
 
         Shader shader = new Shader();
         shader.init(vertexSource, fragmentSource);
+
+        shaderIndex.put(ID, shader);
+    }
+
+    private void loadInternalComputeShader(Integer ID, Path computePath) {
+        String computeSource = readFile(computePath);
+
+        Shader shader = new Shader();
+        shader.initCompute(computeSource);
 
         shaderIndex.put(ID, shader);
     }
