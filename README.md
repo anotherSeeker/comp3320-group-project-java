@@ -7,6 +7,7 @@ Java rewrite of c++ engine
 ## libraries
 - LWJGL
 - Dominion ECS
+- IMGUI
 
 ## tooling
 - gradle
