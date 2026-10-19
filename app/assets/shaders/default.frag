@@ -43,7 +43,9 @@ uniform sampler2D brdfIntMap;
 Material getMaterial(){
     Material material;
 
-    material.roughness = texture(RoughnessMap,UV).r * Roughness;
+    float roughness = max(Roughness,0.1);
+
+    material.roughness = clamp(texture(RoughnessMap,UV).r,roughness,1);
     material.ambientOcclusion = texture(AmbientOcclusionMap,UV).r * AmbientOcclusion;
     material.albedo = pow(texture(Albedo,UV).rgb,vec3(2.2));
 
@@ -145,12 +147,12 @@ vec3 generateAmbientLight(Material material,vec3 norm){
 
     vec3 diffuse = texture(IrradianceMap,norm).rgb * material.albedo * kD;
 
-    const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilterColour = textureLod(PrefilterMap,reflect(-viewDirection,norm),material.roughness * MAX_REFLECTION_LOD).rgb;
+    const float MAX_REFLECTION_LOD = 7.0;
+    vec3 prefilterColour = textureLod(PrefilterMap,reflect(-viewDirection,norm),material.roughness* MAX_REFLECTION_LOD).rgb;
 
     vec2 brdfIBL = texture(brdfIntMap,vec2(nDotV,material.roughness)).rg;
 
-    vec3 specular = prefilterColour * (baseReflectivity * brdfIBL.r + brdfIBL.g);
+    vec3 specular = prefilterColour * (kS * brdfIBL.r + brdfIBL.g);
 
     return (diffuse + specular) * material.ambientOcclusion;
 }
