@@ -45,7 +45,7 @@ public class AssetManager {
     public Integer brdfIntShader = "BRDF_INT".hashCode();
 
     public Integer framebufferShader = "FRAMEBUFFER".hashCode();
-    public Integer edgePreprocess = "EDGE".hashCode();
+    public Integer blurPostProcess = "BLUR".hashCode();
 
     private AssetManager() {
 
@@ -141,7 +141,7 @@ public class AssetManager {
                 Path.of("assets/shaders/internal/framebuffer.frag")
         );
 
-        this.loadInternalComputeShader(edgePreprocess, Path.of("assets/shaders/internal/edge.glsl"));
+        this.loadInternalComputeShader(blurPostProcess, Path.of("assets/shaders/internal/blur.glsl"));
 
         data.flip();
 
