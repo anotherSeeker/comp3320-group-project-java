@@ -6,6 +6,7 @@ public class MaterialEntry {
     public Integer roughnessID = null;
     public Integer ambientOcclusionID = null;
     public Integer normalID = null;
+    public Integer metallicID = null;
 
     public MaterialEntry add(String string, Integer ID) {
 
@@ -21,6 +22,8 @@ public class MaterialEntry {
                 ambientOcclusionID = ID;
             case "NORMAL":
                 normalID = ID;
+            case "METAL":
+                metallicID = ID;
 
             default:
                 break;

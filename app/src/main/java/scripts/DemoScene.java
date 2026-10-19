@@ -54,6 +54,7 @@ public class DemoScene extends MonoScript {
         .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Color.jpg")))
         .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Roughness.jpg")))
         .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_NormalGL.jpg")))
+        .add("METAL",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Metalness.jpg")))
     );
     //@formatter:on
 
@@ -98,6 +99,7 @@ public class DemoScene extends MonoScript {
 
     float[] roughness = new float[] { 0.5f };
     float[] ambientOcclusion = new float[] { 1.0f };
+    float[] metallic = new float[] { 0.0f };
 
     float[] subsurface = new float[] { 0.0f };
     float[] sheen = new float[] { 0.0f };
@@ -116,6 +118,7 @@ public class DemoScene extends MonoScript {
         material.sheen = sheen[0];
         material.annisotropy = annisotropy[0];
         material.specularStrength = specularStrength[0];
+        material.metallic = metallic[0];
 
         material.sheenColour.x = sheenColour[0];
         material.sheenColour.y = sheenColour[1];
@@ -139,6 +142,7 @@ public class DemoScene extends MonoScript {
         ImGui.sliderFloat("sheen", sheen, 0, 200);
         ImGui.sliderFloat("annisotropy", annisotropy, 0, 1);
         ImGui.sliderFloat("specularStrength", specularStrength, 0, 1);
+        ImGui.sliderFloat("metallic", metallic, 0, 1);
 
         ImGui.colorEdit3("sheenColour", sheenColour);
         ImGui.colorEdit3("lightColour", lightColour);

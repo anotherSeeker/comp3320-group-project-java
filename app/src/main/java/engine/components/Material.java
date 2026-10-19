@@ -7,6 +7,7 @@ import org.joml.Vector3f;
 public class Material {
     public float roughness = 1;
     public float ambientOcclusion = 1;
+    public float metallic = 0;
 
     public float subsurface = 0;
     public float sheen = 0;
@@ -20,15 +21,18 @@ public class Material {
     public Texture roughnessMap;
     public Texture ambientOcclusionMap;
     public Texture normalMap;
+    public Texture metallicMap;
 
     public void bindAsUniform() {
         this.shader.setTexture("Albedo", this.albedoMap, 4);
         this.shader.setTexture("RoughnessMap", this.roughnessMap, 5);
         this.shader.setTexture("AmbientOcclusionMap", this.ambientOcclusionMap, 6);
         this.shader.setTexture("NormalMap", this.normalMap, 7);
+        this.shader.setTexture("MetallicMap", this.normalMap, 8);
 
         this.shader.setFloat("Roughness", this.roughness);
         this.shader.setFloat("AmbientOcclusion", this.ambientOcclusion);
+        this.shader.setFloat("Metallic", this.metallic);
 
         this.shader.setFloat("Subsurface", this.subsurface);
         this.shader.setFloat("Sheen", this.sheen);
