@@ -175,8 +175,6 @@ void main() {
     vec3 ambientLight = generateAmbientLight(material,norm);
 
     vec3 colour = brdf(material,norm) + ambientLight;
-    colour = colour / (colour + vec3(1.0));
-    colour = pow(colour,vec3(1/2.2));
 
-    fragColour = vec4(colour,1.0);
+    fragColour = vec4(colour ,1.0);
 }
