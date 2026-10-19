@@ -48,6 +48,13 @@ public class DemoScene extends MonoScript {
         .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_AmbientOcclusion.jpg")))
         .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_NormalGL.jpg")))
     );
+
+    Material ornament_Material = Assets.createMaterial(new MaterialEntry()
+        .add("SHADER", shaderID)
+        .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Color.jpg")))
+        .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Roughness.jpg")))
+        .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_NormalGL.jpg")))
+    );
     //@formatter:on
 
     Integer skyboxTexture = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/qwantani_dusk_2_puresky_1k.hdr"));
@@ -66,13 +73,16 @@ public class DemoScene extends MonoScript {
         Scene.SetSkyboxTexture(skyboxTexture);
 
         A = Scene.createObject(uvSmoothID, tile_material);
-        A.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
+        A.get(Transform.class).setPosition(new Vector3f(0.0f, 0, 0));
 
         B = Scene.createObject(uvSmoothID, brick_Material);
-        B.get(Transform.class).setPosition(new Vector3f(-5f, 0, 0));
+        B.get(Transform.class).setPosition(new Vector3f(-5.0f, 0, 0));
 
         C = Scene.createObject(uvSmoothID, concrete_Material);
-        C.get(Transform.class).setPosition(new Vector3f(-10f, 0, 0));
+        C.get(Transform.class).setPosition(new Vector3f(0.0f, 0, -5.0f));
+
+        D = Scene.createObject(uvSmoothID, ornament_Material);
+        D.get(Transform.class).setPosition(new Vector3f(-5.0f, 0, -5.0f));
 
         ImGui.setNextWindowPos(0.5f, 0.5f);
     }
@@ -138,6 +148,7 @@ public class DemoScene extends MonoScript {
         updateMaterial(tile_material);
         updateMaterial(brick_Material);
         updateMaterial(concrete_Material);
+        updateMaterial(ornament_Material);
 
         Scene.lightColour.x = lightColour[0];
         Scene.lightColour.y = lightColour[1];
