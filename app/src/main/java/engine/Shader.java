@@ -4,6 +4,8 @@ import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL43.*;
 import static org.lwjgl.opengl.GL40.*;
+import static org.lwjgl.opengl.GL42.GL_ALL_BARRIER_BITS;
+import static org.lwjgl.opengl.GL42.glMemoryBarrier;
 
 import java.nio.FloatBuffer;
 
@@ -58,9 +60,9 @@ public class Shader {
         glAttachShader(ID, computeShader);
         glLinkProgram(ID);
 
-        if (glGetShaderi(ID, GL_LINK_STATUS) == GL_FALSE) {
+        if (glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE) {
             System.out.println("PROGRAM");
-            System.err.println(glGetProgramInfoLog(ID, 1024));
+            System.err.println(glGetProgramInfoLog(ID));
             return false;
         }
 
