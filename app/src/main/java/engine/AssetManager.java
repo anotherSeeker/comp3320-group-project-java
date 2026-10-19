@@ -44,6 +44,8 @@ public class AssetManager {
     public Integer prefilterShader = "PREFILTER".hashCode();
     public Integer brdfIntShader = "BRDF_INT".hashCode();
 
+    public Integer framebufferShader = "FRAMEBUFFER".hashCode();
+
     private AssetManager() {
 
     }
@@ -130,6 +132,12 @@ public class AssetManager {
                 brdfIntShader,
                 Path.of("assets/shaders/internal/brdfInt.vert"),
                 Path.of("assets/shaders/internal/brdfInt.frag")
+        );
+
+        this.loadInternalShader(
+                framebufferShader,
+                Path.of("assets/shaders/internal/framebuffer.vert"),
+                Path.of("assets/shaders/internal/framebuffer.frag")
         );
 
         data.flip();

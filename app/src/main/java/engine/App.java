@@ -22,6 +22,8 @@ public class App {
     private ImGuiImplGlfw imGuiGlfw;
     private ImGuiImplGl3 imGuiGL3;
 
+    private ShaderPipeline pipeline;
+
     private ArrayList<MonoScript> scripts = new ArrayList<>();
 
     private int initWidth;
@@ -62,10 +64,15 @@ public class App {
         scene.updateAspectRatio(width, height);
 
         input = new InputManager(window);
+        pipeline = new ShaderPipeline(
+                assetManager.getShader(assetManager.framebufferShader),
+                width,
+                height
+        );
 
         glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
             glViewport(0, 0, new_width, new_height);
-
+            pipeline.onResize(new_width, new_height);
             scene.updateAspectRatio(new_width, new_height);
         });
 
@@ -90,8 +97,6 @@ public class App {
         double deltaTime = 0.0;
 
         while (!glfwWindowShouldClose(window)) {
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
             currentTime = glfwGetTime();
             deltaTime = currentTime - previousTime;
             previousTime = currentTime;
@@ -103,7 +108,14 @@ public class App {
                 scripts.get(i).update(deltaTime);
             }
 
+            glEnable(GL_DEPTH_TEST);
+            pipeline.bind();
+
+            glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             scene.draw();
+
+            pipeline.render();
 
             ImGui.render();
             imGuiGL3.renderDrawData(ImGui.getDrawData());
