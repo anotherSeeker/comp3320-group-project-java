@@ -14,7 +14,6 @@ public class Material {
     public float specularStrength = 0.5f;
 
     public Vector3f sheenColour = new Vector3f(1, 1, 1);
-    public Vector3f diffuseColour = new Vector3f(1, 1, 1);
 
     public Shader shader;
     public Texture albedoMap;
@@ -37,6 +36,5 @@ public class Material {
         this.shader.setFloat("SpecularStrength", this.specularStrength);
 
         this.shader.setVector3("SheenColour", this.sheenColour);
-        this.shader.setVector3("DiffuseColour", this.diffuseColour);
     }
 }
