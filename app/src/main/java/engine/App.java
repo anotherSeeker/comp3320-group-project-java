@@ -101,10 +101,6 @@ public class App {
                 scripts.get(i).update(deltaTime);
             }
 
-            ImGui.begin("hi!!");
-
-            ImGui.end();
-
             scene.draw();
 
             ImGui.render();

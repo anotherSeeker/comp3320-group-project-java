@@ -12,7 +12,10 @@ import engine.*;
 import engine.components.Material;
 import engine.components.Transform;
 
+import imgui.ImGui;
+
 public class DemoScene extends MonoScript {
+
     Integer shaderID = Assets.LoadShader(
             Path.of("assets/shaders/default.vert"),
             Path.of("assets/shaders/default.frag")
@@ -54,6 +57,8 @@ public class DemoScene extends MonoScript {
         swapped = !swapped;
     }
 
+    float[] roughness = new float[] { 0.5f };
+
     @Override
     protected void Update(double deltaTime) {
         if (pressed == false && Input.IsKeyDown(GLFW_KEY_F)) {
@@ -62,5 +67,14 @@ public class DemoScene extends MonoScript {
         } else if (!Input.IsKeyDown(GLFW_KEY_F)) {
             pressed = false;
         }
+
+        ImGui.begin("debug window");
+
+        ImGui.sliderFloat("roughness", roughness, 0, 1);
+
+        material.roughness = roughness[0];
+
+        ImGui.end();
+
     }
 }
