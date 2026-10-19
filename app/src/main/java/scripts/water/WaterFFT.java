@@ -3,6 +3,8 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
 import org.joml.Vector2f;
+import org.joml.Vector3f;
+import java.util.ArrayList;
 import static org.lwjgl.opengl.GL30.GL_RG;
 
 import engine.AssetManager;
@@ -20,11 +22,17 @@ public class WaterFFT
     public static double surfaceTensionCoefficient = 0.074;
 
     //I picked depth wholly at random, windspeed was an loose example stated in the wikiwaves page on jonswap kind of as a throwaway line but that's good enough for me
-    public static double depth = 50;
-    public static double windSpeed = 20;
+    public static double depth = 50; //H or sometimes D: depth of the water, I believe technical constraints mean we can't have a different one for each point on the surface? we'd need to recalculate a new map for every part of the ocean which is kinda infeasible unless I'm horrifically mistaken
+    public static double windSpeed = 20; //U: windspeed, I believe meters per second?
+    public static double fetch = 2000; //F: distance to shore from the direction that the wind is blowing from
+    public static final double gamma_J = 3.3; //gamma: the "peak enhancement factor", from the JONSWAP spectrum, do not ask me I am not an oceanographer
 
-    //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. acerola used 1024*1024 textures but we're gonna start smaller
+    //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
+    //acerola used 1024*1024 textures but we're gonna start smaller and scale up
     public static int textureSize = 512;
+
+    //the wavenumbers, kx, ky, and angular frequency / dispersion relation omega
+    public static ArrayList<Vector3f> waveVectorList;
 
     //texture ids for sending to shaders
     public static int noiseTexId;
@@ -43,6 +51,39 @@ public class WaterFFT
 
         noiseTexId = AssetManager.get().createTexture(noiseBytes, textureSize, GL_RG, "gaussianNoise_Water");
         
+        return true;
+    }
+
+
+
+    public static boolean precomputeWavenumbers_kx_ky_omega()
+    {
+        //thinking about our wavevectors and angular freq / dispersion relation / omega
+
+        //iterate over - (textureSize/2) -> textureSize/2 in both x, and y
+        //the i, k values are then our wave vectors and we can plug those values of k in to precalculate our omega value
+        //then once we got that we write those three to the rgb of a second texture map, 
+        //should be pretty easy now that I've thought it through and am not tired ?
+        
+        //wait I think we reverse that and iterate from positive to negative, 
+        //pos "1,1" should be top left and pos "-1,-1" bottom right so yeah
+
+        waveVectorList = new ArrayList<Vector3f>();
+
+        for (int ky = textureSize/2; ky > -textureSize/2; ky--)
+        {
+            for (int kx = textureSize/2; kx > -textureSize/2; kx-- )
+            {
+                //this gives us a vector pointing in a direction based on the points of the texture, hopefully
+                Vector2f wavevector_k = new Vector2f(kx, ky);
+
+                float dispersion_omega = (float) dispersionRelation(wavevector_k);
+
+                //rgb channels for kx, ky, omega, we still need to calculate h0, but we're precaching these in a texture
+                waveVectorList.add(new Vector3f(wavevector_k.x, wavevector_k.y, dispersion_omega));
+            }
+        }
+
         return true;
     }
 
@@ -80,17 +121,15 @@ public class WaterFFT
         return noiseFloats;
     }
 
-    //working through everything in my head on the page here
-    public void computeWaveVectorMap(Vector2f gaussianNoise, Vector2f wavenumbers)
+    public void computeDisplacementMap_h0(Vector2f gaussianNoise, float kx, float ky, float omega, float theta)
     {
-        double aFreq = dispersionRelation(wavenumbers);
-
-        double h_0 = 1/(Math.sqrt(2)) * (gaussianNoise.x + gaussianNoise.y) * Math.sqrt(doJONSWAP() * doDirectionalSpread(wavenumbers));
+        //we pregen our wave numbers and angular frequency and we'll pass them into this individually
+        double h_0 = 1/(Math.sqrt(2)) * (gaussianNoise.x + gaussianNoise.y) * Math.sqrt(doJONSWAP(omega) * doDirectionalSpread(omega, theta));
 
 
     }
 
-    public double dispersionRelation(Vector2f k)
+    public static double dispersionRelation(Vector2f k)
     {
         double magnitude = waveVectorMagnitude(k);
 
@@ -101,26 +140,75 @@ public class WaterFFT
         return aFreq;
     }
 
-    public double waveVectorMagnitude(Vector2f k)
+    public static double waveVectorMagnitude(Vector2f k)
     {
         return Math.sqrt(k.x*k.x + k.y*k.y);
     }
 
-    public double wavelength(Vector2f k)
+    public static double wavelength(Vector2f k)
     {
         return 1.0;
     }
 
-    public double doJONSWAP()
+    //angle of the wave as compared to the wind direction
+    public static double windWaveDirection_Theta(float kx, float ky)
+    {
+        //theta = arctan(ky/kx)
+        return Math.atan(ky/kx);
+    }
+
+    //wavenumbers/vectors kx,ky and angular freq omega
+    public double doDirectionalSpread(float omega, float theta)
+    {
+     //decide which spread functions we want to use   
+
+        return 1.0;
+    }
+
+    //jonswap is based on a bunch of physical parameters for the ocean that we can tweak and the angular frequency of the specific wave we're looking at
+    public static double doJONSWAP(float omega)
+    {
+        //peak frequency of the wave spectrum
+        float omegaPeak = (float) omega_p_J();
+
+        //amplitude of this wave
+        double alpha = amplitudeAlpha_J(omegaPeak, omega);
+
+        //exponent r
+        double r = exponent_r_J(omegaPeak, omega);
+
+
+
+        return 1.0;
+    }
+
+    //I believe that this is the surface tension parameter and that jonswap uses a slightly different one for some reason?
+    public static double sigma_J(float peakFrequency, float waveFrequency)
+    {
+        double alpha = 0.09;
+        if (peakFrequency >= waveFrequency)
+            alpha = 0.07;
+
+        return alpha;
+    }
+
+     //JONSWAP amplitude
+    public static double amplitudeAlpha_J(float peakFrequency, float waveFrequency)
+    {
+        //as far as I understand 0.076 is the real surface tension of water? perhaps it differs in ocean conditions? again not an oceanographer
+        return 0.076 * Math.pow((windSpeed*windSpeed)/(fetch*gravity), 0.22);
+    }
+
+    //e^[stuff] part of the jonswap equation you might not have heard but I'm not an oceanographer
+    public static double exponent_r_J(float omegaPeak, float omega)
     {
         return 1.0;
     }
 
-    public double doDirectionalSpread(Vector2f k)
+    //peak angular frequency
+    public static double omega_p_J()
     {
-        double angularFrequency = dispersionRelation(k);
-
-        return 1.0;
+        return (22 * ((gravity*gravity)/(windSpeed * fetch)));
     }
 
     //something that's a start for figuring out the wavevectors
