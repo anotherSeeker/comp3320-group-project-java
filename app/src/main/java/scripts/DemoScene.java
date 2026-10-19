@@ -1,6 +1,7 @@
 package scripts;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_F;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_X;
 
 import java.nio.file.Path;
 
@@ -23,12 +24,20 @@ public class DemoScene extends MonoScript {
 
     Integer uvSmoothID = Assets.LoadMesh(Path.of("assets/meshes/uvsmooth.obj"));
 
-    Material material = Assets.createMaterial(
+    Material tile_material = Assets.createMaterial(
             shaderID,
             Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")),
             Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")),
             Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")),
             Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg"))
+    );
+
+    Material brick_Material = Assets.createMaterial(
+            shaderID,
+            Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_Color.jpg")),
+            Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_Roughness.jpg")),
+            Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_AmbientOcclusion.jpg")),
+            Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_NormalGL.jpg"))
     );
 
     Integer skyboxTexture = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/qwantani_dusk_2_puresky_1k.hdr"));
@@ -44,8 +53,11 @@ public class DemoScene extends MonoScript {
     protected void Start() {
         Scene.SetSkyboxTexture(skyboxTexture);
 
-        A = Scene.createObject(uvSmoothID, material);
+        A = Scene.createObject(uvSmoothID, tile_material);
         A.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
+
+        B = Scene.createObject(uvSmoothID, brick_Material);
+        B.get(Transform.class).setPosition(new Vector3f(-5f, 0, 0));
     }
 
     private void swapSkybox() {
@@ -93,16 +105,27 @@ public class DemoScene extends MonoScript {
 
         ImGui.sliderFloat3("lightDirection", lightDirection, -1, 1);
 
-        material.roughness = roughness[0];
-        material.ambientOcclusion = ambientOcclusion[0];
-        material.subsurface = subsurface[0];
-        material.sheen = sheen[0];
-        material.annisotropy = annisotropy[0];
-        material.specularStrength = specularStrength[0];
+        tile_material.roughness = roughness[0];
+        tile_material.ambientOcclusion = ambientOcclusion[0];
+        tile_material.subsurface = subsurface[0];
+        tile_material.sheen = sheen[0];
+        tile_material.annisotropy = annisotropy[0];
+        tile_material.specularStrength = specularStrength[0];
 
-        material.sheenColour.x = sheenColour[0];
-        material.sheenColour.y = sheenColour[1];
-        material.sheenColour.z = sheenColour[2];
+        tile_material.sheenColour.x = sheenColour[0];
+        tile_material.sheenColour.y = sheenColour[1];
+        tile_material.sheenColour.z = sheenColour[2];
+
+        brick_Material.roughness = roughness[0];
+        brick_Material.ambientOcclusion = ambientOcclusion[0];
+        brick_Material.subsurface = subsurface[0];
+        brick_Material.sheen = sheen[0];
+        brick_Material.annisotropy = annisotropy[0];
+        brick_Material.specularStrength = specularStrength[0];
+
+        brick_Material.sheenColour.x = sheenColour[0];
+        brick_Material.sheenColour.y = sheenColour[1];
+        brick_Material.sheenColour.z = sheenColour[2];
 
         Scene.lightColour.x = lightColour[0];
         Scene.lightColour.y = lightColour[1];
