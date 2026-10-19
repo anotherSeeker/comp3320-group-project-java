@@ -10,24 +10,18 @@ public class MaterialEntry {
 
     public MaterialEntry add(String string, Integer ID) {
 
+        //@formatter:off
         switch (string) {
-            case "SHADER":
-                shaderID = ID;
+            case "SHADER": shaderID = ID;
+            case "COLOUR": albedoID = ID;
+            case "ROUGHNESS": roughnessID = ID;
+            case "AMBIENT_OCCLUSION": ambientOcclusionID = ID;
+            case "NORMAL": normalID = ID;
+            case "METAL": metallicID = ID;
 
-            case "COLOUR":
-                albedoID = ID;
-            case "ROUGHNESS":
-                roughnessID = ID;
-            case "AMBIENT_OCCLUSION":
-                ambientOcclusionID = ID;
-            case "NORMAL":
-                normalID = ID;
-            case "METAL":
-                metallicID = ID;
-
-            default:
-                break;
+            default: break;
         }
+        //@formatter:on
 
         return this;
     }
