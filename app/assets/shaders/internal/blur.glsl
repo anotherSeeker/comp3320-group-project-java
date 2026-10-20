@@ -7,11 +7,16 @@ layout(rgba16f,binding = 2) readonly uniform image2D rawImage;
 
 uniform sampler2D DepthBuffer;
 
-const float[9] gaussian_kernel = float[](
-    1, 2, 1,
-    2, 4, 2,
-    1, 2, 1
+const float[25] gaussian_kernel = float[](
+    1,  4,  6,  4, 1,
+    4, 16, 24, 16, 4,
+    6, 24, 36, 24, 6,
+    4, 16, 24, 16, 4,
+    1,  4,  6,  4, 1
 );
+
+const int KERNEL_WIDTH = 5;
+const int KERNEL_HEIGHT = 5;
 
 void main(){
 
@@ -24,33 +29,23 @@ void main(){
 
     vec3 result = vec3(0.0);
 
-    for(int kernelY = 0; kernelY < 3; kernelY++){
-        for(int kernelX = 0; kernelX < 3; kernelX++){
-            ivec2 sampleOffset = ivec2(kernelX-1,kernelY-1);
+    for(int kernelY = 0; kernelY < KERNEL_HEIGHT; kernelY++){
+        for(int kernelX = 0; kernelX < KERNEL_WIDTH; kernelX++){
+            ivec2 sampleOffset = ivec2(kernelX-2,kernelY-2);
 
             ivec2 samplePosition = clamp(gid + sampleOffset,ivec2(0),size - 1);
 
             vec3 sampleColour = imageLoad(inputImage,samplePosition).rgb;
 
-            int kernelIndex = kernelY * 3 + kernelX;
+            int kernelIndex = kernelY * KERNEL_WIDTH + kernelX;
             
             result += sampleColour * vec3(gaussian_kernel[kernelIndex]);
         }
     }
 
-    result /= 16;
+    result /= 256;
 
-    float focusDepth = 0.5;
-    float focusRange = 0.15;
-
-    float depth = texelFetch(DepthBuffer,gid,0).r;
-    float blurAmmount = clamp(abs(depth - focusDepth) / max(focusRange,0.0001),0,1);
-
-    vec3 sharp = imageLoad(rawImage,gid).rgb;
-
-    vec3 dof = mix(sharp,result,blurAmmount);
-
-    vec4 colour = vec4(dof,1);
+    vec4 colour = vec4(result,1);
 
     imageStore(outputImage,gid,colour);
 }
