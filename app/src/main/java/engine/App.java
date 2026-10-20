@@ -74,6 +74,7 @@ public class App {
         pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
         pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
         pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessB));
+        // pipeline.attach(assetManager.getShader(assetManager.vignettePostProcess));
 
         glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
             glViewport(0, 0, new_width, new_height);

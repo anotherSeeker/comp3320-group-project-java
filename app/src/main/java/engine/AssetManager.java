@@ -48,6 +48,7 @@ public class AssetManager {
     public Integer blurPostProcess = "BLUR".hashCode();
     public Integer bloomPostProcessA = "BLOOM_A".hashCode();
     public Integer bloomPostProcessB = "BLOOM_B".hashCode();
+    public Integer vignettePostProcess = "VIGNETTE".hashCode();
 
     private AssetManager() {
 
@@ -146,6 +147,7 @@ public class AssetManager {
         this.loadInternalComputeShader(blurPostProcess, Path.of("assets/shaders/internal/blur.glsl"));
         this.loadInternalComputeShader(bloomPostProcessA, Path.of("assets/shaders/internal/bloomA.glsl"));
         this.loadInternalComputeShader(bloomPostProcessB, Path.of("assets/shaders/internal/bloomB.glsl"));
+        this.loadInternalComputeShader(vignettePostProcess, Path.of("assets/shaders/internal/vignette.glsl"));
 
         data.flip();
 
