@@ -46,6 +46,8 @@ public class AssetManager {
 
     public Integer framebufferShader = "FRAMEBUFFER".hashCode();
     public Integer blurPostProcess = "BLUR".hashCode();
+    public Integer bloomPostProcessA = "BLOOM_A".hashCode();
+    public Integer bloomPostProcessB = "BLOOM_B".hashCode();
 
     private AssetManager() {
 
@@ -142,6 +144,8 @@ public class AssetManager {
         );
 
         this.loadInternalComputeShader(blurPostProcess, Path.of("assets/shaders/internal/blur.glsl"));
+        this.loadInternalComputeShader(bloomPostProcessA, Path.of("assets/shaders/internal/bloomA.glsl"));
+        this.loadInternalComputeShader(bloomPostProcessB, Path.of("assets/shaders/internal/bloomB.glsl"));
 
         data.flip();
 

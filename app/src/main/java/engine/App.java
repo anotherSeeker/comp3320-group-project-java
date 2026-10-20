@@ -70,8 +70,10 @@ public class App {
                 height
         );
 
+        pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessA));
         pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
         pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
+        pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessB));
 
         glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
             glViewport(0, 0, new_width, new_height);

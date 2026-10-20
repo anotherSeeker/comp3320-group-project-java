@@ -33,7 +33,7 @@ public class ShaderPipeline {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
         glTexImage2D(
-                GL_TEXTURE_2D, 0, GL_RGBA8, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null
+                GL_TEXTURE_2D, 0, GL_RGBA16F, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null
         );
     }
 
@@ -118,9 +118,9 @@ public class ShaderPipeline {
     int outputTexture;
 
     private void runShader(Shader shader, int inputTexture, int outputTexture) {
-        glBindImageTexture(0, inputTexture, 0, false, 0, GL_READ_ONLY, GL_RGBA8);
-        glBindImageTexture(1, outputTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA8);
-        glBindImageTexture(2, colourBuffer, 0, false, 0, GL_READ_ONLY, GL_RGBA8);
+        glBindImageTexture(0, inputTexture, 0, false, 0, GL_READ_ONLY, GL_RGBA16F);
+        glBindImageTexture(1, outputTexture, 0, false, 0, GL_WRITE_ONLY, GL_RGBA16F);
+        glBindImageTexture(2, colourBuffer, 0, false, 0, GL_READ_ONLY, GL_RGBA16F);
 
         shader.use();
         glActiveTexture(GL_TEXTURE0);
