@@ -1,0 +1,11 @@
+#version 430 core
+
+layout(local_size_x = 1, local_size_y = 1)
+layout(rg32f, binding = 0) uniform image2D gaussianData
+
+void main() 
+{
+    ivec2 pos = a;
+
+
+}

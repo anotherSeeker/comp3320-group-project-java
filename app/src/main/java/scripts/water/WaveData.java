@@ -2,6 +2,8 @@ package scripts.water;
 
 import org.joml.Vector2f;
 
+//old stuff, used for sum of sines but we're using wave spectra now
+
 public class WaveData 
 {
     float frequency;
