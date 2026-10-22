@@ -5,15 +5,42 @@ import java.util.ArrayList;
 
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import static org.lwjgl.opengl.GL11.GL_RGB;
+
+import static org.lwjgl.opengl.GL11.GL_FALSE;
+import static org.lwjgl.opengl.GL11.GL_FLOAT;
+import static org.lwjgl.opengl.GL11.GL_NEAREST;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
+import static org.lwjgl.opengl.GL11.glBindTexture;
+import static org.lwjgl.opengl.GL11.glGenTextures;
+import static org.lwjgl.opengl.GL11.glTexImage2D;
+import static org.lwjgl.opengl.GL11.glTexParameteri;
+import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
+import static org.lwjgl.opengl.GL15.GL_READ_WRITE;
+import static org.lwjgl.opengl.GL30.GL_R32F;
 import static org.lwjgl.opengl.GL30.GL_RG;
+import static org.lwjgl.opengl.GL30.GL_RGB32F;
+
+import static org.lwjgl.opengl.ARBComputeShader.*;
+import static org.lwjgl.opengl.GL42.*;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL30.*;
+
 
 import engine.AssetManager;
 
+// import static org.lwjgl.opengl.GL42.*;
 // import static org.lwjgl.opengl.GL11.*;
 // import static org.lwjgl.opengl.GL15.*;
 // import static org.lwjgl.opengl.GL20.*;
-// import static org.lwjgl.opengl.GL30.*;
+// // import static org.lwjgl.opengl.GL30.*;
 
 public class WaterFFT 
 {
@@ -38,17 +65,22 @@ public class WaterFFT
     //texture ids for sending to shaders
     public static int noiseTexId;
     public static int waveVectorTexId;
-    public static int h0_texId;
+    public static int h0TexId;
+
+    //compute shader details
+    public static int wavespectraComputeID;
+    public static int wavespectraProgramID;
+    public static String wavespectraComputePath = "assets/shaders/water/wavespectra.comp";
 
     //bytebuffers for creating our textures
     public static ByteBuffer noiseBytes;
     public static FloatBuffer noiseFloats;
 
-    public static ByteBuffer displacementBuffer;
-    public static FloatBuffer displacementFloats;
+    // public static ByteBuffer displacementBuffer;
+    // public static FloatBuffer displacementFloats;
 
-    public static ByteBuffer wavevectorBuffer;
-    public static FloatBuffer wavevectorFloats;
+    // public static ByteBuffer wavevectorBuffer;
+    // public static FloatBuffer wavevectorFloats;
     
 
     public WaterFFT() {}
@@ -57,45 +89,8 @@ public class WaterFFT
     {
         genGaussianNoise2D();
 
-        noiseTexId = AssetManager.get().createTexture(noiseBytes, textureSize, GL_RG, "gaussianNoise_Water");
-
-        h0_texId = AssetManager.get().createTexture(null, textureSize, GL_RGB, "h0_displacement_Water");
-
-        waveVectorTexId = AssetManager.get().createTexture(null, textureSize, GL_RGB, "waveVec_Freq_Water");
-        return true;
-    }
-
-
-
-    public static boolean precomputeWavenumbers_kx_ky_omega()
-    {
-        //thinking about our wavevectors and angular freq / dispersion relation / omega
-
-        //iterate over - (textureSize/2) -> textureSize/2 in both x, and y
-        //the i, k values are then our wave vectors and we can plug those values of k in to precalculate our omega value
-        //then once we got that we write those three to the rgb of a second texture map, 
-        //should be pretty easy now that I've thought it through and am not tired ?
+        computeSpectrum();
         
-        //wait I think we reverse that and iterate from positive to negative, 
-        //pos "1,1" should be top left and pos "-1,-1" bottom right so yeah
-
-        waveVectorList = new ArrayList<>();
-
-        for (int ky = textureSize/2; ky > -textureSize/2; ky--)
-        {
-            for (int kx = textureSize/2; kx > -textureSize/2; kx-- )
-            {
-                //[kx, ky] is a vector pointing in a direction based on the points of the texture, hopefully, unless I'm just that dumb
-                //we want them to all have different magnitudes based on distance from the center as well so I'm pretty sure that should be fine?
-
-                double dispersion_omega = dispersionRelation_omega(kx, ky);
-
-                //rgb channels for kx, ky, omega, we still need to calculate h0, but we're precaching these in a texture
-                waveVectorList.add(new Vector3f((float) kx, (float) ky, (float) dispersion_omega));
-            }
-        }
-        //put in texture dum dum
-
         return true;
     }
 
@@ -128,14 +123,109 @@ public class WaterFFT
 
         noiseBytes.rewind();
 
+        noiseTexId = AssetManager.get().createTexture(noiseBytes, textureSize, GL_RG, "gaussianNoise_Water");
+
         System.out.println("Finished Generating 2D Gaussian Noise values");
 
         return noiseFloats;
     }
 
+    private static void computeSpectrum()
+    {
+        setupComputeShader();
+        genSpectrumTex();
+        //dispatches and waits for completion
+        dispatchWaveSpectra();
 
+    }
+
+    private static void setupComputeShader()
+    {
+        wavespectraComputeID = glCreateShader(GL_COMPUTE_SHADER);
+        glShaderSource(wavespectraComputeID, wavespectraComputePath);
+
+        wavespectraProgramID = glCreateProgram();
+        glAttachShader(wavespectraProgramID, wavespectraComputeID);
+    }
+
+    private static void dispatchWaveSpectra()
+    {
+        glUseProgram( wavespectraComputeID );
+        glDispatchCompute(textureSize, textureSize, 1);
+
+        //wait for completion
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+    }
+
+    //binds our gaussian noise, kxkyfreq and complex displacement textures so we can use them in wavespectra.comp
+    private static void genSpectrumTex()
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, noiseTexId);
+        glBindImageTexture( 0, noiseTexId, 0, false, 0, GL_READ_WRITE, GL_RGB32F );
+
+        waveVectorTexId = glGenTextures();
+
+        glActiveTexture(GL_TEXTURE0+1);
+        glBindTexture(GL_TEXTURE_2D, waveVectorTexId);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, textureSize, textureSize, 0, GL_RGB32F, GL_FLOAT, (ByteBuffer) null);
+        glBindImageTexture( 1, waveVectorTexId, 0, false, 0, GL_READ_WRITE, GL_RGB32F );
+
+        h0TexId = glGenTextures(); 
+
+        glActiveTexture(GL_TEXTURE0+2);
+        glBindTexture(GL_TEXTURE_2D, h0TexId);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, textureSize, textureSize, 0, GL_RGB32F, GL_FLOAT, (ByteBuffer) null);
+        glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGB32F );
+    }
 
     //this should all be in a compute shader instead for speed
+
+    public static boolean precomputeWavenumbers_kx_ky_omega()
+    {
+        //thinking about our wavevectors and angular freq / dispersion relation / omega
+
+        //iterate over - (textureSize/2) -> textureSize/2 in both x, and y
+        //the i, k values are then our wave vectors and we can plug those values of k in to precalculate our omega value
+        //then once we got that we write those three to the rgb of a second texture map, 
+        //should be pretty easy now that I've thought it through and am not tired ?
+        
+        //wait I think we reverse that and iterate from positive to negative, 
+        //pos "1,1" should be top left and pos "-1,-1" bottom right so yeah
+
+        waveVectorList = new ArrayList<>();
+
+        for (int ky = textureSize/2; ky > -textureSize/2; ky--)
+        {
+            for (int kx = textureSize/2; kx > -textureSize/2; kx-- )
+            {
+                //[kx, ky] is a vector pointing in a direction based on the points of the texture, hopefully, unless I'm just that dumb
+                //we want them to all have different magnitudes based on distance from the center as well so I'm pretty sure that should be fine?
+
+                double dispersion_omega = dispersionRelation_omega(kx, ky);
+
+                //rgb channels for kx, ky, omega, we still need to calculate h0, but we're precaching these in a texture
+                waveVectorList.add(new Vector3f((float) kx, (float) ky, (float) dispersion_omega));
+            }
+        }
+        //put in texture dum dum
+
+        return true;
+    }
 
     public void computeDisplacementMap_h0(Vector2f gaussianNoise, float kx, float ky)
     {
@@ -228,7 +318,7 @@ public class WaterFFT
         return alpha;
     }
 
-     //JONSWAP amplitude
+    //JONSWAP amplitude
     public static double amplitudeAlpha_J()
     {
         //as far as I understand 0.076 is the real surface tension of water? perhaps it differs in ocean conditions? again not an oceanographer

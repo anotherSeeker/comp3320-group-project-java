@@ -1,14 +1,166 @@
 #version 430 core
 #define PI 3.1415926535897932384626433832795
 
-uniform sampler2D gaussianVectors;
+//#define doCapillaryWaves true
 
-layout (binding = 0, rgb32f) writeonly uniform image2D h0_real;
-layout (binding = 1, rgb32f) writeonly uniform image2D h0_complex;
+float gravity_g = 9.81;
+float waterDensity_rho = 1000;
+float surfaceTensionCoefficient_sigma = 0.074;
+
+//I picked depth wholly at random, windspeed was an loose example stated in the wikiwaves page on jonswap kind of as a throwaway line but that's good enough for me
+float depth_H = 50; //H or sometimes D: depth of the water, I believe technical constraints mean we can't have a different one for each point on the surface? we'd need to recalculate a new map for every part of the ocean which is kinda infeasible unless I'm horrifically mistaken
+float windSpeed_U = 20; //U: windspeed, I believe meters per second?
+float fetch_F = 2000; //F: distance to shore from the direction that the wind is blowing from
+float gamma_J = 3.3; //gamma: the "peak enhancement factor", from the JONSWAP spectrum, do not ask me I am not an oceanographer
+
+
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(rgb32f, binding = 0) uniform image2D gaussianData;
+layout(rgb32f, binding = 1) uniform image2D kxkyOmega;
+layout(rgb32f, binding = 2) uniform image2D complexDisplacement;
 
 void main() 
 {
-    ivec2 pos = ivec2( gl_GlobalInvocationID.xy );
+    ivec2 rawPos = ivec2( gl_GlobalInvocationID.xy );
 
-    
+    int texSize = imageSize(gaussianData).x;
+
+    //remapping our invocation id to be a specific wave vector k radially from the center 
+    //-1,-1 0,-1 1,-1
+    //-1,0 0,0 1,0
+    //-1,1 0,1 1,1
+    int kx = mapRange(rawPos.x, 0, -texSize/2, texSize, texSize/2);
+    int ky = mapRange(rawPos.y, 0, -texSize/2, texSize, texSize/2);
+
+    ivec2 wavevector_k = vec2(kx,ky);
+    ivec2 noise_xi = texture(gaussianData,rawPos);
+
+    float magnitude_k = waveVectorMagnitude_k(kx,ky);
+    float omega = dispersionRelation_omega(kx, ky, magnitude_k);
+
+    float theta = windWaveDirection_Theta(kx,ky);
+
+    float S = doJONSWAP(omega);
+    float D = doDirectionalSpread(omega, theta);
+
+    //we pregen our wave numbers and angular frequency and we'll pass them into this individually
+    float h0 = (1.0/(sqrt(2))) * sqrt(S*D);
+    float h0_real   = h_0 * noise_xi.x;
+    float h0_complex = h_0 * noise_xi.y;
+
+    imageStore( kxkyOmega, rawPos, vec4(kx,ky,omega,0) );
+    imageStore( complexDisplacement, rawPos, vec4(h0_real,h0_complex,0,0) );
+}
+
+//from 0,2^x to (2^x)/2,-(2^x)/2
+int mapRange(int value, int from1, int to1, int from2, int to2) 
+{
+	return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
+}
+
+//S(omega) wave spectrum calculation
+float doJONSWAP(float omega)
+{
+    //peak frequency of the wave spectrum
+    float omegaPeak = omega_p_J();
+    //amplitude of this wave
+    float alpha = amplitudeAlpha_J();
+    //I believe this is the surface tension term?
+    float sigma = sigma_J(omegaPeak, omega);
+    //exponent r
+    float r = exponent_r_J(omegaPeak, omega, sigma);
+
+
+    //the actual equation bits
+    float a = (alpha*gravity*gravity) / pow(omega, 5);
+
+    float b = exp(-5/4 * pow((omegaPeak/omega), 4));
+
+    float S_jonswap = a*b*pow(GAMMA_J, r);
+
+    return S_jonswap;
+}
+
+//D(omega, theta) controls the strength of waves based on the direction relative to the direction of travel
+float doDirectionalSpread(float omega, float theta)
+{
+    //decide which spread functions we want to use
+    float spread = 0;
+
+    //for now just using the "positive cosine squared" spreading that tessendorf used   
+    if (theta > (-PI/2) && theta < (Math.PI/2))
+    {
+        spread = (2/PI) * pow(cos(theta), 2);
+    }
+
+    return spread;
+}
+
+
+
+
+
+
+//calculate parameters
+
+float dispersionRelation_omega(int kx, int ky, float magnitude)
+{
+    float aFreq;
+
+    #ifdef doCapillaryWaves
+        //includes variables for capillary waves? might look better?
+        aFreq = sqrt((gravity * magnitude + (surfaceTensionCoefficient_sigma / waterDensity_rho) * pow(magnitude, 3)) * tanh(magnitude * depth));
+        return aFreq;
+    #endif
+
+    aFreq = sqrt(gravity * magnitude * tanh(magnitude * depth));
+    return aFreq;
+}
+
+float waveVectorMagnitude_k(int kx, int ky)
+{
+    return sqrt(kx*kx + ky*ky);
+}
+
+//angle of the wave as compared to the wind direction
+float windWaveDirection_Theta(int kx, int ky)
+{
+    //theta = arctan(ky/kx)
+    return atan(ky/kx);
+}
+
+ //I believe that this is the surface tension parameter and that jonswap uses a slightly different one for some reason?
+float sigma_J(float peakFrequency, float waveFrequency)
+{
+    float alpha = 0.09;
+    if (peakFrequency >= waveFrequency)
+        alpha = 0.07;
+
+    return alpha;
+}
+
+//JONSWAP amplitude
+float amplitudeAlpha_J()
+{
+    //as far as I understand 0.076 is the real surface tension of water? perhaps it differs in ocean conditions? again not an oceanographer
+    return 0.076 * pow((windSpeed*windSpeed)/(fetch*gravity), 0.22);
+}
+
+    //e^[stuff] part of the jonswap equation you might not have heard but I'm not an oceanographer
+float exponent_r_J(float omegaPeak, float omega, float sigma)
+{
+    float a = pow(omega - omegaPeak, 2);
+    float b = 2*sigma*sigma*omegaPeak*omegaPeak;
+
+    float c = -(a/b);
+    float r = exp(c);
+
+    return r;
+}
+
+//peak angular frequency
+float omega_p_J()
+{
+    return (22 * ((gravity*gravity)/(windSpeed * fetch)));
 }
