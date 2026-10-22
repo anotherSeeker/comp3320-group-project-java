@@ -328,6 +328,7 @@ public class AssetManager {
     public Integer createTexture(ByteBuffer data, int textureSize, int textureFormat, String name) {
         Integer ID = name.hashCode();
 
+        //makes an RGB32F texture, hopefully this doesn't break out noise
         Texture texture = new Texture(data, textureSize, textureFormat);
         textureIndex.put(ID, texture);
 

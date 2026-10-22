@@ -15,6 +15,10 @@ public class App {
     private SceneGraph scene;
     private InputManager input;
 
+    //remember to just drop these changes for what's on main later
+    int initWidth = 0;
+    int initHeight = 0;
+
     private ArrayList<MonoScript> scripts = new ArrayList<>();
 
     public boolean init(int width, int height, CharSequence title) {
@@ -25,6 +29,9 @@ public class App {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
         window = glfwCreateWindow(width, height, title, NULL, NULL);
+
+        initWidth = width;
+        initHeight = height;
 
         if (window == NULL) {
             System.err.println("unable to create window");
@@ -63,6 +70,7 @@ public class App {
     }
 
     public void run() {
+        glViewport(0, 0, initWidth, initHeight);
         scripts.stream().forEach(script -> script.Start());
 
         double currentTime = glfwGetTime();

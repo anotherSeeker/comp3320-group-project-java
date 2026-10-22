@@ -1,12 +1,12 @@
 package scripts.water;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import java.util.ArrayList;
+import static org.lwjgl.opengl.GL11.GL_RGB;
 import static org.lwjgl.opengl.GL30.GL_RG;
-import static org.lwjgl.opengl.GL30.GL_RGB;
 
 import engine.AssetManager;
 
@@ -29,8 +29,8 @@ public class WaterFFT
     public static final double GAMMA_J = 3.3; //gamma: the "peak enhancement factor", from the JONSWAP spectrum, do not ask me I am not an oceanographer
 
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
-    //acerola used 1024*1024 textures but we're gonna start smaller and scale up
-    public static int textureSize = 512;
+    //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
+    public static int textureSize = 512; //these have to be powers of 2 or we lose efficiency on the fft
 
     //the wavenumbers, kx, ky, and angular frequency / dispersion relation omega
     public static ArrayList<Vector3f> waveVectorList;
@@ -59,12 +59,9 @@ public class WaterFFT
 
         noiseTexId = AssetManager.get().createTexture(noiseBytes, textureSize, GL_RG, "gaussianNoise_Water");
 
+        h0_texId = AssetManager.get().createTexture(null, textureSize, GL_RGB, "h0_displacement_Water");
 
-        
-
-        h0_texId = AssetManager.get().createTexture(displacementBuffer, textureSize, GL_RGB, "h0_displacement_Water");
-
-        waveVectorTexId = AssetManager.get().createTexture(wavevectorBuffer, textureSize, GL_RG, "h0_displacement_Water");
+        waveVectorTexId = AssetManager.get().createTexture(null, textureSize, GL_RGB, "waveVec_Freq_Water");
         return true;
     }
 
@@ -82,7 +79,7 @@ public class WaterFFT
         //wait I think we reverse that and iterate from positive to negative, 
         //pos "1,1" should be top left and pos "-1,-1" bottom right so yeah
 
-        waveVectorList = new ArrayList<Vector3f>();
+        waveVectorList = new ArrayList<>();
 
         for (int ky = textureSize/2; ky > -textureSize/2; ky--)
         {
@@ -136,6 +133,10 @@ public class WaterFFT
         return noiseFloats;
     }
 
+
+
+    //this should all be in a compute shader instead for speed
+
     public void computeDisplacementMap_h0(Vector2f gaussianNoise, float kx, float ky)
     {
         double omega = dispersionRelation_omega(kx, ky);
@@ -145,8 +146,10 @@ public class WaterFFT
         double xi_y = (double) gaussianNoise.y;
 
         //we pregen our wave numbers and angular frequency and we'll pass them into this individually
-        double h_0_r   = (1.0/(Math.sqrt(2))) * xi_x * Math.sqrt(doJONSWAP(omega) * doDirectionalSpread(omega, theta));
-        double h_0_i = (1.0/(Math.sqrt(2))) * xi_y * Math.sqrt(doJONSWAP(omega) * doDirectionalSpread(omega, theta));
+        double h_0_real   = (1.0/(Math.sqrt(2))) * xi_x * Math.sqrt(doJONSWAP(omega) * doDirectionalSpread(omega, theta));
+        double h_0_complex = (1.0/(Math.sqrt(2))) * xi_y * Math.sqrt(doJONSWAP(omega) * doDirectionalSpread(omega, theta));
+
+        //save kx, ky, omega into a texture and h_0_real, ..._complex into another
     }
 
     public static double dispersionRelation_omega(float kx, float ky)
@@ -178,11 +181,18 @@ public class WaterFFT
     }
 
     //wavenumbers/vectors kx,ky and angular freq omega
-    public double doDirectionalSpread(double omega, double theta)
+    public static double doDirectionalSpread(double omega, double theta)
     {
-     //decide which spread functions we want to use   
+        //decide which spread functions we want to use
+        double spread = 0;
 
-        return 1.0;
+        //for now just using the "positive cosine squared" spreading that tessendorf used   
+        if (theta > (-Math.PI/2) && theta < (Math.PI/2))
+        {
+            spread = (2/Math.PI) * Math.pow(Math.cos(theta), 2);
+        }
+
+        return spread;
     }
 
     //jonswap is based on a bunch of physical parameters for the ocean that we can tweak and the angular frequency of the specific wave we're looking at
@@ -242,32 +252,4 @@ public class WaterFFT
     {
         return (22 * ((gravity*gravity)/(windSpeed * fetch)));
     }
-
-    //something that's a start for figuring out the wavevectors
-    //MASK SETTINGS
-    // var maskThreshold : float = 2.0;
-
-    // //REFERENCES
-    // var mask : Texture2D;
-
-    // function Start(){
-    //     GenerateTexture();	
-    // }
-
-    // function GenerateTexture(){
-
-    //     mask = new Texture2D(texWidth, texHeight, TextureFormat.RGBA32, true);
-    //     var maskCenter : Vector2 = new Vector2(texWidth * 0.5, texHeight * 0.5);
-        
-    //     for(var y : int = 0; y < texture.height; ++y){
-    //         for(var x : int = 0; x < texture.width; ++x){
-
-    //             var distFromCenter : float = Vector2.Distance(maskCenter, new Vector2(x, y));
-    //             var maskPixel : float = (0.5 - (distFromCenter / texWidth)) * maskThreshold;
-    //             mask.SetPixel(x, y, Color(maskPixel, maskPixel, maskPixel, 1.0));
-    //         }
-    //     }
-    //     mask.Apply();
-    // }
-
 }

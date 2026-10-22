@@ -1,11 +1,14 @@
 #version 430 core
+#define PI 3.1415926535897932384626433832795
 
-layout(local_size_x = 1, local_size_y = 1)
-layout(rg32f, binding = 0) uniform image2D gaussianData
+uniform sampler2D gaussianVectors;
+
+layout (binding = 0, rgb32f) writeonly uniform image2D h0_real;
+layout (binding = 1, rgb32f) writeonly uniform image2D h0_complex;
 
 void main() 
 {
-    ivec2 pos = a;
+    ivec2 pos = ivec2( gl_GlobalInvocationID.xy );
 
-
+    
 }

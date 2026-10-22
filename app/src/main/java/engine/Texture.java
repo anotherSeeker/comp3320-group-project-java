@@ -42,7 +42,7 @@ public class Texture {
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
-    //float buffer is different to the original I think? if I'm correct we need GL_FLOAT instead of GL_UNSIGNED_BYTE
+    //for textures created at runtime, right now is set to RGB32F, either make that configurable or just RGBA32F later
     public Texture(ByteBuffer data, int size, int colourFormat) 
     {
         ID = glGenTextures();
@@ -59,7 +59,7 @@ public class Texture {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, size, size, 0, GL_RG, GL_FLOAT, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, size, size, 0, colourFormat, GL_FLOAT, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
