@@ -41,7 +41,7 @@ public class WaterFFT
 
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
-    public static int textureSize = 512; //these have to be powers of 2 or we lose efficiency on the fft
+    public static int textureSize = 16; //these have to be powers of 2 or we lose efficiency on the fft
 
     //the wavenumbers, kx, ky, and angular frequency / dispersion relation omega
     public static ArrayList<Vector3f> waveVectorList;
@@ -214,8 +214,9 @@ public class WaterFFT
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         //glTexStorage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, textureSize, textureSize, 0, GL_RGB , GL_FLOAT, (FloatBuffer) null);
-        glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_READ_WRITE, GL_RGB32F);
+        //store and load is not allowed for 3 valued formats like this apparently, so we're using RGBA instead of RGB
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
+        glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
 
         h0TexId = glGenTextures();
         glActiveTexture(GL_TEXTURE0+2);
@@ -238,19 +239,16 @@ public class WaterFFT
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, noiseTexId);
         glBindImageTexture( 0, noiseTexId, 0, false, 0, GL_READ_ONLY, GL_RG32F );
-        //glUniform1i(glGetUniformLocation(wavespectraProgramID, "gaussianData"), 0);
 
         glActiveTexture(GL_TEXTURE0+1);
         glBindTexture(GL_TEXTURE_2D, waveVecTexID);
-        glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_WRITE_ONLY, GL_RGB32F );
-        //glUniform1i(glGetUniformLocation(wavespectraProgramID, "waveVecTex"), 1);
+            //store and load is not allowed for 3 valued formats like this apparently, so we're using RGBA instead of RGB
+        glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F );
         
-        //glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
         glActiveTexture(GL_TEXTURE0+2);
 	    glBindTexture(GL_TEXTURE_2D, h0TexId);
         glBindImageTexture( 2, h0TexId, 0, false, 0, GL_WRITE_ONLY, GL_RG32F );
-        //glUniform1i(glGetUniformLocation(wavespectraProgramID, "h0Tex"), 2);
-
+        
         System.out.println("bind");
     }
 

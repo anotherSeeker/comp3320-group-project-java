@@ -10,7 +10,7 @@ uniform mat4 modelMatrix;
 
 void main()
 {
-    gl_Position = /*projectionMatrix * modelMatrix * */ vec4(position, 1.0);
+    gl_Position = /*projectionMatrix * modelMatrix * */ vec4(position/4, 1.0);
     outTexCoord = texCoord;
 }
 

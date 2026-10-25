@@ -31,7 +31,9 @@ public class WaterScene extends MonoScript {
         //render our map to screen
         //drawScreenQuad( WaterFFT.noiseIndexId );
         //drawScreenQuad( WaterFFT.waveVecIndexID );
-        drawScreenQuad( WaterFFT.h0IndexID );
+        //drawScreenQuad( WaterFFT.h0IndexID );
+
+        drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID);
         //makeWaterPlane();
 
         Scene.SetSkyboxTexture(skyboxTexture);
@@ -57,6 +59,29 @@ public class WaterScene extends MonoScript {
                 texIndexID,
                 texIndexID,
                 texIndexID
+        );
+
+        Mesh quadMesh = Mesh.Quad();
+        quadID = AssetManager.get().LoadMesh(quadMesh, "noiseQuad");
+
+        NoisePlane = Scene.createObject(quadID, quadMat);
+        NoisePlane.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
+    }
+
+    private void drawMapQuads(int ID1, int ID2, int ID3)
+    {
+        Integer quadShader = Assets.LoadShader(
+            Path.of("assets/shaders/water/mapDraw.vert"),
+            Path.of("assets/shaders/water/mapDraw.frag")
+        );
+
+        //can we do this without supplying every map?
+        quadMat = Assets.createMaterial(
+                quadShader,
+                ID1,
+                ID2,
+                ID3,
+                ID1
         );
 
         Mesh quadMesh = Mesh.Quad();

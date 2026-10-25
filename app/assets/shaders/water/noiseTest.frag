@@ -4,7 +4,6 @@ in vec2 outTexCoord;
 
 uniform sampler2D Albedo;
 
-//writing to our texture instead of screen
 layout(location = 0) out vec4 color;
 
 float negativeComponent = 0.0f;
