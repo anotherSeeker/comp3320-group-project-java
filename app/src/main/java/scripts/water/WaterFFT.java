@@ -1,31 +1,15 @@
 package scripts.water;
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-import java.util.ArrayList;
+import java.nio.*;
+import java.nio.file.Path;
+import java.util.*;
 
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
-import static org.lwjgl.opengl.GL11.GL_FALSE;
-import static org.lwjgl.opengl.GL11.GL_FLOAT;
-import static org.lwjgl.opengl.GL11.GL_NEAREST;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
-import static org.lwjgl.opengl.GL11.glBindTexture;
-import static org.lwjgl.opengl.GL11.glGenTextures;
-import static org.lwjgl.opengl.GL11.glTexImage2D;
-import static org.lwjgl.opengl.GL11.glTexParameteri;
 import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
-import static org.lwjgl.opengl.GL15.GL_READ_WRITE;
-import static org.lwjgl.opengl.GL30.GL_R32F;
-import static org.lwjgl.opengl.GL30.GL_RG;
-import static org.lwjgl.opengl.GL30.GL_RGB32F;
-
 import static org.lwjgl.opengl.ARBComputeShader.*;
 import static org.lwjgl.opengl.GL42.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -57,24 +41,37 @@ public class WaterFFT
 
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
-    public static int textureSize = 512; //these have to be powers of 2 or we lose efficiency on the fft
+    public static int textureSize = 16; //these have to be powers of 2 or we lose efficiency on the fft
 
     //the wavenumbers, kx, ky, and angular frequency / dispersion relation omega
     public static ArrayList<Vector3f> waveVectorList;
 
     //texture ids for sending to shaders
     public static int noiseTexId;
-    public static int waveVectorTexId;
+    public static int waveVecTexID;
     public static int h0TexId;
 
+    public static int noiseIndexId;
+    public static int waveVecIndexID;
+    public static int h0IndexID;
+
     //compute shader details
+    public static boolean spectraShaderCreated = false;
     public static int wavespectraComputeID;
     public static int wavespectraProgramID;
-    public static String wavespectraComputePath = "assets/shaders/water/wavespectra.comp";
+    public static Path wavespectraComputePath = Path.of("assets/shaders/water/atest.comp"); //Path.of("assets/shaders/water/wavespectra.comp"); 
 
     //bytebuffers for creating our textures
     public static ByteBuffer noiseBytes;
     public static FloatBuffer noiseFloats;
+
+    public static ByteBuffer k;
+    public static FloatBuffer kF;
+
+    public static ByteBuffer h0;
+    public static FloatBuffer h0F;
+
+    
 
     // public static ByteBuffer displacementBuffer;
     // public static FloatBuffer displacementFloats;
@@ -89,7 +86,7 @@ public class WaterFFT
     {
         genGaussianNoise2D();
 
-        computeSpectrum();
+        //computeSpectrum();
         
         return true;
     }
@@ -123,223 +120,300 @@ public class WaterFFT
 
         noiseBytes.rewind();
 
-        noiseTexId = AssetManager.get().createTexture(noiseBytes, textureSize, GL_RG, "gaussianNoise_Water");
+        noiseIndexId = AssetManager.get().createTexture(noiseBytes, textureSize, GL_RG, "gaussianNoise_Water");
 
         System.out.println("Finished Generating 2D Gaussian Noise values");
 
         return noiseFloats;
     }
 
-    private static void computeSpectrum()
+    public static void computeWaveSpectrum()
     {
-        setupComputeShader();
-        genSpectrumTex();
+        setupSpectraShader();
         //dispatches and waits for completion
         dispatchWaveSpectra();
-
+        System.out.println("compute");
     }
 
-    private static void setupComputeShader()
+    private static void setupSpectraShader()
     {
-        wavespectraComputeID = glCreateShader(GL_COMPUTE_SHADER);
-        glShaderSource(wavespectraComputeID, wavespectraComputePath);
+        if (!spectraShaderCreated)
+        {
+            String source = AssetManager.get().ReadCompute(wavespectraComputePath);
+            
+            wavespectraComputeID = glCreateShader(GL_COMPUTE_SHADER);
+            glShaderSource(wavespectraComputeID, source);
+            glCompileShader(wavespectraComputeID);
+            
+            System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
 
-        wavespectraProgramID = glCreateProgram();
-        glAttachShader(wavespectraProgramID, wavespectraComputeID);
+            wavespectraProgramID = glCreateProgram();
+            glAttachShader(wavespectraProgramID, wavespectraComputeID);
+            glLinkProgram(wavespectraProgramID);
+
+            System.out.println(glGetProgramInfoLog(wavespectraProgramID,1024));
+
+            //make the textures
+            genSpectrumTex();
+            
+            spectraShaderCreated = true;
+        }
+
+        //System.out.println("setup");
     }
 
     private static void dispatchWaveSpectra()
-    {
-        glUseProgram( wavespectraComputeID );
+    {        
+        glUseProgram( wavespectraProgramID );
+
+        //bind our textures
+        bindSpectrumTex();
+        //testBind();
+
+        //send it
+        //System.out.println("dispatch");
         glDispatchCompute(textureSize, textureSize, 1);
 
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
+       //System.out.println("done");
+
+        // //kx,ky,omega so rgb
+        // int kSize = textureSize * textureSize*3*4;
+        // //h0_real, h0_complex so rg
+        // int h0Size = textureSize * textureSize*2*4;
+
+        // k = ByteBuffer.allocateDirect(kSize);
+        // kF = k.asFloatBuffer();
+
+        // h0 = ByteBuffer.allocateDirect(h0Size);
+        // h0F = h0.asFloatBuffer();
+
+        // glActiveTexture(GL_TEXTURE0);
+        // glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, k);
+        // printFloatBuffer(kF);
+
+        //glActiveTexture(GL_TEXTURE0+2);
+        // glGetTexImage(GL_TEXTURE_2D, 0, GL_RG, GL_FLOAT, h0F);
+        // printFloatBuffer(h0F);
+
+        System.out.println("read");
     }
 
-    //binds our gaussian noise, kxkyfreq and complex displacement textures so we can use them in wavespectra.comp
+    //binds our kxkyfreq and complex displacement textures so we can use them in wavespectra.comp
     private static void genSpectrumTex()
     {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, noiseTexId);
-        glBindImageTexture( 0, noiseTexId, 0, false, 0, GL_READ_WRITE, GL_RGB32F );
-
-        waveVectorTexId = glGenTextures();
-
+        //create
+        waveVecTexID = glGenTextures();
         glActiveTexture(GL_TEXTURE0+1);
-        glBindTexture(GL_TEXTURE_2D, waveVectorTexId);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
+        glBindTexture(GL_TEXTURE_2D, waveVecTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, textureSize, textureSize, 0, GL_RGB32F, GL_FLOAT, (ByteBuffer) null);
-        glBindImageTexture( 1, waveVectorTexId, 0, false, 0, GL_READ_WRITE, GL_RGB32F );
+        //glTexStorage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA32F , GL_FLOAT, (FloatBuffer) null);
+        glActiveTexture(GL_TEXTURE0+1);
+        glBindTexture(GL_TEXTURE_2D, waveVecTexID);
+        //glBindImageTexture( 0, waveVecTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
 
-        h0TexId = glGenTextures(); 
-
+        h0TexId = glGenTextures();
         glActiveTexture(GL_TEXTURE0+2);
         glBindTexture(GL_TEXTURE_2D, h0TexId);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, textureSize, textureSize, 0, GL_RGB32F, GL_FLOAT, (ByteBuffer) null);
-        glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGB32F );
+        //glTexStorage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA32F , GL_FLOAT, (FloatBuffer) null);
+        glActiveTexture(GL_TEXTURE0+1);
+        glBindTexture(GL_TEXTURE_2D, waveVecTexID);
+        //glBindImageTexture( 0, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+
+        //add to texture index for engine
+        waveVecIndexID = AssetManager.get().AddTexture("waveDisplacementTex",waveVecTexID);
+        h0IndexID = AssetManager.get().AddTexture("waveDisplacementTex",h0TexId);
     }
+
+    public static void bindSpectrumTex()
+    {
+        glBindImageTexture( 0, noiseTexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, noiseTexId);
+        //glUniform1i(glGetUniformLocation(wavespectraProgramID, "gaussianData"), 0);
+
+        //glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+        //glActiveTexture(GL_TEXTURE0+1);
+        //glBindTexture(GL_TEXTURE_2D, waveVecTexID);
+        glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+        //glUniform1i(glGetUniformLocation(wavespectraProgramID, "waveVecTex"), 1);
+        
+        //glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+        //glActiveTexture(GL_TEXTURE0+2);
+	    //glBindTexture(GL_TEXTURE_2D, h0TexId);
+        glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+        //glUniform1i(glGetUniformLocation(wavespectraProgramID, "h0Tex"), 2);
+
+        System.out.println("bind");
+    }
+
+    private static void printFloatBuffer(FloatBuffer buffer)
+    {
+        if (buffer.hasArray())
+        {
+            System.out.println(Arrays.toString(buffer.array()));
+        }
+        else
+        {
+            System.out.println("No buffer array");
+        }
+    }
+
 
     //this should all be in a compute shader instead for speed
 
-    public static boolean precomputeWavenumbers_kx_ky_omega()
-    {
-        //thinking about our wavevectors and angular freq / dispersion relation / omega
+    // public static boolean precomputeWavenumbers_kx_ky_omega()
+    // {
+    //     //thinking about our wavevectors and angular freq / dispersion relation / omega
 
-        //iterate over - (textureSize/2) -> textureSize/2 in both x, and y
-        //the i, k values are then our wave vectors and we can plug those values of k in to precalculate our omega value
-        //then once we got that we write those three to the rgb of a second texture map, 
-        //should be pretty easy now that I've thought it through and am not tired ?
+    //     //iterate over - (textureSize/2) -> textureSize/2 in both x, and y
+    //     //the i, k values are then our wave vectors and we can plug those values of k in to precalculate our omega value
+    //     //then once we got that we write those three to the rgb of a second texture map, 
+    //     //should be pretty easy now that I've thought it through and am not tired ?
         
-        //wait I think we reverse that and iterate from positive to negative, 
-        //pos "1,1" should be top left and pos "-1,-1" bottom right so yeah
+    //     //wait I think we reverse that and iterate from positive to negative, 
+    //     //pos "1,1" should be top left and pos "-1,-1" bottom right so yeah
 
-        waveVectorList = new ArrayList<>();
+    //     waveVectorList = new ArrayList<>();
 
-        for (int ky = textureSize/2; ky > -textureSize/2; ky--)
-        {
-            for (int kx = textureSize/2; kx > -textureSize/2; kx-- )
-            {
-                //[kx, ky] is a vector pointing in a direction based on the points of the texture, hopefully, unless I'm just that dumb
-                //we want them to all have different magnitudes based on distance from the center as well so I'm pretty sure that should be fine?
+    //     for (int ky = textureSize/2; ky > -textureSize/2; ky--)
+    //     {
+    //         for (int kx = textureSize/2; kx > -textureSize/2; kx-- )
+    //         {
+    //             //[kx, ky] is a vector pointing in a direction based on the points of the texture, hopefully, unless I'm just that dumb
+    //             //we want them to all have different magnitudes based on distance from the center as well so I'm pretty sure that should be fine?
 
-                double dispersion_omega = dispersionRelation_omega(kx, ky);
+    //             double dispersion_omega = dispersionRelation_omega(kx, ky);
 
-                //rgb channels for kx, ky, omega, we still need to calculate h0, but we're precaching these in a texture
-                waveVectorList.add(new Vector3f((float) kx, (float) ky, (float) dispersion_omega));
-            }
-        }
-        //put in texture dum dum
+    //             //rgb channels for kx, ky, omega, we still need to calculate h0, but we're precaching these in a texture
+    //             waveVectorList.add(new Vector3f((float) kx, (float) ky, (float) dispersion_omega));
+    //         }
+    //     }
+    //     //put in texture dum dum
 
-        return true;
-    }
+    //     return true;
+    // }
 
-    public void computeDisplacementMap_h0(Vector2f gaussianNoise, float kx, float ky)
-    {
-        double omega = dispersionRelation_omega(kx, ky);
-        double theta = windWaveDirection_Theta(kx, ky);
+    // public void computeDisplacementMap_h0(Vector2f gaussianNoise, float kx, float ky)
+    // {
+    //     double omega = dispersionRelation_omega(kx, ky);
+    //     double theta = windWaveDirection_Theta(kx, ky);
 
-        double xi_x = (double) gaussianNoise.x;
-        double xi_y = (double) gaussianNoise.y;
+    //     double xi_x = (double) gaussianNoise.x;
+    //     double xi_y = (double) gaussianNoise.y;
 
-        //we pregen our wave numbers and angular frequency and we'll pass them into this individually
-        double h_0_real   = (1.0/(Math.sqrt(2))) * xi_x * Math.sqrt(doJONSWAP(omega) * doDirectionalSpread(omega, theta));
-        double h_0_complex = (1.0/(Math.sqrt(2))) * xi_y * Math.sqrt(doJONSWAP(omega) * doDirectionalSpread(omega, theta));
+    //     //we pregen our wave numbers and angular frequency and we'll pass them into this individually
+    //     double h_0_real   = (1.0/(Math.sqrt(2))) * xi_x * Math.sqrt(doJONSWAP(omega) * doDirectionalSpread(omega, theta));
+    //     double h_0_complex = (1.0/(Math.sqrt(2))) * xi_y * Math.sqrt(doJONSWAP(omega) * doDirectionalSpread(omega, theta));
 
-        //save kx, ky, omega into a texture and h_0_real, ..._complex into another
-    }
+    //     //save kx, ky, omega into a texture and h_0_real, ..._complex into another
+    // }
 
-    public static double dispersionRelation_omega(float kx, float ky)
-    {
-        double magnitude = waveVectorMagnitude_k(kx, ky);
+    // public static double dispersionRelation_omega(float kx, float ky)
+    // {
+    //     double magnitude = waveVectorMagnitude_k(kx, ky);
 
-        double aFreq = Math.sqrt(gravity * magnitude * Math.tanh(magnitude * depth));
-        //includes variables for capilliary waves? might look better?
-        //double aFreq = Math.sqrt((gravity * magnitude + (surfaceTensionCoefficient / waterDensity) * Math.pow(magnitude, 3))* Math.tanh(magnitude * depth));
+    //     double aFreq = Math.sqrt(gravity * magnitude * Math.tanh(magnitude * depth));
+    //     //includes variables for capilliary waves? might look better?
+    //     //double aFreq = Math.sqrt((gravity * magnitude + (surfaceTensionCoefficient / waterDensity) * Math.pow(magnitude, 3))* Math.tanh(magnitude * depth));
 
-        return aFreq;
-    }
+    //     return aFreq;
+    // }
 
-    public static double waveVectorMagnitude_k(Vector2f k)
-    {
-        return Math.sqrt(k.x*k.x + k.y*k.y);
-    }
+    // public static double waveVectorMagnitude_k(Vector2f k)
+    // {
+    //     return Math.sqrt(k.x*k.x + k.y*k.y);
+    // }
 
-    public static double waveVectorMagnitude_k(float kx, float ky)
-    {
-        return Math.sqrt(kx*kx + ky*ky);
-    }
+    // public static double waveVectorMagnitude_k(float kx, float ky)
+    // {
+    //     return Math.sqrt(kx*kx + ky*ky);
+    // }
 
-    //angle of the wave as compared to the wind direction
-    public static double windWaveDirection_Theta(float kx, float ky)
-    {
-        //theta = arctan(ky/kx)
-        return Math.atan(ky/kx);
-    }
+    // //angle of the wave as compared to the wind direction
+    // public static double windWaveDirection_Theta(float kx, float ky)
+    // {
+    //     //theta = arctan(ky/kx)
+    //     return Math.atan(ky/kx);
+    // }
 
-    //wavenumbers/vectors kx,ky and angular freq omega
-    public static double doDirectionalSpread(double omega, double theta)
-    {
-        //decide which spread functions we want to use
-        double spread = 0;
+    // //wavenumbers/vectors kx,ky and angular freq omega
+    // public static double doDirectionalSpread(double omega, double theta)
+    // {
+    //     //decide which spread functions we want to use
+    //     double spread = 0;
 
-        //for now just using the "positive cosine squared" spreading that tessendorf used   
-        if (theta > (-Math.PI/2) && theta < (Math.PI/2))
-        {
-            spread = (2/Math.PI) * Math.pow(Math.cos(theta), 2);
-        }
+    //     //for now just using the "positive cosine squared" spreading that tessendorf used   
+    //     if (theta > (-Math.PI/2) && theta < (Math.PI/2))
+    //     {
+    //         spread = (2/Math.PI) * Math.pow(Math.cos(theta), 2);
+    //     }
 
-        return spread;
-    }
+    //     return spread;
+    // }
 
-    //jonswap is based on a bunch of physical parameters for the ocean that we can tweak and the angular frequency of the specific wave we're looking at
-    public static double doJONSWAP(double omega)
-    {
-        //peak frequency of the wave spectrum
-        double omegaPeak = omega_p_J();
-        //amplitude of this wave
-        double alpha = amplitudeAlpha_J();
-        //I believe this is the surface tension term?
-        double sigma = sigma_J(omegaPeak, omega);
-        //exponent r
-        double r = exponent_r_J(omegaPeak, omega, sigma);
+    // //jonswap is based on a bunch of physical parameters for the ocean that we can tweak and the angular frequency of the specific wave we're looking at
+    // public static double doJONSWAP(double omega)
+    // {
+    //     //peak frequency of the wave spectrum
+    //     double omegaPeak = omega_p_J();
+    //     //amplitude of this wave
+    //     double alpha = amplitudeAlpha_J();
+    //     //I believe this is the surface tension term?
+    //     double sigma = sigma_J(omegaPeak, omega);
+    //     //exponent r
+    //     double r = exponent_r_J(omegaPeak, omega, sigma);
 
 
-        //the actual equation bits
-        double a = (alpha*gravity*gravity) / Math.pow(omega, 5);
+    //     //the actual equation bits
+    //     double a = (alpha*gravity*gravity) / Math.pow(omega, 5);
 
-        double b = Math.exp(-5/4 * Math.pow((omegaPeak/omega), 4));
+    //     double b = Math.exp(-5/4 * Math.pow((omegaPeak/omega), 4));
 
-        double S_jonswap = a*b*Math.pow(GAMMA_J, r);
+    //     double S_jonswap = a*b*Math.pow(GAMMA_J, r);
 
-        return S_jonswap;
-    }
+    //     return S_jonswap;
+    // }
 
-    //I believe that this is the surface tension parameter and that jonswap uses a slightly different one for some reason?
-    public static double sigma_J(double peakFrequency, double waveFrequency)
-    {
-        double alpha = 0.09;
-        if (peakFrequency >= waveFrequency)
-            alpha = 0.07;
+    // //I believe that this is the surface tension parameter and that jonswap uses a slightly different one for some reason?
+    // public static double sigma_J(double peakFrequency, double waveFrequency)
+    // {
+    //     double alpha = 0.09;
+    //     if (peakFrequency >= waveFrequency)
+    //         alpha = 0.07;
 
-        return alpha;
-    }
+    //     return alpha;
+    // }
 
-    //JONSWAP amplitude
-    public static double amplitudeAlpha_J()
-    {
-        //as far as I understand 0.076 is the real surface tension of water? perhaps it differs in ocean conditions? again not an oceanographer
-        return 0.076 * Math.pow((windSpeed*windSpeed)/(fetch*gravity), 0.22);
-    }
+    // //JONSWAP amplitude
+    // public static double amplitudeAlpha_J()
+    // {
+    //     //as far as I understand 0.076 is the real surface tension of water? perhaps it differs in ocean conditions? again not an oceanographer
+    //     return 0.076 * Math.pow((windSpeed*windSpeed)/(fetch*gravity), 0.22);
+    // }
 
-    //e^[stuff] part of the jonswap equation you might not have heard but I'm not an oceanographer
-    public static double exponent_r_J(double omegaPeak, double omega, double sigma)
-    {
-        double a = Math.pow(omega - omegaPeak, 2);
-        double b = 2*sigma*sigma*omegaPeak*omegaPeak;
+    // //e^[stuff] part of the jonswap equation you might not have heard but I'm not an oceanographer
+    // public static double exponent_r_J(double omegaPeak, double omega, double sigma)
+    // {
+    //     double a = Math.pow(omega - omegaPeak, 2);
+    //     double b = 2*sigma*sigma*omegaPeak*omegaPeak;
 
-        double c = -(a/b);
-        double r = Math.exp(c);
+    //     double c = -(a/b);
+    //     double r = Math.exp(c);
 
-        return r;
-    }
+    //     return r;
+    // }
 
-    //peak angular frequency
-    public static double omega_p_J()
-    {
-        return (22 * ((gravity*gravity)/(windSpeed * fetch)));
-    }
+    // //peak angular frequency
+    // public static double omega_p_J()
+    // {
+    //     return (22 * ((gravity*gravity)/(windSpeed * fetch)));
+    // }
 }

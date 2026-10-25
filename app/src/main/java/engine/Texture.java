@@ -63,6 +63,12 @@ public class Texture {
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
+    //for a texture that exists but isn't in the engines system yet, being used for generating our textures in a compute shader for FFT and JONSWAP
+    public Texture(int ID)
+    {
+        this.ID = ID;
+    }
+
     public void use(int slot) {
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_2D, ID);

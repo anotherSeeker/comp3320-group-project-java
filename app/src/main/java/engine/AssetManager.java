@@ -162,6 +162,14 @@ public class AssetManager {
         return ID;
     }
 
+    //sol: cutting corners for my compute shaders
+    public String ReadCompute(Path computePath)
+    {
+        String computeSource = readFile(computePath);
+
+        return computeSource;
+    }
+
     public Integer LoadMesh(Path filePath) {
         Integer ID = filePath.toAbsolutePath().hashCode();
 
@@ -322,6 +330,15 @@ public class AssetManager {
         }
 
         return ID;
+    }
+
+    //adds a texture to the texture index, for textures created with compute shaders for the water
+    public Integer AddTexture(String name, int texID) {
+        Integer indexID = name.hashCode();
+
+        textureIndex.put(indexID, new Texture(texID));
+
+        return indexID;
     }
 
     //Sol: I need to create a 2d noise texture that's only using the red and green channels, 

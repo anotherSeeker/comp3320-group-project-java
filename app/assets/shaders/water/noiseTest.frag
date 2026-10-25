@@ -2,7 +2,6 @@
 
 in vec2 outTexCoord;
 
-//Named the same so we can use the engine variables
 uniform sampler2D Albedo;
 
 //writing to our texture instead of screen

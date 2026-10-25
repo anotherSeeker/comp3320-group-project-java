@@ -25,7 +25,13 @@ public class WaterScene extends MonoScript {
     protected void Start() {
         //Generate our Gaussian noise array
         WaterFFT.noiseSetup();
-        genNoiseQuad();
+        //compute jonswap params
+        WaterFFT.computeWaveSpectrum();
+
+        //render our map to screen
+        //drawScreenQuad( WaterFFT.noiseIndexId );
+        drawScreenQuad( WaterFFT.waveVecIndexID );
+        drawScreenQuad( WaterFFT.h0IndexID );
         //makeWaterPlane();
 
         Scene.SetSkyboxTexture(skyboxTexture);
@@ -37,7 +43,7 @@ public class WaterScene extends MonoScript {
 
     }
 
-    private void genNoiseQuad()
+    private void drawScreenQuad(int texIndexID)
     {
         Integer quadShader = Assets.LoadShader(
             Path.of("assets/shaders/water/noiseTest.vert"),
@@ -47,10 +53,10 @@ public class WaterScene extends MonoScript {
         //can we do this without supplying every map?
         quadMat = Assets.createMaterial(
                 quadShader,
-                WaterFFT.noiseTexId,
-                WaterFFT.noiseTexId,
-                WaterFFT.noiseTexId,
-                WaterFFT.noiseTexId
+                texIndexID,
+                texIndexID,
+                texIndexID,
+                texIndexID
         );
 
         Mesh quadMesh = Mesh.Quad();

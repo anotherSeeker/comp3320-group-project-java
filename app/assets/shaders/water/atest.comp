@@ -1,0 +1,17 @@
+#version 430 core
+#define PI 3.1415926535897932384626433832795
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(rgba32f, binding = 0) uniform readonly image2D gaussianData;
+layout(rgba32f, binding = 1) uniform writeonly image2D waveVecTex;
+layout(rgba32f, binding = 2) uniform writeonly image2D h0Tex;
+
+void main() 
+{
+    ivec2 rawPos = ivec2( gl_GlobalInvocationID.xy);
+    uint size = gl_NumWorkGroups.x;
+
+    //imageStore( a, rawPos, vec4(rawPos.x,rawPos.y,1.0,1.0) );
+    imageStore(waveVecTex, rawPos, vec4(1.0,1.0,1.0,1.0) );
+    imageStore(h0Tex, rawPos, vec4(1.0,1.0,1.0,1.0) );
+}
