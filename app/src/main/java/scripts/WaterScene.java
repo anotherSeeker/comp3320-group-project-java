@@ -30,7 +30,7 @@ public class WaterScene extends MonoScript {
 
         //render our map to screen
         //drawScreenQuad( WaterFFT.noiseIndexId );
-        drawScreenQuad( WaterFFT.waveVecIndexID );
+        //drawScreenQuad( WaterFFT.waveVecIndexID );
         drawScreenQuad( WaterFFT.h0IndexID );
         //makeWaterPlane();
 

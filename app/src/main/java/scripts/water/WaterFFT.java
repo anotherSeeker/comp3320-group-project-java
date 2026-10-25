@@ -41,7 +41,7 @@ public class WaterFFT
 
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
-    public static int textureSize = 16; //these have to be powers of 2 or we lose efficiency on the fft
+    public static int textureSize = 512; //these have to be powers of 2 or we lose efficiency on the fft
 
     //the wavenumbers, kx, ky, and angular frequency / dispersion relation omega
     public static ArrayList<Vector3f> waveVectorList;
@@ -59,7 +59,7 @@ public class WaterFFT
     public static boolean spectraShaderCreated = false;
     public static int wavespectraComputeID;
     public static int wavespectraProgramID;
-    public static Path wavespectraComputePath = Path.of("assets/shaders/water/atest.comp"); //Path.of("assets/shaders/water/wavespectra.comp"); 
+    public static Path wavespectraComputePath = Path.of("assets/shaders/water/wavespectra.comp"); //Path.of("assets/shaders/water/wavespectra.comp"); 
 
     //bytebuffers for creating our textures
     public static ByteBuffer noiseBytes;
@@ -120,7 +120,8 @@ public class WaterFFT
 
         noiseBytes.rewind();
 
-        noiseIndexId = AssetManager.get().createTexture(noiseBytes, textureSize, GL_RG, "gaussianNoise_Water");
+        noiseIndexId = AssetManager.get().createTexture(noiseBytes, textureSize, GL_RG32F, GL_RG, "gaussianData");
+        noiseTexId = AssetManager.get().getTexture(noiseIndexId).ID;
 
         System.out.println("Finished Generating 2D Gaussian Noise values");
 
@@ -164,12 +165,8 @@ public class WaterFFT
 
     private static void dispatchWaveSpectra()
     {        
-        glUseProgram( wavespectraProgramID );
-
-        //bind our textures
-        bindSpectrumTex();
-        //testBind();
-
+        //use our program and bind our textures
+        useSpectraShader();
         //send it
         //System.out.println("dispatch");
         glDispatchCompute(textureSize, textureSize, 1);
@@ -177,7 +174,7 @@ public class WaterFFT
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
         System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
-       //System.out.println("done");
+        //System.out.println("done");
 
         // //kx,ky,omega so rgb
         // int kSize = textureSize * textureSize*3*4;
@@ -185,20 +182,26 @@ public class WaterFFT
         // int h0Size = textureSize * textureSize*2*4;
 
         // k = ByteBuffer.allocateDirect(kSize);
-        // kF = k.asFloatBuffer();
 
         // h0 = ByteBuffer.allocateDirect(h0Size);
+
+        // glActiveTexture(GL_TEXTURE0+1);
+        // glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, k);
+
+        // glActiveTexture(GL_TEXTURE0+2);
+        // glGetTexImage(GL_TEXTURE_2D, 0, GL_RG, GL_FLOAT, h0);
+
+        // h0 = h0.order(ByteOrder.nativeOrder());
         // h0F = h0.asFloatBuffer();
 
-        // glActiveTexture(GL_TEXTURE0);
-        // glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, k);
+        // k = h0.order(ByteOrder.nativeOrder());
+        // kF = k.asFloatBuffer();
+        // System.out.println("k");
         // printFloatBuffer(kF);
-
-        //glActiveTexture(GL_TEXTURE0+2);
-        // glGetTexImage(GL_TEXTURE_2D, 0, GL_RG, GL_FLOAT, h0F);
+        // System.out.println("h");
         // printFloatBuffer(h0F);
 
-        System.out.println("read");
+        // System.out.println("read");
     }
 
     //binds our kxkyfreq and complex displacement textures so we can use them in wavespectra.comp
@@ -211,10 +214,8 @@ public class WaterFFT
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         //glTexStorage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA32F , GL_FLOAT, (FloatBuffer) null);
-        glActiveTexture(GL_TEXTURE0+1);
-        glBindTexture(GL_TEXTURE_2D, waveVecTexID);
-        //glBindImageTexture( 0, waveVecTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, textureSize, textureSize, 0, GL_RGB , GL_FLOAT, (FloatBuffer) null);
+        glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_READ_WRITE, GL_RGB32F);
 
         h0TexId = glGenTextures();
         glActiveTexture(GL_TEXTURE0+2);
@@ -222,33 +223,32 @@ public class WaterFFT
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         //glTexStorage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA32F , GL_FLOAT, (FloatBuffer) null);
-        glActiveTexture(GL_TEXTURE0+1);
-        glBindTexture(GL_TEXTURE_2D, waveVecTexID);
-        //glBindImageTexture( 0, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RG , GL_FLOAT, (FloatBuffer) null);
+        glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RG32F);
 
         //add to texture index for engine
         waveVecIndexID = AssetManager.get().AddTexture("waveDisplacementTex",waveVecTexID);
-        h0IndexID = AssetManager.get().AddTexture("waveDisplacementTex",h0TexId);
+        h0IndexID = AssetManager.get().AddTexture("h0DisplacementTex",h0TexId);
     }
 
-    public static void bindSpectrumTex()
+    public static void useSpectraShader()
     {
-        glBindImageTexture( 0, noiseTexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
-        //glActiveTexture(GL_TEXTURE0);
-        //glBindTexture(GL_TEXTURE_2D, noiseTexId);
+        glUseProgram( wavespectraProgramID );
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, noiseTexId);
+        glBindImageTexture( 0, noiseTexId, 0, false, 0, GL_READ_ONLY, GL_RG32F );
         //glUniform1i(glGetUniformLocation(wavespectraProgramID, "gaussianData"), 0);
 
-        //glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
-        //glActiveTexture(GL_TEXTURE0+1);
-        //glBindTexture(GL_TEXTURE_2D, waveVecTexID);
-        glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+        glActiveTexture(GL_TEXTURE0+1);
+        glBindTexture(GL_TEXTURE_2D, waveVecTexID);
+        glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_WRITE_ONLY, GL_RGB32F );
         //glUniform1i(glGetUniformLocation(wavespectraProgramID, "waveVecTex"), 1);
         
         //glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
-        //glActiveTexture(GL_TEXTURE0+2);
-	    //glBindTexture(GL_TEXTURE_2D, h0TexId);
-        glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+        glActiveTexture(GL_TEXTURE0+2);
+	    glBindTexture(GL_TEXTURE_2D, h0TexId);
+        glBindImageTexture( 2, h0TexId, 0, false, 0, GL_WRITE_ONLY, GL_RG32F );
         //glUniform1i(glGetUniformLocation(wavespectraProgramID, "h0Tex"), 2);
 
         System.out.println("bind");
@@ -256,14 +256,12 @@ public class WaterFFT
 
     private static void printFloatBuffer(FloatBuffer buffer)
     {
-        if (buffer.hasArray())
+        while (buffer.hasRemaining())
         {
-            System.out.println(Arrays.toString(buffer.array()));
+            System.out.println(buffer.get());
         }
-        else
-        {
-            System.out.println("No buffer array");
-        }
+
+        buffer.rewind();
     }
 
 

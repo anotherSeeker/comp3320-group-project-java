@@ -12,16 +12,9 @@
 //#define doCapillaryWaves true
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-layout(rgba32f, binding = 0) uniform readonly image2D gaussianData;
+layout(rg32f, binding = 0) uniform readonly image2D gaussianData;
 layout(rgba32f, binding = 1) uniform writeonly image2D waveVecTex;
 layout(rgba32f, binding = 2) uniform writeonly image2D h0Tex;
-
-//from 0,2^x to (2^x)/2,-(2^x)/2
-int mapRange(int value, int from1, int to1, int from2, int to2) 
-{
-    int newValue = int(float(value - from1)/float(to1 - from1)*float(to2 - from2)+float(from2));
-    return newValue;
-}
 
 //D(omega, theta) controls the strength of waves based on the direction relative to the direction of travel
 float doDirectionalSpread(float omega, float theta)
@@ -38,31 +31,32 @@ float doDirectionalSpread(float omega, float theta)
     return spread;
 }
 
-//calculate parameters
-float dispersionRelation_omega(int kx, int ky, float magnitude)
-{
-    float aFreq = 0.0f;
-
-    #ifdef doCapillaryWaves
-        //includes variables for capillary waves? might look better?
-        aFreq = sqrt((gravity_g * magnitude + (surfaceTensionCoefficient_sigma/waterDensity_rho) * pow(magnitude, 3)) * tanh(magnitude * depth_H));
-        return aFreq;
-    #endif
-
-    aFreq = sqrt(gravity_g * magnitude * tanh(magnitude * depth_H));
-    return aFreq;
-}
-
-float waveVectorMagnitude_k(int kx, int ky)
+float waveVectorMagnitude_k(float kx, float ky)
 {
     return sqrt(kx*kx + ky*ky);
 }
 
+//calculate parameters
+float dispersionRelation_omega(float kx, float ky)
+{
+    float aFreq = 0.0f;
+    float magnitude_k = waveVectorMagnitude_k(kx,ky);
+
+    // #ifdef doCapillaryWaves
+    //     //includes variables for capillary waves? might look better?
+    //     aFreq = sqrt((gravity_g * magnitude_k + (surfaceTensionCoefficient_sigma/waterDensity_rho) * pow(magnitude_k, 3)) * tanh(magnitude_k * depth_H));
+    //     return aFreq;
+    // #endif
+
+    aFreq = sqrt(gravity_g * magnitude_k * tanh(magnitude_k * depth_H));
+    return aFreq;
+}
+
 //angle of the wave as compared to the wind direction
-float windWaveDirection_Theta(int kx, int ky)
+float windWaveDirection_Theta(float kx, float ky)
 {
     //theta = arctan(ky/kx)
-    return atan(float(ky) / float(kx));
+    return atan(ky / kx);
 }
 
  //I believe that this is the surface tension parameter and that jonswap uses a slightly different one for some reason?
@@ -128,19 +122,20 @@ void main()
 {
     ivec2 rawPos = ivec2( gl_GlobalInvocationID.xy );
     
-    int texSize = imageSize(waveVecTex).x;
+    int texSize = imageSize(gaussianData).x;
+    float texSizef = float(texSize);
 
     //always working with powers of two for image sizing
-    int halfSize = (texSize/2);
+    float halfSize = (texSizef-1.0)/2.0;
+    //float scale = 0.25;
     //mapping to series of radial direction vectors, rotation of the map shouldn't matter at all
-    int kx = mapRange(rawPos.x, 0, -halfSize, texSize, halfSize);
-    int ky = mapRange(rawPos.y, 0, -halfSize, texSize, halfSize);
+    float kx = (rawPos.x - halfSize);
+    float ky = (rawPos.y - halfSize);
 
     ivec2 wavevector_k = ivec2(kx,ky);
     vec2 noise_xi = vec2(imageLoad(gaussianData, rawPos).xy);
 
-    float magnitude_k = waveVectorMagnitude_k(kx,ky);
-    float omega = dispersionRelation_omega(kx, ky, magnitude_k);
+    float omega = dispersionRelation_omega(kx, ky);
 
     float theta = windWaveDirection_Theta(kx,ky);
 
@@ -148,9 +143,17 @@ void main()
     float D = doDirectionalSpread(omega, theta);
 
     float h0 = (1.0/(sqrt(2))) * sqrt(S*D);
-    float h0_real   = h0 * noise_xi.x;
+    float h0_real    = h0 * noise_xi.x;
     float h0_complex = h0 * noise_xi.y;
 
-    imageStore( waveVecTex, rawPos, vec4(kx,ky,omega,0) );
-    imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,0,0) );
+    imageStore( waveVecTex, rawPos, vec4(kx,ky,omega,1) );
+    imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,0,1) );
 }
+
+//old map range was bad and also we don't need this if I'm just not stupid
+// float halfSize = (texSize-1.0)/2.0;
+// float kx = mapRange(rawPos.x, 0, texSize-1, -halfSize, halfSize);
+// float ky = mapRange(rawPos.y, 0, texSize-1, -halfSize, halfSize);
+// float mapRange(int x, int in_min, int in_max, int out_min, int out_max) {
+//   return int(float(x - in_min) * float(out_max - out_min) / float(in_max - in_min) + out_min);
+// }

@@ -342,11 +342,11 @@ public class AssetManager {
     }
 
     //Sol: I need to create a 2d noise texture that's only using the red and green channels, 
-    public Integer createTexture(ByteBuffer data, int textureSize, int textureFormat, String name) {
+    public Integer createTexture(ByteBuffer data, int textureSize, int internalFormat, int transferFormat, String name) {
         Integer ID = name.hashCode();
 
         //makes an RGB32F texture, hopefully this doesn't break out noise
-        Texture texture = new Texture(data, textureSize, textureFormat);
+        Texture texture = new Texture(internalFormat, transferFormat, data, textureSize );
         textureIndex.put(ID, texture);
 
         return ID;
