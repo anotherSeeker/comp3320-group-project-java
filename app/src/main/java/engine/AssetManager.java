@@ -228,6 +228,16 @@ public class AssetManager {
         PointerBuffer meshbuffer = scene.mMeshes();
         AIMesh assimpMesh = AIMesh.create(meshbuffer.get(0));
 
+        Mesh mesh = createMesh(assimpMesh);
+
+        aiReleaseImport(scene);
+
+        meshIndex.put(ID, mesh);
+
+        return ID;
+    }
+
+    private Mesh createMesh(AIMesh assimpMesh) {
         int vertexCount = assimpMesh.mNumVertices();
         int indexCount = assimpMesh.mNumFaces() * 3;
 
@@ -310,14 +320,12 @@ public class AssetManager {
         vertices.flip();
         indices.flip();
 
-        aiReleaseImport(scene);
-
-        meshIndex.put(ID, new Mesh(vertices, indices));
+        Mesh mesh = new Mesh(vertices, indices);
 
         memFree(vertices);
         memFree(indices);
 
-        return ID;
+        return mesh;
     }
 
     public Integer LoadMesh(Mesh mesh, String name) {
@@ -395,6 +403,30 @@ public class AssetManager {
         }
 
         return ID;
+    }
+
+    public void LoadIntoScene(Path filePath, SceneGraph sceneGraph) {
+        AIScene scene = aiImportFile(
+                filePath.toString(), aiProcess_Triangulate |
+                        aiProcess_GenSmoothNormals |
+                        aiProcess_JoinIdenticalVertices |
+                        aiProcess_CalcTangentSpace
+        );
+
+        if (scene == null || scene.mRootNode() == null) {
+            System.out.printf("failed to load file %s:\n%s\n", filePath, aiGetErrorString());
+            return;
+        }
+
+        PointerBuffer meshbuffer = scene.mMeshes();
+        PointerBuffer materialbuffer = scene.mMaterials();
+
+        AINode root = scene.mRootNode();
+
+        System.out.printf("loaded file %s\n", filePath);
+
+        aiReleaseImport(scene);
+
     }
 
     public Shader getShader(Integer assetID) {

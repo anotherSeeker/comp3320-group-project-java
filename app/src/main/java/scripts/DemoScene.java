@@ -86,6 +86,9 @@ public class DemoScene extends MonoScript {
         D.get(Transform.class).setPosition(new Vector3f(-5.0f, 0, -5.0f));
 
         ImGui.setNextWindowPos(0.5f, 0.5f);
+
+        Assets.LoadIntoScene(Path.of("assets/DamagedHelmet.glb"), Scene);
+
     }
 
     private void swapSkybox() {
