@@ -41,7 +41,7 @@ public class WaterFFT
 
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
-    public static int textureSize = 256; //these have to be powers of 2 or we lose efficiency on the fft
+    public static int textureSize = 32; //these have to be powers of 2 or we lose efficiency on the fft
 
     //the wavenumbers, kx, ky, and angular frequency / dispersion relation omega
     public static ArrayList<Vector3f> waveVectorList;
@@ -177,17 +177,20 @@ public class WaterFFT
         // //kx,ky,omega so rgb
         // int kSize = textureSize * textureSize*3*4;
         // //h0_real, h0_complex so rg
-        // int h0Size = textureSize * textureSize*2*4;
+        int h0Size = textureSize * textureSize*2*4;
 
         // k = ByteBuffer.allocateDirect(kSize);
 
-        // h0 = ByteBuffer.allocateDirect(h0Size);
+        h0 = ByteBuffer.allocateDirect(h0Size);
+        h0F = h0.asFloatBuffer();
 
         // glActiveTexture(GL_TEXTURE0+1);
         // glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, k);
 
-        // glActiveTexture(GL_TEXTURE0+2);
-        // glGetTexImage(GL_TEXTURE_2D, 0, GL_RG, GL_FLOAT, h0);
+        glActiveTexture(GL_TEXTURE0+2);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RG, GL_FLOAT, h0F);
+
+        //gl_
 
         // h0 = h0.order(ByteOrder.nativeOrder());
         // h0F = h0.asFloatBuffer();
