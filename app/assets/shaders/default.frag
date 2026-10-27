@@ -46,13 +46,11 @@ uniform sampler2D brdfIntMap;
 Material getMaterial(){
     Material material;
 
-    float roughness = max(Roughness,0.1);
-
-    material.roughness = clamp(texture(RoughnessMap,UV).r + roughness,0,1);
+    material.roughness = max(texture(RoughnessMap,UV).r * Roughness,0.02);
     material.ambientOcclusion = texture(AmbientOcclusionMap,UV).r * AmbientOcclusion;
     material.albedo = pow(texture(Albedo,UV).rgb,vec3(2.2));
 
-    material.metallic = clamp(texture(MetallicMap,UV).r + Metallic,0,1);
+    material.metallic = clamp(texture(MetallicMap,UV).r * Metallic,0,1);
 
     return material;
 }
