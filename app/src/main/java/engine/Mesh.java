@@ -24,6 +24,69 @@ public class Mesh {
     int VBO;
     int EBO;
 
+    Mesh(float[] positions, float[] uvs, float[] normals, float[] tangents, float[] bitangents, int[] indexes,) 
+    {
+        int i = 0;
+
+        //ArrayList<Integer> indices = new ArrayList<>();
+        ArrayList<Vertex> vertices = new ArrayList<>();
+        
+        try {
+            while (i < positions.length)
+            {
+                Vector3f pos = new Vector3f(positions[i], positions[i+1], positions[i+2]);
+                Vector3f normal = new Vector3f(normals[i], normals[i+1], normals[i+2]);
+                Vector2f uv = new Vector2f(uvs[i], uvs[i+1]);
+                Vector3f tangent = new Vector3f(tangents[i], tangents[i+1], tangents[i+2]);
+                Vector3f bitangent = new Vector3f(bitangents[i], bitangents[i+1], bitangents[i+2]);
+
+                Vertex vertex = new Vertex(pos, normal, uv, tangent, bitangent);
+                vertices.add(vertex);
+
+                i += 3;
+            }
+        }
+        catch(Exception e)
+        {
+            System.out.println("Something went wrong while trying to create a mesh from arrays");
+            System.out.println(e);
+            return;
+        }
+
+        FloatBuffer vertexBuffer = memAllocFloat(vertices.size() * 14);
+        for (Vertex vertex : vertices) {
+            vertexBuffer.put(vertex.position.x);
+            vertexBuffer.put(vertex.position.y);
+            vertexBuffer.put(vertex.position.z);
+
+            vertexBuffer.put(vertex.normal.x);
+            vertexBuffer.put(vertex.normal.y);
+            vertexBuffer.put(vertex.normal.z);
+
+            vertexBuffer.put(vertex.uv.x);
+            vertexBuffer.put(vertex.uv.y);
+
+            vertexBuffer.put(vertex.tangent.x);
+            vertexBuffer.put(vertex.tangent.y);
+            vertexBuffer.put(vertex.tangent.z);
+
+            vertexBuffer.put(vertex.bitangent.x);
+            vertexBuffer.put(vertex.bitangent.y);
+            vertexBuffer.put(vertex.bitangent.z);
+        }
+
+        IntBuffer indexBuffer = memAllocInt(indexes.length);
+        indexBuffer.put(indexes);
+
+        vertexBuffer.flip();
+        indexBuffer.flip();
+
+        this(vertexBuffer, indexBuffer);
+
+        memFree(vertexBuffer);
+        memFree(indexBuffer);
+    }
+
     Mesh(ArrayList<Vertex> vertices, ArrayList<Integer> indices) {
 
         FloatBuffer vertexBuffer = memAllocFloat(vertices.size() * 14);
