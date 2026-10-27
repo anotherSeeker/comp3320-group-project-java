@@ -17,7 +17,7 @@ public class Feya extends MonoScript {
             Path.of("assets/shaders/default.frag")
     );
 
-    Integer characterMesh = Assets.LoadMesh(Path.of("assets/meshes/character_combined.obj"));
+    Integer characterMesh = Assets.LoadMesh(Path.of("assets/meshes/feya combined.glb"));
 
     //@formatter:off
     Material material = Assets.createMaterial(new MaterialEntry()
