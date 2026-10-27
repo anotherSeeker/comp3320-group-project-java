@@ -60,9 +60,6 @@ public class WaterScene extends MonoScript {
         quadMat = Assets.createMaterial(new MaterialEntry()
             .add("SHADER", quadShader)
             .add("COLOUR",texIndexID)
-            .add("ROUGHNESS",texIndexID)
-            .add("AMBIENT_OCCLUSION",texIndexID)
-            .add("NORMAL",texIndexID)
         );
 
         Mesh quadMesh = Mesh.Quad();
@@ -85,9 +82,7 @@ public class WaterScene extends MonoScript {
             .add("COLOUR",ID1)
             .add("ROUGHNESS",ID2)
             .add("AMBIENT_OCCLUSION",ID3)
-            .add("NORMAL",ID1)
         );
-
 
         Mesh quadMesh = Mesh.Quad();
         quadID = AssetManager.get().LoadMesh(quadMesh, "noiseQuad");
