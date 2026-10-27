@@ -23,13 +23,9 @@ public class Mesh {
     int VAO;
     int VBO;
     int EBO;
-<<<<<<< HEAD
 
-=======
-    
     //awful garbage function I hate
->>>>>>> af840cb7e2148b0e42f9a38d33c5f962d50ab33d
-    Mesh(float[] positions, float[] uvs, float[] normals, float[] tangents, float[] bitangents, int[] indexes) 
+    public Mesh(float[] positions, float[] uvs, float[] normals, float[] tangents, float[] bitangents, int[] indexes) 
     {
         boolean error = false;
         int i = 0;
