@@ -8,7 +8,7 @@ import dev.dominion.ecs.api.Entity;
 
 import engine.*;
 import engine.components.Material;
-import engine.components.MaterialEntry;
+import engine.components.MaterialEntry; 
 import engine.components.Transform;
 
 public class Feya extends MonoScript {

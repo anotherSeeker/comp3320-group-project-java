@@ -9,6 +9,7 @@ import engine.AssetManager;
 import engine.Mesh;
 import engine.MonoScript;
 import engine.components.Material;
+import engine.components.MaterialEntry;
 import engine.components.Transform;
 import scripts.water.WaterFFT;
 
@@ -56,13 +57,12 @@ public class WaterScene extends MonoScript {
             Path.of("assets/shaders/water/noiseTest.frag")
         );
 
-        //can we do this without supplying every map?
-        quadMat = Assets.createMaterial(
-                quadShader,
-                texIndexID,
-                texIndexID,
-                texIndexID,
-                texIndexID
+        quadMat = Assets.createMaterial(new MaterialEntry()
+            .add("SHADER", quadShader)
+            .add("COLOUR",texIndexID)
+            .add("ROUGHNESS",texIndexID)
+            .add("AMBIENT_OCCLUSION",texIndexID)
+            .add("NORMAL",texIndexID)
         );
 
         Mesh quadMesh = Mesh.Quad();
@@ -80,13 +80,14 @@ public class WaterScene extends MonoScript {
         );
 
         //can we do this without supplying every map?
-        quadMat = Assets.createMaterial(
-                quadShader,
-                ID1,
-                ID2,
-                ID3,
-                ID1
+        quadMat = Assets.createMaterial(new MaterialEntry()
+            .add("SHADER", quadShader)
+            .add("COLOUR",ID1)
+            .add("ROUGHNESS",ID2)
+            .add("AMBIENT_OCCLUSION",ID3)
+            .add("NORMAL",ID1)
         );
+
 
         Mesh quadMesh = Mesh.Quad();
         quadID = AssetManager.get().LoadMesh(quadMesh, "noiseQuad");
@@ -104,12 +105,12 @@ public class WaterScene extends MonoScript {
 
         Integer waterMeshID = Assets.LoadMesh(Path.of("assets/meshes/WaterTestMesh_Bigger.obj"));
 
-        Material waterMat = Assets.createMaterial(
-                waterShader,
-                Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")),
-                Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")),
-                Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")),
-                Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg"))
+        Material waterMat = Assets.createMaterial(new MaterialEntry()
+            .add("SHADER", waterShader)
+            .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")))
+            .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")))
+            .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")))
+            .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg")))
         );
 
         WaterPlane = Scene.createObject(waterMeshID, waterMat);
