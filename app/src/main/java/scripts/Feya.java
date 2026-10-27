@@ -8,6 +8,7 @@ import dev.dominion.ecs.api.Entity;
 
 import engine.*;
 import engine.components.Material;
+import engine.components.MaterialEntry;
 import engine.components.Transform;
 
 public class Feya extends MonoScript {
@@ -16,28 +17,25 @@ public class Feya extends MonoScript {
             Path.of("assets/shaders/default.frag")
     );
 
-    Integer character = Assets.LoadMesh(Path.of("assets/meshes/character_combined.obj"));
+    Integer characterMesh = Assets.LoadMesh(Path.of("assets/meshes/character_combined.obj"));
 
-    Material material = Assets.createMaterial(
-            shaderID,
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg"))
+    //@formatter:off
+    Material material = Assets.createMaterial(new MaterialEntry()
+        .add("SHADER", shaderID)
+        .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")))
+        .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")))
+        .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")))
+        .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg")))
     );
+    //@formatter:on
 
-    Integer skyboxTexture = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/qwantani_dusk_2_puresky_1k.hdr"));
-
-    Entity A;
-    Entity B;
+    Entity character;
 
     @Override
     protected void Start() {
 
-        Scene.SetSkyboxTexture(skyboxTexture);
-
-        A = Scene.createObject(character, material);
-        A.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
+        character = Scene.createObject(characterMesh, material);
+        character.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
     }
 
     @Override

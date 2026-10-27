@@ -25,6 +25,7 @@ public class SceneGraph {
 
     public Transform cameraTransform = new Transform(new Matrix4f());
     public Vector3f lightDirection = new Vector3f(1, 1, 0);
+    public Vector3f lightColour = new Vector3f(1, 1, 1);
 
     public int fov = 60;
     public float aspectRatio;
@@ -97,19 +98,15 @@ public class SceneGraph {
 
             material.shader.setMatrix4("Model", transform.model);
             material.shader.setMatrix4("CameraMatrix", viewportMatrix);
-            material.shader.setTexture("Albedo", material.albedoMap, 4);
-            material.shader.setTexture("RoughnessMap", material.roughnessMap, 5);
-            material.shader.setTexture("AmbientOcclusionMap", material.ambientOcclusionMap, 6);
-            material.shader.setTexture("NormalMap", material.normalMap, 7);
             material.shader.setVector3("LightDirection", lightDirection);
             material.shader.setVector3("ViewPosition", cameraTransform.position);
+            material.shader.setVector3("DiffuseColour", lightColour);
 
             material.shader.setInt("IrradianceMap", 1);
             material.shader.setInt("PrefilterMap", 2);
             material.shader.setInt("brdfIntMap", 3);
 
-            material.shader.setFloat("Roughness", material.roughness);
-            material.shader.setFloat("AmbientOcclusion", material.ambientOcclusion);
+            material.bindAsUniform();
 
             gameObject.mesh.bind();
             gameObject.mesh.draw();

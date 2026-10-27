@@ -1,5 +1,20 @@
 package engine;
 
+import engine.components.Material;
+import engine.components.MaterialEntry;
+
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.system.MemoryUtil.memAllocFloat;
+import static org.lwjgl.system.MemoryUtil.memAllocInt;
+import static org.lwjgl.system.MemoryUtil.memFree;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.PointerBuffer;
+
+import org.lwjgl.stb.STBImage;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.assimp.*;
+import static org.lwjgl.assimp.Assimp.*;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -42,11 +57,21 @@ public class AssetManager {
     private Map<Integer, CubeTexture> cubeTextureIndex = new HashMap<>();
 
     public Integer defaultTexture = "DEFAULT".hashCode();
+    public Integer whiteTexture = "WHITE".hashCode();
+    public Integer blackTexture = "BLACK".hashCode();
+    public Integer normalTexture = "NORMAL".hashCode();
+
     public Integer cubemapShader = "CUBEMAP".hashCode();
     public Integer skyboxShader = "SKYBOX".hashCode();
     public Integer irradianceShader = "IRRADIANCE".hashCode();
     public Integer prefilterShader = "PREFILTER".hashCode();
     public Integer brdfIntShader = "BRDF_INT".hashCode();
+
+    public Integer framebufferShader = "FRAMEBUFFER".hashCode();
+    public Integer blurPostProcess = "BLUR".hashCode();
+    public Integer bloomPostProcessA = "BLOOM_A".hashCode();
+    public Integer bloomPostProcessB = "BLOOM_B".hashCode();
+    public Integer vignettePostProcess = "VIGNETTE".hashCode();
 
     private AssetManager() {
 
@@ -86,6 +111,26 @@ public class AssetManager {
             }
         }
 
+        ByteBuffer whiteData = BufferUtils.createByteBuffer(width * height);
+
+        for (int i = 0; i < width * height; i++) {
+            whiteData.put((byte) 0xFF);
+        }
+
+        ByteBuffer blackData = BufferUtils.createByteBuffer(width * height);
+
+        for (int i = 0; i < width * height; i++) {
+            blackData.put((byte) 0xFF);
+        }
+
+        ByteBuffer normalData = BufferUtils.createByteBuffer(width * height * 3);
+
+        for (int i = 0; i < width * height; i++) {
+            normalData.put((byte) 0x80);
+            normalData.put((byte) 0x80);
+            normalData.put((byte) 0xFF);
+        }
+
         this.loadInternalShader(
                 cubemapShader,
                 Path.of("assets/shaders/internal/cubemap.vert"),
@@ -116,9 +161,23 @@ public class AssetManager {
                 Path.of("assets/shaders/internal/brdfInt.frag")
         );
 
+        this.loadInternalShader(
+                framebufferShader,
+                Path.of("assets/shaders/internal/framebuffer.vert"),
+                Path.of("assets/shaders/internal/framebuffer.frag")
+        );
+
+        this.loadInternalComputeShader(blurPostProcess, Path.of("assets/shaders/internal/blur.glsl"));
+        this.loadInternalComputeShader(bloomPostProcessA, Path.of("assets/shaders/internal/bloomA.glsl"));
+        this.loadInternalComputeShader(bloomPostProcessB, Path.of("assets/shaders/internal/bloomB.glsl"));
+        this.loadInternalComputeShader(vignettePostProcess, Path.of("assets/shaders/internal/vignette.glsl"));
+
         data.flip();
 
         textureIndex.put(defaultTexture, new Texture(data, width, height, GL_RGBA));
+        textureIndex.put(whiteTexture, new Texture(whiteData, width, height, GL_R));
+        textureIndex.put(blackTexture, new Texture(blackData, width, height, GL_R));
+        textureIndex.put(normalTexture, new Texture(normalData, width, height, GL_RGB));
     }
 
     private String readFile(Path filePath) {
@@ -141,6 +200,15 @@ public class AssetManager {
 
         Shader shader = new Shader();
         shader.init(vertexSource, fragmentSource);
+
+        shaderIndex.put(ID, shader);
+    }
+
+    private void loadInternalComputeShader(Integer ID, Path computePath) {
+        String computeSource = readFile(computePath);
+
+        Shader shader = new Shader();
+        shader.initCompute(computeSource);
 
         shaderIndex.put(ID, shader);
     }
@@ -396,15 +464,18 @@ public class AssetManager {
         return cubeTextureIndex.get(assetID);
     }
 
-    public Material createMaterial(
-            Integer shaderID, Integer albedoID, Integer roughnessID, Integer ambientOcclusionID, Integer normalID
-    ) {
+    public Material createMaterial(MaterialEntry materialEntry) {
+
         Material material = new Material();
-        material.shader = getShader(shaderID);
-        material.albedoMap = getTexture(albedoID);
-        material.roughnessMap = getTexture(roughnessID);
-        material.ambientOcclusionMap = getTexture(ambientOcclusionID);
-        material.normalMap = getTexture(normalID);
+        material.shader = getShader(materialEntry.shaderID);
+
+        // @formatter:off
+        material.albedoMap              = getTexture(materialEntry.albedoID           != null ? materialEntry.albedoID : defaultTexture);
+        material.roughnessMap           = getTexture(materialEntry.roughnessID        != null ? materialEntry.roughnessID : blackTexture);
+        material.ambientOcclusionMap    = getTexture(materialEntry.ambientOcclusionID != null ? materialEntry.ambientOcclusionID : whiteTexture);
+        material.normalMap              = getTexture(materialEntry.normalID           != null ? materialEntry.normalID : normalTexture);
+        material.metallicMap            = getTexture(materialEntry.metallicID           != null ? materialEntry.metallicID : blackTexture);
+        // @formatter:on
 
         return material;
     }

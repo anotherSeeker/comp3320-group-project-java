@@ -125,12 +125,19 @@ public class CubeTexture {
         }
 
         // generating prefilter map
+        int maxMipLevels = 8;
+
         prefilterID = glGenTextures();
         glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterID);
-        for (int i = 0; i < 6; i++) {
-            glTexImage2D(
-                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 128, 128, 0, GL_RGB, GL_FLOAT, (ByteBuffer) null
-            );
+
+        for (int mip = 0; mip < maxMipLevels; mip++) {
+            int mipSize = 128 >> mip;
+            for (int i = 0; i < 6; i++) {
+                glTexImage2D(
+                        GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, mip, GL_RGB16F, mipSize, mipSize, 0, GL_RGB, GL_FLOAT,
+                        (ByteBuffer) null
+                );
+            }
         }
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -140,8 +147,6 @@ public class CubeTexture {
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-
         Shader prefilterShader = assets.getShader(assets.prefilterShader);
 
         prefilterShader.use();
@@ -149,7 +154,6 @@ public class CubeTexture {
         prefilterShader.setMatrix4("Projection", captureProjection);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
-        int maxMipLevels = 5;
 
         for (int mip = 0; mip < maxMipLevels; mip++) {
             int mipWidth = 128 >> mip;

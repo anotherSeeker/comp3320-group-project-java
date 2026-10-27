@@ -9,3 +9,5 @@ bin
 
 # Ignore Kotlin plugin data
 .kotlin
+
+imgui.ini
