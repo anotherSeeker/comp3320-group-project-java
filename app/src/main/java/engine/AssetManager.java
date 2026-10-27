@@ -54,6 +54,8 @@ public class AssetManager {
     public Integer bloomPostProcessB = "BLOOM_B".hashCode();
     public Integer vignettePostProcess = "VIGNETTE".hashCode();
 
+    public Integer defaultShader = "DEFAULT".hashCode();
+
     private AssetManager() {
 
     }
@@ -146,6 +148,12 @@ public class AssetManager {
                 framebufferShader,
                 Path.of("assets/shaders/internal/framebuffer.vert"),
                 Path.of("assets/shaders/internal/framebuffer.frag")
+        );
+
+        this.loadInternalShader(
+                defaultShader,
+                Path.of("assets/shaders/default.vert"),
+                Path.of("assets/shaders/default.frag")
         );
 
         this.loadInternalComputeShader(blurPostProcess, Path.of("assets/shaders/internal/blur.glsl"));
@@ -241,7 +249,7 @@ public class AssetManager {
         return ID;
     }
 
-    private Mesh createMesh(AIMesh assimpMesh) {
+    public Mesh createMesh(AIMesh assimpMesh) {
         int vertexCount = assimpMesh.mNumVertices();
         int indexCount = assimpMesh.mNumFaces() * 3;
 
@@ -422,10 +430,9 @@ public class AssetManager {
             return;
         }
 
-        PointerBuffer meshbuffer = scene.mMeshes();
-        PointerBuffer materialbuffer = scene.mMaterials();
+        SceneParser loader = new SceneParser();
 
-        AINode root = scene.mRootNode();
+        loader.loadScene(filePath, scene, sceneGraph);
 
         System.out.printf("loaded file %s\n", filePath);
 
@@ -452,7 +459,7 @@ public class AssetManager {
     public Material createMaterial(MaterialEntry materialEntry) {
 
         Material material = new Material();
-        material.shader = getShader(materialEntry.shaderID);
+        material.shader = getShader(materialEntry.shaderID != null ? materialEntry.shaderID : defaultShader);
 
         // @formatter:off
         material.albedoMap              = getTexture(materialEntry.albedoID           != null ? materialEntry.albedoID : defaultTexture);

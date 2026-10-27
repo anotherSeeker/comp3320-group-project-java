@@ -17,16 +17,10 @@ import imgui.ImGui;
 
 public class DemoScene extends MonoScript {
 
-    Integer shaderID = Assets.LoadShader(
-            Path.of("assets/shaders/default.vert"),
-            Path.of("assets/shaders/default.frag")
-    );
-
     Integer uvSmoothID = Assets.LoadMesh(Path.of("assets/meshes/uvsmooth.obj"));
 
     //@formatter:off
     Material tile_material = Assets.createMaterial(new MaterialEntry()
-        .add("SHADER", shaderID)
         .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")))
         .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")))
         .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")))
@@ -34,7 +28,6 @@ public class DemoScene extends MonoScript {
     );
 
     Material brick_Material = Assets.createMaterial(new MaterialEntry()
-        .add("SHADER", shaderID)
         .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_Color.jpg")))
         .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_Roughness.jpg")))
         .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_AmbientOcclusion.jpg")))
@@ -42,7 +35,6 @@ public class DemoScene extends MonoScript {
     );
 
     Material concrete_Material = Assets.createMaterial(new MaterialEntry()
-        .add("SHADER", shaderID)
         .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_Color.jpg")))
         .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_Roughness.jpg")))
         .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_AmbientOcclusion.jpg")))
@@ -50,7 +42,6 @@ public class DemoScene extends MonoScript {
     );
 
     Material ornament_Material = Assets.createMaterial(new MaterialEntry()
-        .add("SHADER", shaderID)
         .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Color.jpg")))
         .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Roughness.jpg")))
         .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_NormalGL.jpg")))
@@ -73,17 +64,19 @@ public class DemoScene extends MonoScript {
     protected void Start() {
         Scene.SetSkyboxTexture(skyboxTexture);
 
+        Vector3f offset = new Vector3f(0, 0, -5);
+
         A = Scene.createObject(uvSmoothID, tile_material);
-        A.get(Transform.class).setPosition(new Vector3f(0.0f, 0, 0));
+        A.get(Transform.class).setPosition(new Vector3f(0.0f, 0, 0).add(offset));
 
         B = Scene.createObject(uvSmoothID, brick_Material);
-        B.get(Transform.class).setPosition(new Vector3f(-5.0f, 0, 0));
+        B.get(Transform.class).setPosition(new Vector3f(-5.0f, 0, 0).add(offset));
 
         C = Scene.createObject(uvSmoothID, concrete_Material);
-        C.get(Transform.class).setPosition(new Vector3f(0.0f, 0, -5.0f));
+        C.get(Transform.class).setPosition(new Vector3f(0.0f, 0, -5.0f).add(offset));
 
         D = Scene.createObject(uvSmoothID, ornament_Material);
-        D.get(Transform.class).setPosition(new Vector3f(-5.0f, 0, -5.0f));
+        D.get(Transform.class).setPosition(new Vector3f(-5.0f, 0, -5.0f).add(offset));
 
         ImGui.setNextWindowPos(0.5f, 0.5f);
 
