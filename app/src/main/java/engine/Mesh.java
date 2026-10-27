@@ -24,7 +24,7 @@ public class Mesh {
     int VBO;
     int EBO;
 
-    Mesh(float[] positions, float[] uvs, float[] normals, float[] tangents, float[] bitangents, int[] indexes,) 
+    Mesh(float[] positions, float[] uvs, float[] normals, float[] tangents, float[] bitangents, int[] indexes) 
     {
         int i = 0;
 
