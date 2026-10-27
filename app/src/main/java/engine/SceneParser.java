@@ -8,9 +8,11 @@ import static org.lwjgl.assimp.Assimp.aiTextureType_AMBIENT_OCCLUSION;
 import static org.lwjgl.assimp.Assimp.aiTextureType_BASE_COLOR;
 import static org.lwjgl.assimp.Assimp.aiTextureType_DIFFUSE;
 import static org.lwjgl.assimp.Assimp.aiTextureType_DIFFUSE_ROUGHNESS;
+import static org.lwjgl.assimp.Assimp.aiTextureType_GLTF_METALLIC_ROUGHNESS;
 import static org.lwjgl.assimp.Assimp.aiTextureType_LIGHTMAP;
 import static org.lwjgl.assimp.Assimp.aiTextureType_METALNESS;
 import static org.lwjgl.assimp.Assimp.aiTextureType_NORMALS;
+import static org.lwjgl.opengl.GL11.GL_RED;
 import static org.lwjgl.opengl.GL11.GL_RGBA;
 
 import java.nio.ByteBuffer;
@@ -31,6 +33,7 @@ import org.lwjgl.assimp.AITexel;
 import org.lwjgl.assimp.AITexture;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import engine.components.Material;
 import engine.components.MaterialEntry;
@@ -112,14 +115,13 @@ public class SceneParser {
         MaterialEntry entry = new MaterialEntry();
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
-
             Integer texture;
 
             texture = loadTexture(assimpMat, aiTextureType_BASE_COLOR);
             if (texture == null) {
                 entry.add("COLOUR", loadTexture(assimpMat, aiTextureType_DIFFUSE));
             } else {
-                entry.add("COLOUR", loadTexture(assimpMat, aiTextureType_BASE_COLOR));
+                entry.add("COLOUR", texture);
             }
 
             texture = loadTexture(assimpMat, aiTextureType_NORMALS);
@@ -127,27 +129,28 @@ public class SceneParser {
                 entry.add("NORMAL", texture);
             }
 
-            texture = loadTexture(assimpMat, aiTextureType_METALNESS);
+            texture = loadTexture(assimpMat, aiTextureType_LIGHTMAP);
             if (texture != null) {
-                entry.add("METAL", texture);
+                entry.add("AMBIENT_OCCLUSION", texture);
             }
 
-            texture = loadTexture(assimpMat, aiTextureType_DIFFUSE_ROUGHNESS);
+            texture = loadTexture(assimpMat, aiTextureType_GLTF_METALLIC_ROUGHNESS);
             if (texture != null) {
-                entry.add("ROUGHNESS", texture);
-            }
-
-            texture = loadTexture(assimpMat, aiTextureType_AMBIENT_OCCLUSION);
-            if (texture == null) {
-                entry.add("AMBIENT_OCCLUSION", loadTexture(assimpMat, aiTextureType_LIGHTMAP));
-            } else {
-                entry.add("AMBIENT_OCCLUSION", loadTexture(assimpMat, aiTextureType_AMBIENT_OCCLUSION));
+                entry.add("METAL", loadTextureChannel(assimpMat, aiTextureType_GLTF_METALLIC_ROUGHNESS, 2, "metallic"));
+                entry.add(
+                        "ROUGHNESS",
+                        loadTextureChannel(assimpMat, aiTextureType_GLTF_METALLIC_ROUGHNESS, 1, "roughness")
+                );
             }
 
             material = assetManager.createMaterial(entry);
 
+            material.print();
             FloatBuffer value = stack.mallocFloat(1);
             IntBuffer count = stack.ints(1);
+
+            value.put(0, 0);
+            count.put(0, 1);
 
             if (aiGetMaterialFloatArray(assimpMat, "$mat.roughnessFactor", 0, 0, value, count) == aiReturn_SUCCESS) {
                 material.roughness = value.get(0);
@@ -158,10 +161,8 @@ public class SceneParser {
 
             if (aiGetMaterialFloatArray(assimpMat, "$mat.metallicFactor", 0, 0, value, count) == aiReturn_SUCCESS) {
                 material.metallic = value.get(0);
-            }
 
-            value.put(0, 0);
-            count.put(0, 1);
+            }
 
         }
 
@@ -216,8 +217,6 @@ public class SceneParser {
         int width = texture.mWidth();
         int height = texture.mHeight();
 
-        // gltf files sometimes store compressed textures
-        // this is indicated by a height of 0
         if (height == 0) {
             ByteBuffer compressed = texture.pcDataCompressed();
 
@@ -234,7 +233,7 @@ public class SceneParser {
                 IntBuffer outHeight = stack.mallocInt(1);
                 IntBuffer channels = stack.mallocInt(1);
 
-                ByteBuffer data = STBImage.stbi_load_from_memory(compressed, outWidth, outHeight, channels, 4);
+                ByteBuffer data = STBImage.stbi_load_from_memory(encoded, outWidth, outHeight, channels, 4);
                 if (data == null) {
                     throw new RuntimeException(
                             "failed to load embedded texture " + STBImage.stbi_failure_reason()
@@ -263,5 +262,113 @@ public class SceneParser {
         data.flip();
 
         return assetManager.LoadTexture(data, width, height, GL_RGBA, name);
+    }
+
+    private Integer loadTextureChannel(AIMaterial assimpMat, int textureType, int channel, String suffix) {
+
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            AIString path = AIString.calloc(stack);
+
+            if (aiGetMaterialTextureCount(assimpMat, textureType) == 0) {
+                return null;
+            }
+
+            if (aiGetMaterialTexture(
+                    assimpMat,
+                    textureType,
+                    0,
+                    path,
+                    (IntBuffer) null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            ) != aiReturn_SUCCESS) {
+                return null;
+            }
+
+            String texturePath = path.dataString();
+
+            IntBuffer width = stack.mallocInt(1);
+            IntBuffer height = stack.mallocInt(1);
+            IntBuffer channels = stack.mallocInt(1);
+
+            ByteBuffer data = decodeTexture(texturePath.toString(), width, height, channels);
+
+            if (data == null) {
+                throw new RuntimeException(
+                        "could not decode texture: " + texturePath + " " + STBImage.stbi_failure_reason()
+                );
+            }
+
+            try {
+                int w = width.get(0);
+                int h = height.get(0);
+
+                ByteBuffer extracted = BufferUtils.createByteBuffer(w * h);
+
+                for (int i = 0; i < w * h; i++) {
+
+                    extracted.put(data.get(i * 4 + channel));
+                }
+
+                extracted.flip();
+
+                String name = filepath + "#" + suffix + "-" + texturePath;
+
+                return assetManager.LoadTexture(extracted, w, h, GL_RED, name);
+
+            } finally {
+                STBImage.stbi_image_free(data);
+            }
+        }
+
+    }
+
+    private ByteBuffer decodeTexture(String texturePath, IntBuffer width, IntBuffer height, IntBuffer channels) {
+
+        if (texturePath.startsWith("*")) {
+            int index = Integer.parseInt(texturePath.substring(1));
+            PointerBuffer textures = scene.mTextures();
+
+            AITexture embedded = AITexture.create(textures.get(index));
+
+            // gltf files sometimes store compressed textures
+            // this is indicated by a height of 0
+            if (embedded.mHeight() == 0) {
+                ByteBuffer compressed = embedded.pcDataCompressed().duplicate();
+                compressed.position(0);
+                compressed.limit(embedded.mWidth());
+
+                return STBImage.stbi_load_from_memory(compressed, width, height, channels, 4);
+            }
+
+            int w = embedded.mWidth();
+            int h = embedded.mHeight();
+
+            AITexel.Buffer texels = embedded.pcData();
+            ByteBuffer data = BufferUtils.createByteBuffer(w * h * 4);
+
+            for (int i = 0; i < w * h; i++) {
+                AITexel texel = texels.get(i);
+                data.put((byte) texel.r());
+                data.put((byte) texel.g());
+                data.put((byte) texel.b());
+                data.put((byte) texel.a());
+            }
+
+            data.flip();
+
+            width.put(0, w);
+            height.put(0, h);
+            channels.put(0, 4);
+
+            return data;
+        }
+
+        Path resolved = directory.resolve(texturePath).normalize();
+
+        return STBImage.stbi_load(resolved.toString(), width, height, channels, 4);
     }
 }

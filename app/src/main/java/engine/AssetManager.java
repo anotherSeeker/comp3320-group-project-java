@@ -103,7 +103,7 @@ public class AssetManager {
         ByteBuffer blackData = BufferUtils.createByteBuffer(width * height);
 
         for (int i = 0; i < width * height; i++) {
-            blackData.put((byte) 0xFF);
+            blackData.put((byte) 0x00);
         }
 
         ByteBuffer normalData = BufferUtils.createByteBuffer(width * height * 3);

@@ -48,11 +48,11 @@ Material getMaterial(){
 
     float roughness = max(Roughness,0.1);
 
-    material.roughness = clamp(texture(RoughnessMap,UV).r,roughness,1);
+    material.roughness = clamp(texture(RoughnessMap,UV).r + roughness,0,1);
     material.ambientOcclusion = texture(AmbientOcclusionMap,UV).r * AmbientOcclusion;
     material.albedo = pow(texture(Albedo,UV).rgb,vec3(2.2));
 
-    material.metallic = clamp(texture(MetallicMap,UV).r, Metallic,1);
+    material.metallic = clamp(texture(MetallicMap,UV).r + Metallic,0,1);
 
     return material;
 }
@@ -150,7 +150,10 @@ vec3 generateAmbientLight(Material material,vec3 norm){
     float nDotV = max(dot(norm,viewDirection),0.0f);
 
     vec3 baseReflectivity = vec3(0.04);
-    vec3 kS = baseReflectivity + (max(vec3(1.0 - material.roughness),baseReflectivity) - baseReflectivity) * pow((1 - nDotV),5.0);
+
+    vec3 F0 = mix(baseReflectivity,material.albedo,material.metallic);
+
+    vec3 kS = F0 + (max(vec3(1.0 - material.roughness),F0) - F0) * pow((1 - nDotV),5.0);
     vec3 kD = (1.0 - kS) * (1.0 - material.metallic);
 
     vec3 diffuse = texture(IrradianceMap,norm).rgb * material.albedo * kD;
@@ -162,7 +165,7 @@ vec3 generateAmbientLight(Material material,vec3 norm){
 
     vec3 specular = prefilterColour * (kS * brdfIBL.r + brdfIBL.g);
 
-    return (diffuse + specular) * material.ambientOcclusion;
+    return (diffuse * material.ambientOcclusion + specular) ;
 }
 
 void main() {

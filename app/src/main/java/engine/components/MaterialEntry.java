@@ -12,12 +12,12 @@ public class MaterialEntry {
 
         //@formatter:off
         switch (string) {
-            case "SHADER": shaderID = ID;
-            case "COLOUR": albedoID = ID;
-            case "ROUGHNESS": roughnessID = ID;
-            case "AMBIENT_OCCLUSION": ambientOcclusionID = ID;
-            case "NORMAL": normalID = ID;
-            case "METAL": metallicID = ID;
+            case "SHADER": shaderID = ID; break;
+            case "COLOUR": albedoID = ID; break;
+            case "ROUGHNESS": roughnessID = ID; break;
+            case "AMBIENT_OCCLUSION": ambientOcclusionID = ID; break;
+            case "NORMAL": normalID = ID; break;
+            case "METAL": metallicID = ID; break;
 
             default: break;
         }
