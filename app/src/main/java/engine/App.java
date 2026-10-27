@@ -1,5 +1,7 @@
 package engine;
 
+import engine.rendering.*;
+
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 

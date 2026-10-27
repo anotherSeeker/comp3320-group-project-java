@@ -1,4 +1,4 @@
-package engine;
+package engine.rendering;
 
 import org.joml.Vector3f;
 import org.joml.Vector2f;

@@ -1,7 +1,8 @@
 package engine.components;
 
-import engine.Shader;
-import engine.Texture;
+import engine.rendering.Shader;
+import engine.rendering.Texture;
+
 import org.joml.Vector3f;
 
 public class Material {
