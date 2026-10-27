@@ -67,23 +67,23 @@ public class App {
         scene.updateAspectRatio(width, height);
 
         input = new InputManager(window);
-        pipeline = new ShaderPipeline(
-                assetManager.getShader(assetManager.framebufferShader),
-                width,
-                height
-        );
+        // pipeline = new ShaderPipeline(
+        //         assetManager.getShader(assetManager.framebufferShader),
+        //         width,
+        //         height
+        // );
 
-        pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessA));
-        pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
-        pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
-        pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessB));
-        // pipeline.attach(assetManager.getShader(assetManager.vignettePostProcess));
+        // pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessA));
+        // pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
+        // pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
+        // pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessB));
+        // // pipeline.attach(assetManager.getShader(assetManager.vignettePostProcess));
 
-        glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
-            glViewport(0, 0, new_width, new_height);
-            pipeline.onResize(new_width, new_height);
-            scene.updateAspectRatio(new_width, new_height);
-        });
+        // glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
+        //     glViewport(0, 0, new_width, new_height);
+        //     pipeline.onResize(new_width, new_height);
+        //     scene.updateAspectRatio(new_width, new_height);
+        // });
 
         glEnable(GL_DEPTH_TEST);
 
@@ -118,14 +118,14 @@ public class App {
             }
 
             glEnable(GL_DEPTH_TEST);
-            pipeline.bind();
+            //pipeline.bind();
 
             glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             scene.draw();
 
-            pipeline.process();
-            pipeline.render();
+            //pipeline.process();
+            //pipeline.render();
 
             ImGui.render();
             imGuiGL3.renderDrawData(ImGui.getDrawData());
