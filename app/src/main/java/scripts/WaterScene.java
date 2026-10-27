@@ -28,12 +28,9 @@ public class WaterScene extends MonoScript {
         //compute jonswap params
         WaterFFT.computeWaveSpectrum();
 
-        //render our map to screen
-        //drawScreenQuad( WaterFFT.noiseIndexId );
-        //drawScreenQuad( WaterFFT.waveVecIndexID );
-        //drawScreenQuad( WaterFFT.h0IndexID );
-
+        //render our maps to screen
         drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID);
+
         //makeWaterPlane();
 
         Scene.SetSkyboxTexture(skyboxTexture);
@@ -42,7 +39,14 @@ public class WaterScene extends MonoScript {
     @Override
     protected void Update(double deltaTime) 
     {
+        //compute the time variant displacement
+        //todo
 
+        //generate displacement maps via IFFT
+        //todo
+
+        //dispatch water shader
+        //
     }
 
     private void drawScreenQuad(int texIndexID)
