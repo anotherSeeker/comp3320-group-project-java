@@ -1,19 +1,7 @@
 package engine;
 
-import static org.lwjgl.assimp.Assimp.aiGetMaterialFloatArray;
-import static org.lwjgl.assimp.Assimp.aiGetMaterialTexture;
-import static org.lwjgl.assimp.Assimp.aiGetMaterialTextureCount;
-import static org.lwjgl.assimp.Assimp.aiReturn_SUCCESS;
-import static org.lwjgl.assimp.Assimp.aiTextureType_AMBIENT_OCCLUSION;
-import static org.lwjgl.assimp.Assimp.aiTextureType_BASE_COLOR;
-import static org.lwjgl.assimp.Assimp.aiTextureType_DIFFUSE;
-import static org.lwjgl.assimp.Assimp.aiTextureType_DIFFUSE_ROUGHNESS;
-import static org.lwjgl.assimp.Assimp.aiTextureType_GLTF_METALLIC_ROUGHNESS;
-import static org.lwjgl.assimp.Assimp.aiTextureType_LIGHTMAP;
-import static org.lwjgl.assimp.Assimp.aiTextureType_METALNESS;
-import static org.lwjgl.assimp.Assimp.aiTextureType_NORMALS;
-import static org.lwjgl.opengl.GL11.GL_RED;
-import static org.lwjgl.opengl.GL11.GL_RGBA;
+import static org.lwjgl.assimp.Assimp.*;
+import static org.lwjgl.opengl.GL11.*;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -23,22 +11,13 @@ import java.nio.file.Path;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.assimp.AIMaterial;
-import org.lwjgl.assimp.AIMatrix4x4;
-import org.lwjgl.assimp.AIMesh;
-import org.lwjgl.assimp.AINode;
-import org.lwjgl.assimp.AIScene;
-import org.lwjgl.assimp.AIString;
-import org.lwjgl.assimp.AITexel;
-import org.lwjgl.assimp.AITexture;
+import org.lwjgl.assimp.*;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 
 import engine.components.Material;
 import engine.components.MaterialEntry;
 import engine.components.Transform;
-import engine.rendering.Texture;
 
 public class SceneParser {
     private AssetManager assetManager = AssetManager.get();
