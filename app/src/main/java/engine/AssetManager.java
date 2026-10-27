@@ -389,6 +389,20 @@ public class AssetManager {
         return ID;
     }
 
+    public Integer LoadTexture(ByteBuffer data, int width, int height, int channelFormat, String name) {
+
+        Integer ID = name.hashCode();
+
+        if (textureIndex.containsKey(ID))
+            return ID;
+
+        Texture texture = new Texture(data, width, height, channelFormat);
+
+        textureIndex.put(ID, texture);
+
+        return ID;
+    }
+
     // takes in a .HDR equirectangular texture and converts it to a cube map
     public Integer LoadCubeMap(Path filePath) {
         Integer ID = filePath.toAbsolutePath().hashCode();
