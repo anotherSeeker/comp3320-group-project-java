@@ -23,14 +23,16 @@ public class Mesh {
     int VAO;
     int VBO;
     int EBO;
-
-    Mesh(float[] positions, float[] uvs, float[] normals, float[] tangents, float[] bitangents, int[] indexes,) 
+    
+    //awful garbage function I hate
+    Mesh(float[] positions, float[] uvs, float[] normals, float[] tangents, float[] bitangents, int[] indexes) 
     {
+        boolean error = false;
         int i = 0;
 
         //ArrayList<Integer> indices = new ArrayList<>();
         ArrayList<Vertex> vertices = new ArrayList<>();
-        
+
         try {
             while (i < positions.length)
             {
@@ -50,41 +52,70 @@ public class Mesh {
         {
             System.out.println("Something went wrong while trying to create a mesh from arrays");
             System.out.println(e);
-            return;
+            error = true;
         }
 
-        FloatBuffer vertexBuffer = memAllocFloat(vertices.size() * 14);
-        for (Vertex vertex : vertices) {
-            vertexBuffer.put(vertex.position.x);
-            vertexBuffer.put(vertex.position.y);
-            vertexBuffer.put(vertex.position.z);
+        if (error == false)
+        {
+            FloatBuffer vertexBuffer = memAllocFloat(vertices.size() * 14);
+            for (Vertex vertex : vertices) {
+                vertexBuffer.put(vertex.position.x);
+                vertexBuffer.put(vertex.position.y);
+                vertexBuffer.put(vertex.position.z);
 
-            vertexBuffer.put(vertex.normal.x);
-            vertexBuffer.put(vertex.normal.y);
-            vertexBuffer.put(vertex.normal.z);
+                vertexBuffer.put(vertex.normal.x);
+                vertexBuffer.put(vertex.normal.y);
+                vertexBuffer.put(vertex.normal.z);
 
-            vertexBuffer.put(vertex.uv.x);
-            vertexBuffer.put(vertex.uv.y);
+                vertexBuffer.put(vertex.uv.x);
+                vertexBuffer.put(vertex.uv.y);
 
-            vertexBuffer.put(vertex.tangent.x);
-            vertexBuffer.put(vertex.tangent.y);
-            vertexBuffer.put(vertex.tangent.z);
+                vertexBuffer.put(vertex.tangent.x);
+                vertexBuffer.put(vertex.tangent.y);
+                vertexBuffer.put(vertex.tangent.z);
 
-            vertexBuffer.put(vertex.bitangent.x);
-            vertexBuffer.put(vertex.bitangent.y);
-            vertexBuffer.put(vertex.bitangent.z);
+                vertexBuffer.put(vertex.bitangent.x);
+                vertexBuffer.put(vertex.bitangent.y);
+                vertexBuffer.put(vertex.bitangent.z);
+            }
+
+            IntBuffer indexBuffer = memAllocInt(indexes.length);
+            indexBuffer.put(indexes);
+
+            vertexBuffer.flip();
+            indexBuffer.flip();
+
+            VAO = glGenVertexArrays();
+            VBO = glGenBuffers();
+            EBO = glGenBuffers();
+
+            glBindVertexArray(VAO);
+
+            int stride = 14 * Float.BYTES;
+
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
+
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, stride, 0);
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, stride, 3 * Float.BYTES);
+            glVertexAttribPointer(2, 2, GL_FLOAT, false, stride, 6 * Float.BYTES);
+            glVertexAttribPointer(3, 3, GL_FLOAT, false, stride, 8 * Float.BYTES);
+            glVertexAttribPointer(4, 3, GL_FLOAT, false, stride, 11 * Float.BYTES);
+
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
+            glEnableVertexAttribArray(3);
+            glEnableVertexAttribArray(4);
+
+            indiceCount = indexBuffer.remaining();
+
+            memFree(vertexBuffer);
+            memFree(indexBuffer);
         }
-
-        IntBuffer indexBuffer = memAllocInt(indexes.length);
-        indexBuffer.put(indexes);
-
-        vertexBuffer.flip();
-        indexBuffer.flip();
-
-        this(vertexBuffer, indexBuffer);
-
-        memFree(vertexBuffer);
-        memFree(indexBuffer);
     }
 
     Mesh(ArrayList<Vertex> vertices, ArrayList<Integer> indices) {
