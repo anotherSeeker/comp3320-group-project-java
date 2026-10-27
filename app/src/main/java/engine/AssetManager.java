@@ -331,6 +331,7 @@ public class AssetManager {
         return ID;
     }
 
+    
     public Integer LoadTexture(Path filePath) {
         Integer ID = filePath.toAbsolutePath().hashCode();
 

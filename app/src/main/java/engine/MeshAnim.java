@@ -4,6 +4,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -17,9 +18,7 @@ import static org.lwjgl.opengl.GL30.*;
 
 import static org.lwjgl.system.MemoryUtil.*;
 
-package org.lwjglb.engine.graph;
 
-import org.joml.Vector3f;
 
 public class MeshAnim {
 
@@ -35,7 +34,7 @@ public class MeshAnim {
     private float[] textCoords;
     private float[] weights;
 
-    public MeshData(float[] positions, float[] normals, float[] tangents, float[] bitangents,
+    public MeshAnim(float[] positions, float[] normals, float[] tangents, float[] bitangents,
                     float[] textCoords, int[] indices, int[] boneIndices, float[] weights,
                     Vector3f aabbMin, Vector3f aabbMax) {
         materialIdx = 0;
@@ -49,6 +48,31 @@ public class MeshAnim {
         this.weights = weights;
         this.aabbMin = aabbMin;
         this.aabbMax = aabbMax;
+    }
+
+    public static class AnimatedFrame {
+        private Matrix4f[] bonesMatrices;
+        private int offset;
+
+        public AnimatedFrame(Matrix4f[] bonesMatrices) {
+            this.bonesMatrices = bonesMatrices;
+        }
+
+        public void clearData() {
+            bonesMatrices = null;
+        }
+
+        public Matrix4f[] getBonesMatrices() {
+            return bonesMatrices;
+        }
+
+        public int getOffset() {
+            return offset;
+        }
+
+        public void setOffset(int offset) {
+            this.offset = offset;
+        }
     }
 
     public Vector3f getAabbMax() {

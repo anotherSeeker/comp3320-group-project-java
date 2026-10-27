@@ -3,6 +3,7 @@ package engine.components;
 import engine.Shader;
 import engine.Texture;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 public class Material {
     public float roughness = 1;
@@ -41,4 +42,16 @@ public class Material {
 
         this.shader.setVector3("SheenColour", this.sheenColour);
     }
+    public static final Vector4f DEFAULT_COLOR = new Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
+
+    private Vector4f diffuseColor;
+
+    public Vector4f getDiffuseColor() {
+        return diffuseColor;
+    }
+
+    public void setDiffuseColor(Vector4f diffuseColor) {
+        this.diffuseColor = diffuseColor;
+    }
+
 }
