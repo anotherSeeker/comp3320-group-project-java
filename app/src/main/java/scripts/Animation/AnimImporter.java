@@ -250,6 +250,44 @@ public class AnimImporter {
         return data;
     }
 
+    private static float[] processBitangents(AIMesh aiMesh, float[] normals) {
+
+        AIVector3D.Buffer buffer = aiMesh.mBitangents();
+        float[] data = new float[buffer.remaining() * 3];
+        int pos = 0;
+        while (buffer.remaining() > 0) {
+            AIVector3D aiBitangent = buffer.get();
+            data[pos++] = aiBitangent.x();
+            data[pos++] = aiBitangent.y();
+            data[pos++] = aiBitangent.z();
+        }
+
+        // Assimp may not calculate tangents with models that do not have texture coordinates. Just create empty values
+        if (data.length == 0) {
+            data = new float[normals.length];
+        }
+        return data;
+    }
+
+    private static float[] processTangents(AIMesh aiMesh, float[] normals) {
+
+        AIVector3D.Buffer buffer = aiMesh.mTangents();
+        float[] data = new float[buffer.remaining() * 3];
+        int pos = 0;
+        while (buffer.remaining() > 0) {
+            AIVector3D aiTangent = buffer.get();
+            data[pos++] = aiTangent.x();
+            data[pos++] = aiTangent.y();
+            data[pos++] = aiTangent.z();
+        }
+
+        // Assimp may not calculate tangents with models that do not have texture coordinates. Just create empty values
+        if (data.length == 0) {
+            data = new float[normals.length];
+        }
+        return data;
+    }
+
     private static Mesh processMesh(AIMesh aiMesh, List<Bone> boneList) {
         float[] vertices = processVertices(aiMesh);
         float[] normals = processNormals(aiMesh);
