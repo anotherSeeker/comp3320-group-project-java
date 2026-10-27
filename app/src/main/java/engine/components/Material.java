@@ -42,4 +42,14 @@ public class Material {
 
         this.shader.setVector3("SheenColour", this.sheenColour);
     }
+
+    public void print() {
+        System.out.println("roughness: " + roughness);
+        System.out.println("ambientOcclusion: " + ambientOcclusion);
+        System.out.println("metallic: " + metallic);
+        System.out.println("subsurface: " + subsurface);
+        System.out.println("sheen: " + sheen);
+        System.out.println("annisotropy: " + annisotropy);
+        System.out.println("specularStrength: " + specularStrength);
+    }
 }
