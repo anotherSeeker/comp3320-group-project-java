@@ -6,11 +6,10 @@ layout(rgba16f,binding = 1) writeonly uniform image2D outputImage;
 layout(rgba16f,binding = 2) readonly uniform image2D rawImage;
 
 uniform sampler2D DepthBuffer;
+uniform float Radius = 0.75; 
+uniform float Softness = 0.2;
 
 void main(){
-
-    const float radius = 0.75;
-    const float softness = 0.2;
 
     ivec2 gid = ivec2(gl_GlobalInvocationID.xy);
     ivec2 size = imageSize(inputImage);
@@ -25,7 +24,7 @@ void main(){
     vec2 centerDist = uv - 0.5;
     float dist = length(centerDist);
 
-    float vignette = smoothstep(radius,radius - softness,dist);
+    float vignette = smoothstep(Radius,Radius - Softness,dist);
 
     colour.rgb *= vignette;
     

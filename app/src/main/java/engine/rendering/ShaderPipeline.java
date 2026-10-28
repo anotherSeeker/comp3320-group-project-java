@@ -57,6 +57,9 @@ public class ShaderPipeline {
     public float BloomKnee = 0.5f;
     public float BloomThreshold = 1.0f;
 
+    public float VignetteRadius = 0.75f;
+    public float VignetteSoftness = 0.2f;
+
     private int screenWidth;
     private int screenHeight;
 
@@ -191,6 +194,9 @@ public class ShaderPipeline {
         if ((featureMask & VIGNETTE) != 0) {
             int target = currentTexture == pingBuffer ? pongBuffer : pingBuffer;
 
+            vignette.use();
+            vignette.setFloat("Radius", VignetteRadius);
+            vignette.setFloat("Softness", VignetteSoftness);
             runShader(vignette, currentTexture, target);
 
             currentTexture = target;

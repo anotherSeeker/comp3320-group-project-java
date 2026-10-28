@@ -14,6 +14,7 @@ import engine.components.MaterialEntry;
 import engine.components.Transform;
 import engine.rendering.ShaderPipeline;
 import imgui.ImGui;
+import imgui.type.ImBoolean;
 
 public class DemoScene extends MonoScript {
 
@@ -113,6 +114,12 @@ public class DemoScene extends MonoScript {
     float[] bloomKnee = new float[] { 0.5f };
     float[] bloomThreshold = new float[] { 1.0f };
 
+    float[] vignetteRadius = new float[] { 0.75f };
+    float[] vignetteSoftness = new float[] { 0.2f };
+
+    ImBoolean bloomEnabled = new ImBoolean(true);
+    ImBoolean vignetteEnabled = new ImBoolean(false);
+
     @Override
     protected void Update(double deltaTime) {
         if (pressed == false && Input.IsKeyDown(GLFW_KEY_F)) {
@@ -129,10 +136,32 @@ public class DemoScene extends MonoScript {
         ImGui.colorEdit3("lightColour", lightColour);
         ImGui.sliderFloat3("normalised light position", lightDirection, -1, 1);
 
-        ImGui.text("bloom properties");
+        ImGui.text("bloom");
         ImGui.separator();
+        if (ImGui.checkbox("enable bloom", bloomEnabled)) {
+            if (bloomEnabled.get()) {
+                PostProcess.Enable(ShaderPipeline.BLOOM);
+            } else {
+                PostProcess.Disable(ShaderPipeline.BLOOM);
+            }
+        }
+
         ImGui.sliderFloat("knee", bloomKnee, 0, 2);
         ImGui.sliderFloat("threshold", bloomThreshold, 0, 5);
+
+        ImGui.text("vignette");
+        ImGui.separator();
+
+        if (ImGui.checkbox("enable vignette", vignetteEnabled)) {
+            if (vignetteEnabled.get()) {
+                PostProcess.Enable(ShaderPipeline.VIGNETTE);
+            } else {
+                PostProcess.Disable(ShaderPipeline.VIGNETTE);
+            }
+        }
+
+        ImGui.sliderFloat("radius", vignetteRadius, 0, 1);
+        ImGui.sliderFloat("softness", vignetteSoftness, 0.01f, 1);
 
         Scene.lightColour.x = lightColour[0];
         Scene.lightColour.y = lightColour[1];
@@ -145,6 +174,8 @@ public class DemoScene extends MonoScript {
         PostProcess.BloomKnee = bloomKnee[0];
         PostProcess.BloomThreshold = bloomThreshold[0];
 
+        PostProcess.VignetteRadius = vignetteRadius[0];
+        PostProcess.VignetteSoftness = vignetteSoftness[0];
         ImGui.end();
 
     }
