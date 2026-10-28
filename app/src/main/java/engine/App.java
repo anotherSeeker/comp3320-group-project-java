@@ -72,10 +72,8 @@ public class App {
                 height
         );
 
-        pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessA));
-        pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
-        pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
-        pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessB));
+        pipeline.enable(ShaderPipeline.BLOOM);
+        pipeline.enable(ShaderPipeline.VIGNETTE);
         // pipeline.attach(assetManager.getShader(assetManager.vignettePostProcess));
 
         glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {

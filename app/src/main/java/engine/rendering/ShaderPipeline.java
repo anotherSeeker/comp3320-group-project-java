@@ -7,11 +7,15 @@ import static org.lwjgl.opengl.GL42.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL14.GL_DEPTH_COMPONENT24;
+import static org.lwjgl.opengl.GL15.GL_READ_ONLY;
+import static org.lwjgl.opengl.GL15.GL_WRITE_ONLY;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import engine.AssetManager;
 
 public class ShaderPipeline {
+    private AssetManager assets = AssetManager.get();
+
     private int FBO;
     private int colourBuffer;
     private int pingBuffer;
@@ -20,7 +24,14 @@ public class ShaderPipeline {
     private Mesh screenQuad;
     private Shader framebufferShader;
 
-    private ArrayList<Shader> shaders = new ArrayList<>();
+    private Shader bloomA = assets.getShader(assets.bloomPostProcessA);
+    private Shader bloomB = assets.getShader(assets.bloomPostProcessB);
+    private Shader blur = assets.getShader(assets.blurPostProcess);
+    private Shader vignette = assets.getShader(assets.vignettePostProcess);
+
+    private int featureMask = 0;
+    public static int BLOOM = 1 << 0;
+    public static int VIGNETTE = 1 << 1;
 
     private int screenWidth;
     private int screenHeight;
@@ -103,16 +114,20 @@ public class ShaderPipeline {
         );
     }
 
-    public void attach(Shader shader) {
-        shaders.add(shader);
-    }
-
     public void bind() {
         glBindFramebuffer(GL_FRAMEBUFFER, FBO);
     }
 
     public void unbind() {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    public void enable(int feature) {
+        featureMask |= feature;
+    }
+
+    public void disable(int feature) {
+        featureMask = featureMask & ~feature;
     }
 
     int outputTexture;
@@ -130,28 +145,31 @@ public class ShaderPipeline {
     }
 
     public void process() {
-        if (shaders.isEmpty()) {
+        if (featureMask == 0) {
             outputTexture = colourBuffer;
             return;
         }
 
-        int inputTexture = colourBuffer;
-        int writeTexture = pongBuffer;
+        int currentTexture = colourBuffer;
 
-        for (Shader shader : shaders) {
+        if (((featureMask >> 0) & 1) == 1) {
+            runShader(bloomA, currentTexture, pingBuffer);
+            runShader(blur, pingBuffer, pongBuffer);
+            runShader(blur, pongBuffer, pingBuffer);
+            runShader(bloomB, pingBuffer, pongBuffer);
 
-            runShader(shader, inputTexture, writeTexture);
-
-            inputTexture = writeTexture;
-
-            if (writeTexture == pingBuffer) {
-                writeTexture = pongBuffer;
-            } else {
-                writeTexture = pingBuffer;
-            }
+            currentTexture = pongBuffer;
         }
 
-        outputTexture = inputTexture;
+        if (((featureMask >> 1) & 1) == 1) {
+            int target = currentTexture == pingBuffer ? pongBuffer : pingBuffer;
+
+            runShader(vignette, currentTexture, target);
+
+            currentTexture = target;
+        }
+
+        outputTexture = currentTexture;
     }
 
     public void render() {
