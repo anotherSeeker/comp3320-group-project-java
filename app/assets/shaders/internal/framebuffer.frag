@@ -5,15 +5,30 @@ in vec2 UV;
 
 uniform sampler2D screenTexture;
 
-// might consider switching to using hable or uchimura tone mapping functions
-vec3 ACESCurve(vec3 x){
-    float a = 2.51;
-    float b = 0.03;
-    float c = 2.43;
-    float d = 0.59;
-    float e = 0.14;
+vec3 uchimura(vec3 x){
+    float maxBrightness = 1.0f; 
+    float contrast = 1.0f;
+    float linSectStart = 0.22f;
+    float linSectLength = 0.4f;
+    float black = 1.33f;
+    float pedestal = 0.0f;
 
-    return (x * (a * x + b)) / (x * (c * x + d) + e);
+    float l0 = ((maxBrightness - linSectStart) * linSectLength) / contrast;
+    float s0 = linSectStart + l0;
+    float s1 = linSectStart + contrast * l0;
+
+    float c2 = (contrast * maxBrightness) / (maxBrightness - s1);
+    float cp = -c2 / maxBrightness;
+
+    vec3 w0 = 1.0 - smoothstep(0.0,linSectStart,x);
+    vec3 w2 = step(linSectStart + l0,x);
+    vec3 w1 = 1.0 - w0 - w2;
+
+    vec3 toe = linSectStart * pow(max(x,vec3(0.0)) / linSectStart, vec3(black)) + pedestal;
+    vec3 saturation = maxBrightness - (maxBrightness - s1) * exp(cp * (x - s0));
+    vec3 linear = linSectStart + contrast * (x - linSectStart);
+
+    return toe * w0 + linear * w1 + saturation * w2;
 }
 
 void main(){
@@ -23,12 +38,10 @@ void main(){
     float whitepoint = 11.2;
     float exposure = -1.5;
 
-    vec3 w = vec3(whitepoint);
-    vec3 whitescale = clamp(ACESCurve(w),0.0,1.0);
+    vec3 x = colour * exp2(exposure);    
+    vec3 whitescale = uchimura(vec3(whitepoint));
 
-    vec3 x = colour * pow(2.0,exposure);
-
-    colour = clamp(ACESCurve(x) / whitescale,0.0,1.0);
+    colour = clamp(uchimura(x) / whitescale,0.0,1.0);
 
     // colour /= colour + vec3(1);
     colour = pow(colour,vec3(1.0/2.2));
