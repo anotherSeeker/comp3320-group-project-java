@@ -54,6 +54,9 @@ public class ShaderPipeline {
     public static int BLOOM = 1 << 0;
     public static int VIGNETTE = 1 << 1;
 
+    public float BloomKnee = 0.5f;
+    public float BloomThreshold = 1.0f;
+
     private int screenWidth;
     private int screenHeight;
 
@@ -78,8 +81,7 @@ public class ShaderPipeline {
 
         glTexImage2D(
                 GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, screenWidth, screenHeight, 0, GL_DEPTH_COMPONENT,
-                GL_UNSIGNED_INT,
-                (ByteBuffer) null
+                GL_UNSIGNED_INT, (ByteBuffer) null
         );
     }
 
@@ -143,11 +145,11 @@ public class ShaderPipeline {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    public void enable(int feature) {
+    public void Enable(int feature) {
         featureMask |= feature;
     }
 
-    public void disable(int feature) {
+    public void Disable(int feature) {
         featureMask = featureMask & ~feature;
     }
 
@@ -174,6 +176,10 @@ public class ShaderPipeline {
         int currentTexture = colourBuffer;
 
         if ((featureMask & BLOOM) != 0) {
+            bloomA.use();
+            bloomA.setFloat("Knee", BloomKnee);
+            bloomA.setFloat("Threshold", BloomThreshold);
+
             runShader(bloomA, currentTexture, pingBuffer);
             runShader(blur, pingBuffer, pongBuffer);
             runShader(blur, pongBuffer, pingBuffer);

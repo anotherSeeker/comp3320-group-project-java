@@ -72,10 +72,6 @@ public class App {
                 height
         );
 
-        pipeline.enable(ShaderPipeline.BLOOM);
-        pipeline.enable(ShaderPipeline.VIGNETTE);
-        // pipeline.attach(assetManager.getShader(assetManager.vignettePostProcess));
-
         glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
             glViewport(0, 0, new_width, new_height);
             pipeline.onResize(new_width, new_height);
@@ -91,6 +87,7 @@ public class App {
         script.Assets = assetManager;
         script.Scene = scene;
         script.Input = input;
+        script.PostProcess = pipeline;
         scripts.add(script);
     }
 

@@ -12,7 +12,7 @@ import engine.*;
 import engine.components.Material;
 import engine.components.MaterialEntry;
 import engine.components.Transform;
-
+import engine.rendering.ShaderPipeline;
 import imgui.ImGui;
 
 public class DemoScene extends MonoScript {
@@ -62,6 +62,8 @@ public class DemoScene extends MonoScript {
 
     @Override
     protected void Start() {
+        PostProcess.Enable(ShaderPipeline.BLOOM);
+
         Scene.SetSkyboxTexture(skyboxTexture);
 
         Vector3f offset = new Vector3f(0, 0, -5);
@@ -82,8 +84,18 @@ public class DemoScene extends MonoScript {
 
         Assets.LoadIntoScene(Path.of("assets/DamagedHelmet.glb"), Scene, new Vector3f(0, 0, 0));
 
-        Assets.LoadIntoScene(Path.of("assets/sunken_castle.glb"), Scene, new Vector3f(0, -15, 0));
+        ornament_Material.metallic = 1;
+        ornament_Material.roughness = 0.3f;
+        brick_Material.roughness = 0.8f;
+        concrete_Material.roughness = 0.8f;
+        tile_material.roughness = 0.4f;
 
+        ornament_Material.specularStrength = 0.5f;
+        brick_Material.specularStrength = 0.5f;
+        concrete_Material.specularStrength = 0.5f;
+        tile_material.specularStrength = 0.5f;
+
+        ornament_Material.annisotropy = 1;
     }
 
     private void swapSkybox() {
@@ -95,33 +107,11 @@ public class DemoScene extends MonoScript {
         swapped = !swapped;
     }
 
-    float[] roughness = new float[] { 0.5f };
-    float[] ambientOcclusion = new float[] { 1.0f };
-    float[] metallic = new float[] { 0.0f };
-
-    float[] subsurface = new float[] { 0.0f };
-    float[] sheen = new float[] { 0.0f };
-    float[] annisotropy = new float[] { 0.0f };
-    float[] specularStrength = new float[] { 0.5f };
-
-    float[] sheenColour = new float[] { 1, 1, 1 };
     float[] lightColour = new float[] { 1, 1, 1 };
-
     float[] lightDirection = new float[] { 1, 1, 1 };
 
-    void updateMaterial(Material material) {
-        material.roughness = roughness[0];
-        material.ambientOcclusion = ambientOcclusion[0];
-        material.subsurface = subsurface[0];
-        material.sheen = sheen[0];
-        material.annisotropy = annisotropy[0];
-        material.specularStrength = specularStrength[0];
-        material.metallic = metallic[0];
-
-        material.sheenColour.x = sheenColour[0];
-        material.sheenColour.y = sheenColour[1];
-        material.sheenColour.z = sheenColour[2];
-    }
+    float[] bloomKnee = new float[] { 0.5f };
+    float[] bloomThreshold = new float[] { 1.0f };
 
     @Override
     protected void Update(double deltaTime) {
@@ -134,23 +124,15 @@ public class DemoScene extends MonoScript {
 
         ImGui.begin("debug window");
 
-        ImGui.sliderFloat("roughness", roughness, 0, 1);
-        ImGui.sliderFloat("ambientOcclusion", ambientOcclusion, 0, 1);
-        ImGui.sliderFloat("subsurface", subsurface, 0, 1);
-        ImGui.sliderFloat("sheen", sheen, 0, 200);
-        ImGui.sliderFloat("annisotropy", annisotropy, 0, 1);
-        ImGui.sliderFloat("specularStrength", specularStrength, 0, 1);
-        ImGui.sliderFloat("metallic", metallic, 0, 1);
-
-        ImGui.colorEdit3("sheenColour", sheenColour);
+        ImGui.text("Scene properties");
+        ImGui.separator();
         ImGui.colorEdit3("lightColour", lightColour);
-
         ImGui.sliderFloat3("normalised light position", lightDirection, -1, 1);
 
-        updateMaterial(tile_material);
-        updateMaterial(brick_Material);
-        updateMaterial(concrete_Material);
-        updateMaterial(ornament_Material);
+        ImGui.text("bloom properties");
+        ImGui.separator();
+        ImGui.sliderFloat("knee", bloomKnee, 0, 2);
+        ImGui.sliderFloat("threshold", bloomThreshold, 0, 5);
 
         Scene.lightColour.x = lightColour[0];
         Scene.lightColour.y = lightColour[1];
@@ -159,6 +141,9 @@ public class DemoScene extends MonoScript {
         Scene.lightDirection.x = lightDirection[0];
         Scene.lightDirection.y = lightDirection[1];
         Scene.lightDirection.z = lightDirection[2];
+
+        PostProcess.BloomKnee = bloomKnee[0];
+        PostProcess.BloomThreshold = bloomThreshold[0];
 
         ImGui.end();
 
