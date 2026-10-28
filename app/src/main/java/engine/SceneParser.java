@@ -42,8 +42,6 @@ public class SceneParser {
 
         AINode root = scene.mRootNode();
 
-        System.out.printf("Meshes: %s\nMaterials: %s\n", scene.mNumMeshes(), scene.mNumMaterials());
-
         processNode(root, new Matrix4f());
     }
 
@@ -124,7 +122,6 @@ public class SceneParser {
 
             material = assetManager.createMaterial(entry);
 
-            material.print();
             FloatBuffer value = stack.mallocFloat(1);
             IntBuffer count = stack.ints(1);
 
