@@ -9,6 +9,7 @@ import java.nio.IntBuffer;
 import java.nio.file.Path;
 
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
@@ -31,7 +32,7 @@ public class SceneParser {
     private Path filepath;
     private Path directory;
 
-    public void loadScene(Path filepath, AIScene scene, SceneGraph sceneGraph) {
+    public void loadScene(Path filepath, AIScene scene, SceneGraph sceneGraph, Vector3f rootPosition) {
         this.meshes = scene.mMeshes();
         this.materials = scene.mMaterials();
         this.scene = scene;
@@ -42,7 +43,9 @@ public class SceneParser {
 
         AINode root = scene.mRootNode();
 
-        processNode(root, new Matrix4f());
+        Matrix4f rootTransform = new Matrix4f().translate(rootPosition);
+
+        processNode(root, rootTransform);
     }
 
     private void processNode(AINode node, Matrix4f parentTransform) {

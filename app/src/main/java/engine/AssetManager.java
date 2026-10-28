@@ -11,6 +11,8 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.memAllocFloat;
 import static org.lwjgl.system.MemoryUtil.memAllocInt;
 import static org.lwjgl.system.MemoryUtil.memFree;
+
+import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 
@@ -431,7 +433,7 @@ public class AssetManager {
         return ID;
     }
 
-    public void LoadIntoScene(Path filePath, SceneGraph sceneGraph) {
+    public void LoadIntoScene(Path filePath, SceneGraph sceneGraph, Vector3f rootPosition) {
         AIScene scene = aiImportFile(
                 filePath.toString(), aiProcess_Triangulate |
                         aiProcess_GenSmoothNormals |
@@ -446,7 +448,7 @@ public class AssetManager {
 
         SceneParser loader = new SceneParser();
 
-        loader.loadScene(filePath, scene, sceneGraph);
+        loader.loadScene(filePath, scene, sceneGraph, rootPosition);
 
         System.out.printf("loaded file %s\n", filePath);
 

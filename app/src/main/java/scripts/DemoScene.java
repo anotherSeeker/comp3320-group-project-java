@@ -80,7 +80,9 @@ public class DemoScene extends MonoScript {
 
         ImGui.setNextWindowPos(0.5f, 0.5f);
 
-        Assets.LoadIntoScene(Path.of("assets/DamagedHelmet.glb"), Scene);
+        Assets.LoadIntoScene(Path.of("assets/DamagedHelmet.glb"), Scene, new Vector3f(0, 0, 0));
+
+        Assets.LoadIntoScene(Path.of("assets/sunken_castle.glb"), Scene, new Vector3f(0, -15, 0));
 
     }
 
