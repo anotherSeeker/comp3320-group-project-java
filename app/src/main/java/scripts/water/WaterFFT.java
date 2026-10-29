@@ -177,18 +177,18 @@ public class WaterFFT
         // //kx,ky,omega so rgb
         // int kSize = textureSize * textureSize*3*4;
         // //h0_real, h0_complex so rg
-        int h0Size = textureSize * textureSize*2*4;
+        //int h0Size = textureSize * textureSize*2*4;
 
         // k = ByteBuffer.allocateDirect(kSize);
 
-        h0 = ByteBuffer.allocateDirect(h0Size);
-        h0F = h0.asFloatBuffer();
+        //h0 = ByteBuffer.allocateDirect(h0Size);
+        //h0F = h0.asFloatBuffer();
 
         // glActiveTexture(GL_TEXTURE0+1);
         // glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, k);
 
-        glActiveTexture(GL_TEXTURE0+2);
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RG, GL_FLOAT, h0F);
+        //glActiveTexture(GL_TEXTURE0+2);
+        //glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, h0F);
 
         //gl_
 
@@ -225,8 +225,9 @@ public class WaterFFT
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         //glTexStorage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RG , GL_FLOAT, (FloatBuffer) null);
-        glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RG32F);
+        //We actually do need RGBA for h0(k) and h0(-k)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
+        glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
 
         //add to texture index for engine
         waveVecIndexID = AssetManager.get().AddTexture("waveDisplacementTex",waveVecTexID);
@@ -248,7 +249,8 @@ public class WaterFFT
         
         glActiveTexture(GL_TEXTURE0+2);
 	    glBindTexture(GL_TEXTURE_2D, h0TexId);
-        glBindImageTexture( 2, h0TexId, 0, false, 0, GL_WRITE_ONLY, GL_RG32F );
+        //need 4 values for h0(k) and h0(-k)
+        glBindImageTexture( 2, h0TexId, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F );
         
         System.out.println("bind");
     }

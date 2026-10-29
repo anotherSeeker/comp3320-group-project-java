@@ -4,7 +4,7 @@
 #define gravity_g 9.81
 #define waterDensity_rho 1000.0
 #define surfaceTensionCoefficient_sigma 0.074
-#define depth_H 100.0 //H or sometimes D: depth of the water, has to be just one depth or we'd need to recalculate a new map for every part of the ocean which is kinda infeasible unless I'm horrifically mistaken
+#define depth_H 15.0 //H or sometimes D: depth of the water, has to be just one depth or we'd need to recalculate a new map for every part of the ocean which is kinda infeasible unless I'm horrifically mistaken
 #define windSpeed_U 25.0 //U: windspeed, I believe meters per second?
 //800km
 #define fetch_F 800000.0 //F: distance to shore from the direction that the wind is blowing from
@@ -12,24 +12,52 @@
 
 #define doCapillaryWaves true
 
+//todo: input patch length as a variable along with the configurable ones above, F, U & H
+
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(rg32f, binding = 0) uniform readonly image2D gaussianData;
 layout(rgba32f, binding = 1) uniform writeonly image2D waveVecTex;
 layout(rg32f, binding = 2) uniform writeonly image2D h0Tex;
 
 //D(omega, theta) controls the strength of waves based on the direction relative to the direction of travel
-float doDirectionalSpread(float omega, float theta)
-{
-    //decide which spread functions we want to use
-    float spread = 0;
+// float doDirectionalSpread(float omega, float theta)
+// {
+//     float spread = 0;
 
-    //for now just using the "positive cosine squared" spreading that tessendorf used   
-    if (theta > (-PI/2) && theta < (PI/2))
+//     //for now just using the "positive cosine squared" spreading that tessendorf used   
+//     if (theta > (-PI/2) && theta < (PI/2))
+//     {
+//         spread = (2.0/PI) * pow(cos(theta), 2);
+//     }
+
+//     return spread;
+// }
+
+//donelan-banner spreading function
+float doDirectionalSpread(float omega, float omegaPeak, float theta)
+{
+    float D = 0;
+    float beta = 0;
+    float baseOnPeak = omega/omegaPeak;
+
+    if (baseOnPeak < 0.95)
     {
-        spread = (2.0/PI) * pow(cos(theta), 2);
+        beta = 2.61 * pow(baseOnPeak, 1.3);
+    }
+    else if (baseOnPeak >= 0.95 && baseOnPeak < 1.6)
+    {
+        beta = 2.28 * pow(baseOnPeak, -1.3);
+    }
+    else
+    {
+        float epsilon = -0.4 + 0.8393 * exp(-0.567*log(baseOnPeak*baseOnPeak));
+        beta = pow(10, epsilon);
     }
 
-    return spread;
+    float sech = 1/cosh(beta*theta);
+    D = ( beta / (2*tanh(beta*PI)) ) * sech * sech;
+
+    return D;
 }
 
 float waveVectorMagnitude_k(float kx, float ky)
@@ -49,8 +77,13 @@ float dispersionRelation_omega(float kx, float ky)
         return aFreq;
     #endif
 
-    aFreq = sqrt(gravity_g * magnitude_k * tanh(magnitude_k * depth_H));
+    aFreq = sqrt(gravity_g * magnitude_k /* * tanh(magnitude_k * depth_H)*/);
     return aFreq;
+}
+
+float dispersionDerivative()
+{
+    return 0.0;
 }
 
 //angle of the wave as compared to the wind direction
@@ -96,10 +129,8 @@ float omega_p_J()
 }
 
 //S(omega) wave spectrum calculation
-float doJONSWAP(float omega)
+float doJONSWAP(float omega, float omegaPeak)
 {
-    //peak frequency of the wave spectrum
-    float omegaPeak = omega_p_J();
     //amplitude of this wave
     float alpha = amplitudeAlpha_J();
     //I believe this is the surface tension term?
@@ -119,6 +150,21 @@ float doJONSWAP(float omega)
     return S_jonswap;
 }
 
+//the Christopher Horvath paper recommends this for correcting jonswap at shallow depths
+float tmaCorrection(float omega)
+{
+    float omega_h = omega * sqrt(depth_H/gravity_g); 
+
+    if (omega_h <= 1)
+    {
+        return 0.5*omega_h*omega_h;
+    }
+    else
+    {
+        return 1 - 0.5 * (2-omega_h) * (2-omega_h);
+    }
+}
+
 void main() 
 {
     ivec2 rawPos = ivec2( gl_GlobalInvocationID.xy );
@@ -134,30 +180,51 @@ void main()
 
     //pretty sure this is the correct wave vectors now?
 
-    //raw pos should be from 0 to (2^x)-1 so 15 - 8 and 0 - 8 = -8, 0, 7
-    float n = (rawPos.x - (texSize/2) );
-    float m = (rawPos.y - (texSize/2) );
+    //number of points in x dir and y dir cause square tex
+    float N = texSize;
+    //physical size of the patch, we should be passing this in instead
+    float L = N*2;
 
-    float kx = (2.0 * PI * n ) / (texSize);
-    float ky = (2.0 * PI * m ) / (texSize);
+    float n = (rawPos.x - (N/2.0) );
+    float m = (rawPos.y - (N/2.0) );
 
-    //vec2 wavevector_k = vec2(kx,ky);
+    float kx = (2.0 * PI * n) / L;
+    float ky = (2.0 * PI * m) / L;
+    float kxmin = -kx;
+    float kymin = -ky;
+
     vec2 noise_xi = vec2(imageLoad(gaussianData, rawPos).xy);
 
     float omega = dispersionRelation_omega(kx, ky);
+    float omegaMin = dispersionRelation_omega(kxmin, kymin);
+
+    //peak frequency of the wave spectrum
+    float omegaPeak = omega_p_J();
 
     float theta = windWaveDirection_Theta(kx, ky);
+    float thetaMin = windWaveDirection_Theta(kxmin, kymin);
 
-    float S = doJONSWAP(omega);
-    float D = doDirectionalSpread(omega, theta);
+    float S = doJONSWAP(omega, omegaPeak);
+    float D = doDirectionalSpread(omega, omegaPeak, theta);
+    float tma = tmaCorrection(omega);
+
+    float SMin = doJONSWAP(omegaMin, omegaPeak);
+    float DMin = doDirectionalSpread(omegaMin, omegaPeak, thetaMin);
+    float tmaMin = tmaCorrection(omegaMin);
 
     //we missed a 2 in here
-    float h0 = (1.0/(sqrt(2.0))) * sqrt(2*S*D);
+    float h0 = (1.0/(sqrt(2.0))) * sqrt(2*S*D*tma);
     float h0_real    = h0 * noise_xi.x;
     float h0_complex = h0 * noise_xi.y;
 
+    //we also need h0(-k) for the fourier transform
+    float h0M = (1.0/(sqrt(2.0))) * sqrt(2*S*D*tma);
+    float h0M_real    = h0 * noise_xi.x;
+    float h0M_complex = h0 * noise_xi.y;
+
     imageStore( waveVecTex, rawPos, vec4(kx,ky,omega,1) );
-    imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,0,1) );
+    //storing h0(k) and h0(-k)
+    imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,h0M_real,h0M_complex) );
 }
 
 //old map range was bad and also we don't need this if I'm just not stupid

@@ -2,6 +2,11 @@
 #define PI 3.14159265359
 
 
+layout(rgba32f, binding = 0) uniform readonly image2D waveVecTex;
+layout(rgba32f, binding = 1) uniform readonly image2D h0Tex;
+layout(rg32f, binding = 2) uniform writeonly image2D h0tTex;
+
+
 //h_k_t = h0 * (cos(x) + j (sin(x)));
 
 struct Complex
@@ -24,5 +29,10 @@ Complex cAdd(Complex a, Complex b)
 	c.real = a.real + b.real;
     c.im = a.im + b.im;
     return c;
+}
+
+void main() 
+{
+
 }
 
