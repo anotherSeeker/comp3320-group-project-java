@@ -1,0 +1,28 @@
+#version 430 core
+#define PI 3.14159265359
+
+
+//h_k_t = h0 * (cos(x) + j (sin(x)));
+
+struct Complex
+{
+    float real;
+    float im;
+}
+
+Complex cMult(Complex a, Complex b)
+{
+    Complex c;
+	c.real = a.real * b.real - a.im * b.im;
+    c.im = a.real * b.im + a.im * b.real;
+    return c;
+}
+
+Complex cAdd(Complex a, Complex b)
+{
+    Complex c;
+	c.real = a.real + b.real;
+    c.im = a.im + b.im;
+    return c;
+}
+

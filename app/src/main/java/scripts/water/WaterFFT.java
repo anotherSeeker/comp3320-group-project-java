@@ -41,7 +41,7 @@ public class WaterFFT
 
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
-    public static int textureSize = 32; //these have to be powers of 2 or we lose efficiency on the fft
+    public static int textureSize = 256; //these have to be powers of 2 or we lose efficiency on the fft
 
     //the wavenumbers, kx, ky, and angular frequency / dispersion relation omega
     public static ArrayList<Vector3f> waveVectorList;
