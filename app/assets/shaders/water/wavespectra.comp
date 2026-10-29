@@ -60,16 +60,16 @@ float doDirectionalSpread(float omega, float omegaPeak, float theta)
     return D;
 }
 
-float waveVectorMagnitude_k(float kx, float ky)
+float waveVectorMagnitude_k(float kx, float kz)
 {
-    return sqrt(kx*kx + ky*ky);
+    return sqrt(kx*kx + kz*kz);
 }
 
 //calculate parameters
-float dispersionRelation_omega(float kx, float ky)
+float dispersionRelation_omega(float kx, float kz)
 {
     float aFreq = 0.0f;
-    float magnitude_k = waveVectorMagnitude_k(kx,ky);
+    float magnitude_k = waveVectorMagnitude_k(kx,kz);
 
     #ifdef doCapillaryWaves
         //includes variables for capillary waves? might look better?
@@ -87,10 +87,10 @@ float dispersionDerivative()
 }
 
 //angle of the wave as compared to the wind direction
-float windWaveDirection_Theta(float kx, float ky)
+float windWaveDirection_Theta(float kx, float kz)
 {
-    //theta = arctan(ky/kx)
-    return atan(ky / kx);
+    //theta = arctan(kz/kx)
+    return atan(kz / kx);
 }
 
  //I believe that this is the surface tension parameter and that jonswap uses a slightly different one for some reason?
@@ -172,7 +172,7 @@ void main()
     int texSize = imageSize(gaussianData).x;
     float texSizef = float(texSize);
 
-    //ok we were doing it wrong I'm pretty sure after re reading our sources pretty confident we should be calculating kx, ky like this instead
+    //ok we were doing it wrong I'm pretty sure after re reading our sources pretty confident we should be calculating kx, kz like this instead
         //always working with powers of two for image sizing
         //float halfSize = (texSizef-1)/2;
         //float scale = 0.25;
@@ -183,26 +183,26 @@ void main()
     //number of points in x dir and y dir cause square tex
     float N = texSize;
     //physical size of the patch, we should be passing this in instead
-    float L = N*2;
+    float L = 1000;
 
     float n = (rawPos.x - (N/2.0) );
     float m = (rawPos.y - (N/2.0) );
 
     float kx = (2.0 * PI * n) / L;
-    float ky = (2.0 * PI * m) / L;
+    float kz = (2.0 * PI * m) / L;
     float kxmin = -kx;
-    float kymin = -ky;
+    float kzmin = -kz;
 
     vec2 noise_xi = vec2(imageLoad(gaussianData, rawPos).xy);
 
-    float omega = dispersionRelation_omega(kx, ky);
-    float omegaMin = dispersionRelation_omega(kxmin, kymin);
+    float omega = dispersionRelation_omega(kx, kz);
+    float omegaMin = dispersionRelation_omega(kxmin, kzmin);
 
     //peak frequency of the wave spectrum
     float omegaPeak = omega_p_J();
 
-    float theta = windWaveDirection_Theta(kx, ky);
-    float thetaMin = windWaveDirection_Theta(kxmin, kymin);
+    float theta = windWaveDirection_Theta(kx, kz);
+    float thetaMin = windWaveDirection_Theta(kxmin, kzmin);
 
     float S = doJONSWAP(omega, omegaPeak);
     float D = doDirectionalSpread(omega, omegaPeak, theta);
@@ -222,7 +222,7 @@ void main()
     float h0M_real    = h0 * noise_xi.x;
     float h0M_complex = h0 * noise_xi.y;
 
-    imageStore( waveVecTex, rawPos, vec4(kx,ky,omega,1) );
+    imageStore( waveVecTex, rawPos, vec4(kx,kz,omega,1) );
     //storing h0(k) and h0(-k)
     imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,h0M_real,h0M_complex) );
 }
@@ -230,7 +230,7 @@ void main()
 //old map range was bad and also we don't need this if I'm just not stupid
 // float halfSize = (texSize-1.0)/2.0;
 // float kx = mapRange(rawPos.x, 0, texSize-1, -halfSize, halfSize);
-// float ky = mapRange(rawPos.y, 0, texSize-1, -halfSize, halfSize);
+// float kz = mapRange(rawPos.y, 0, texSize-1, -halfSize, halfSize);
 // float mapRange(int x, int in_min, int in_max, int out_min, int out_max) {
 //   return int(float(x - in_min) * float(out_max - out_min) / float(in_max - in_min) + out_min);
 // }
