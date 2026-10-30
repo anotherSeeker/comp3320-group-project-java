@@ -3,6 +3,7 @@ package scripts;
 import java.nio.file.Path;
 import java.util.Map;
 
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import dev.dominion.ecs.api.Entity;
@@ -11,9 +12,12 @@ import engine.*;
 import engine.components.Material;
 import engine.components.MaterialEntry;
 import engine.components.Transform;
+import engine.rendering.ColourCurve;
 import engine.rendering.ShaderPipeline;
+import engine.rendering.ColourCurve.Curve;
 import imgui.ImGui;
 import imgui.type.ImBoolean;
+import imgui.type.ImFloat;
 import imgui.type.ImInt;
 
 public class DemoScene extends MonoScript {
@@ -55,13 +59,8 @@ public class DemoScene extends MonoScript {
     Integer nightSkybox = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/kloppenheim_02_puresky_1k.hdr"));
 
     Map<String, Integer> skyboxes = Map.of("dusk", skyboxTexture, "night", nightSkybox, "bar", barSkybox);
-
     String[] skyboxArray = { "dusk", "night", "bar" };
-
     ImInt skyboxIndex = new ImInt(0);
-
-    boolean swapped = false;
-    boolean pressed = false;
 
     Entity A;
     Entity B;
@@ -116,9 +115,94 @@ public class DemoScene extends MonoScript {
     float[] vignetteRadius = new float[] { 0.75f };
     float[] vignetteSoftness = new float[] { 0.2f };
 
+    float[] red_p0 = new float[] { 0.0f };
+    float[] red_p1 = new float[] { 0.25f, 0.25f };
+    float[] red_p2 = new float[] { 0.25f, 0.25f };
+    float[] red_p3 = new float[] { 1.0f, 1.0f, 1.0f };
+
+    float[] green_p0 = new float[] { 0.0f };
+    float[] green_p1 = new float[] { 0.25f, 0.25f };
+    float[] green_p2 = new float[] { 0.25f, 0.25f };
+    float[] green_p3 = new float[] { 1.0f, 1.0f, 1.0f };
+
+    float[] blue_p0 = new float[] { 0.0f };
+    float[] blue_p1 = new float[] { 0.25f, 0.25f };
+    float[] blue_p2 = new float[] { 0.25f, 0.25f };
+    float[] blue_p3 = new float[] { 1.0f, 1.0f, 1.0f };
+
     ImBoolean bloomEnabled = new ImBoolean(true);
     ImBoolean vignetteEnabled = new ImBoolean(false);
     ImBoolean gradingEnabled = new ImBoolean(true);
+
+    private void colourGradingUi() {
+        ImGui.text("colour grading");
+        ImGui.separator();
+        if (ImGui.checkbox("enable colour grading", gradingEnabled)) {
+            if (gradingEnabled.get()) {
+                PostProcess.Enable(ShaderPipeline.COLOUR_GRADE);
+            } else {
+                PostProcess.Disable(ShaderPipeline.COLOUR_GRADE);
+            }
+        }
+
+        boolean red_updated = false;
+
+        red_updated |= ImGui.sliderFloat("red p0", red_p0, 0, 1);
+        red_updated |= ImGui.sliderFloat2("red p1", red_p1, 0, 1);
+        red_updated |= ImGui.sliderFloat2("red p2", red_p2, 0, 1);
+        red_updated |= ImGui.sliderFloat("red p3", red_p3, 0, 1);
+
+        if (red_updated) {
+            PostProcess.ColourGradeCurve.red = new Curve(
+                    red_p0[0],
+                    new Vector2f(red_p1[0], red_p1[1]),
+                    new Vector2f(red_p2[0], red_p2[1]),
+                    red_p3[0]
+            );
+
+            PostProcess.ColourGradeCurve.update();
+        }
+        ;
+
+        boolean green_updated = false;
+
+        green_updated |= ImGui.sliderFloat("green p0", green_p0, 0, 1);
+        green_updated |= ImGui.sliderFloat2("green p1", green_p1, 0, 1);
+        green_updated |= ImGui.sliderFloat2("green p2", green_p2, 0, 1);
+        green_updated |= ImGui.sliderFloat("green p3", green_p3, 0, 1);
+
+        if (green_updated) {
+            PostProcess.ColourGradeCurve.green = new Curve(
+                    green_p0[0],
+                    new Vector2f(green_p1[0], green_p1[1]),
+                    new Vector2f(green_p2[0], green_p2[1]),
+                    green_p3[0]
+            );
+
+            PostProcess.ColourGradeCurve.update();
+        }
+        ;
+
+        boolean blue_updated = false;
+
+        blue_updated |= ImGui.sliderFloat("blue p0", blue_p0, 0, 1);
+        blue_updated |= ImGui.sliderFloat2("blue p1", blue_p1, 0, 1);
+        blue_updated |= ImGui.sliderFloat2("blue p2", blue_p2, 0, 1);
+        blue_updated |= ImGui.sliderFloat("blue p3", blue_p3, 0, 1);
+
+        if (blue_updated) {
+            PostProcess.ColourGradeCurve.blue = new Curve(
+                    blue_p0[0],
+                    new Vector2f(blue_p1[0], blue_p1[1]),
+                    new Vector2f(blue_p2[0], blue_p2[1]),
+                    blue_p3[0]
+            );
+
+            PostProcess.ColourGradeCurve.update();
+        }
+        ;
+
+    }
 
     @Override
     protected void Update(double deltaTime) {
@@ -161,15 +245,7 @@ public class DemoScene extends MonoScript {
         ImGui.sliderFloat("radius", vignetteRadius, 0, 1);
         ImGui.sliderFloat("softness", vignetteSoftness, 0.01f, 1);
 
-        ImGui.text("colour grading");
-        ImGui.separator();
-        if (ImGui.checkbox("enable colour grading", gradingEnabled)) {
-            if (gradingEnabled.get()) {
-                PostProcess.Enable(ShaderPipeline.COLOUR_GRADE);
-            } else {
-                PostProcess.Disable(ShaderPipeline.COLOUR_GRADE);
-            }
-        }
+        colourGradingUi();
 
         Scene.lightColour.x = lightColour[0];
         Scene.lightColour.y = lightColour[1];
