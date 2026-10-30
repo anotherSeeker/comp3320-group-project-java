@@ -15,9 +15,9 @@ public class ColourCurve {
 
     private final int RESOLUTION = 256;
 
-    private Curve red;
-    private Curve green;
-    private Curve blue;
+    public Curve red;
+    public Curve green;
+    public Curve blue;
 
     public record Curve(
             float p0,
@@ -77,14 +77,15 @@ public class ColourCurve {
         this.blue = blue;
 
         ID = glGenTextures();
-        update();
+        glBindTexture(GL_TEXTURE_1D, ID);
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB32F, RESOLUTION, 0, GL_RGB, GL_FLOAT, (FloatBuffer) null);
 
         glBindTexture(GL_TEXTURE_1D, ID);
         glTexParameterIi(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameterIi(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterIi(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glBindTexture(GL_TEXTURE_1D, 0);
+        update();
     }
 
     public void update() {
@@ -101,7 +102,7 @@ public class ColourCurve {
         data.flip();
         glBindTexture(GL_TEXTURE_1D, ID);
 
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, RESOLUTION, 0, GL_RGB, GL_FLOAT, data);
+        glTexSubImage1D(GL_TEXTURE_1D, 0, 0, RESOLUTION, GL_RGB, GL_FLOAT, data);
 
         glBindTexture(GL_TEXTURE_1D, 0);
     }
