@@ -33,6 +33,7 @@ import static org.lwjgl.opengl.GL15.GL_WRITE_ONLY;
 
 import java.nio.ByteBuffer;
 import engine.AssetManager;
+import engine.rendering.ColourCurve.Curve;
 
 public class ShaderPipeline {
     private AssetManager assets = AssetManager.get();
@@ -49,16 +50,20 @@ public class ShaderPipeline {
     private Shader bloomB = assets.getShader(assets.bloomPostProcessB);
     private Shader blur = assets.getShader(assets.blurPostProcess);
     private Shader vignette = assets.getShader(assets.vignettePostProcess);
+    private Shader colourGrade = assets.getShader(assets.colourGradeProcess);
 
     private int featureMask = 0;
     public static int BLOOM = 1 << 0;
     public static int VIGNETTE = 1 << 1;
+    public static int COLOUR_GRADE = 1 << 2;
 
     public float BloomKnee = 0.5f;
     public float BloomThreshold = 1.0f;
 
     public float VignetteRadius = 0.75f;
     public float VignetteSoftness = 0.2f;
+
+    public ColourCurve ColourGradeCurve = new ColourCurve(Curve.Default(), Curve.Default(), Curve.Default());
 
     private int screenWidth;
     private int screenHeight;
@@ -189,6 +194,19 @@ public class ShaderPipeline {
             runShader(bloomB, pingBuffer, pongBuffer);
 
             currentTexture = pongBuffer;
+        }
+
+        if ((featureMask & COLOUR_GRADE) != 0) {
+            int target = currentTexture == pingBuffer ? pongBuffer : pingBuffer;
+
+            colourGrade.use();
+
+            ColourGradeCurve.use(1);
+            colourGrade.setInt("ColourRamp", 1);
+
+            runShader(colourGrade, currentTexture, target);
+
+            currentTexture = target;
         }
 
         if ((featureMask & VIGNETTE) != 0) {

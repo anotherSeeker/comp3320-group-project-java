@@ -1,7 +1,5 @@
 package scripts;
 
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_F;
-
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -73,6 +71,7 @@ public class DemoScene extends MonoScript {
     @Override
     protected void Start() {
         PostProcess.Enable(ShaderPipeline.BLOOM);
+        PostProcess.Enable(ShaderPipeline.COLOUR_GRADE);
 
         Scene.SetSkyboxTexture(skyboxes.get(skyboxArray[skyboxIndex.get()]));
 
@@ -119,6 +118,7 @@ public class DemoScene extends MonoScript {
 
     ImBoolean bloomEnabled = new ImBoolean(true);
     ImBoolean vignetteEnabled = new ImBoolean(false);
+    ImBoolean gradingEnabled = new ImBoolean(true);
 
     @Override
     protected void Update(double deltaTime) {
@@ -160,6 +160,16 @@ public class DemoScene extends MonoScript {
 
         ImGui.sliderFloat("radius", vignetteRadius, 0, 1);
         ImGui.sliderFloat("softness", vignetteSoftness, 0.01f, 1);
+
+        ImGui.text("colour grading");
+        ImGui.separator();
+        if (ImGui.checkbox("enable colour grading", gradingEnabled)) {
+            if (gradingEnabled.get()) {
+                PostProcess.Enable(ShaderPipeline.COLOUR_GRADE);
+            } else {
+                PostProcess.Disable(ShaderPipeline.COLOUR_GRADE);
+            }
+        }
 
         Scene.lightColour.x = lightColour[0];
         Scene.lightColour.y = lightColour[1];
