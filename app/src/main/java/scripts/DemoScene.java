@@ -128,6 +128,16 @@ public class DemoScene extends MonoScript {
     float[] blue_p2 = new float[] { 0.75f, 0.75f };
     float[] blue_p3 = new float[] { 1.0f, 1.0f, 1.0f };
 
+    float[] maxBrightness = new float[] { 1.0f };
+    float[] contrast = new float[] { 1.0f };
+    float[] linSectStart = new float[] { 0.22f };
+    float[] linSectLength = new float[] { 0.4f };
+    float[] black = new float[] { 1.33f };
+    float[] pedestal = new float[] { 0.0f };
+
+    float[] whitepoint = new float[] { 11.2f };
+    float[] exposure = new float[] { -1.5f };
+
     ImBoolean bloomEnabled = new ImBoolean(true);
     ImBoolean vignetteEnabled = new ImBoolean(false);
     ImBoolean gradingEnabled = new ImBoolean(true);
@@ -258,6 +268,20 @@ public class DemoScene extends MonoScript {
             ImGui.endTabItem();
         }
 
+        if (ImGui.beginTabItem("HDR")) {
+
+            ImGui.sliderFloat("max brightness", maxBrightness, 0.3f, 20.0f);
+            ImGui.sliderFloat("contrast", contrast, 0.3f, 2);
+            ImGui.sliderFloat("linear section Start", linSectStart, 0.05f, 1);
+            ImGui.sliderFloat("linear section Length", linSectLength, 0, 0.95f);
+            ImGui.sliderFloat("black", black, 0, 3);
+            ImGui.sliderFloat("pedestal", pedestal, 0, 1);
+
+            ImGui.sliderFloat("exposure", exposure, -5, 5);
+            ImGui.sliderFloat("whitepoint", whitepoint, 0, 15);
+            ImGui.endTabItem();
+        }
+
         ImGui.endTabBar();
 
         Scene.lightColour.x = lightColour[0];
@@ -273,6 +297,17 @@ public class DemoScene extends MonoScript {
 
         PostProcess.VignetteRadius = vignetteRadius[0];
         PostProcess.VignetteSoftness = vignetteSoftness[0];
+
+        PostProcess.MaxBrightness = maxBrightness[0];
+        PostProcess.Contrast = contrast[0];
+        PostProcess.LinSectStart = linSectStart[0];
+        PostProcess.LinSectLength = linSectLength[0];
+        PostProcess.Black = black[0];
+        PostProcess.Pedestal = pedestal[0];
+
+        PostProcess.Exposure = exposure[0];
+        PostProcess.Whitepoint = whitepoint[0];
+
         ImGui.end();
 
     }

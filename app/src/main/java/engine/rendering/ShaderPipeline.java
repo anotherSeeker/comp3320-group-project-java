@@ -2,26 +2,6 @@ package engine.rendering;
 
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
-import static org.lwjgl.opengl.GL11.GL_DEPTH_COMPONENT;
-import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
-import static org.lwjgl.opengl.GL11.GL_FLOAT;
-import static org.lwjgl.opengl.GL11.GL_LINEAR;
-import static org.lwjgl.opengl.GL11.GL_NEAREST;
-import static org.lwjgl.opengl.GL11.GL_RGBA;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
-import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
-import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
-import static org.lwjgl.opengl.GL11.glBindTexture;
-import static org.lwjgl.opengl.GL11.glClear;
-import static org.lwjgl.opengl.GL11.glClearColor;
-import static org.lwjgl.opengl.GL11.glDisable;
-import static org.lwjgl.opengl.GL11.glGenTextures;
-import static org.lwjgl.opengl.GL11.glTexImage2D;
-import static org.lwjgl.opengl.GL11.glTexParameteri;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL42.*;
 
@@ -62,6 +42,16 @@ public class ShaderPipeline {
 
     public float VignetteRadius = 0.75f;
     public float VignetteSoftness = 0.2f;
+
+    public float MaxBrightness = 1.0f;
+    public float Contrast = 1.0f;
+    public float LinSectStart = 0.22f;
+    public float LinSectLength = 0.4f;
+    public float Black = 1.33f;
+    public float Pedestal = 0.0f;
+
+    public float Whitepoint = 11.2f;
+    public float Exposure = -1.5f;
 
     public ColourCurve ColourGradeCurve = new ColourCurve(Curve.Default(), Curve.Default(), Curve.Default());
 
@@ -234,8 +224,18 @@ public class ShaderPipeline {
         glBindTexture(GL_TEXTURE_2D, outputTexture);
 
         framebufferShader.use();
+
         framebufferShader.setInt("screenTexture", 0);
 
+        framebufferShader.setFloat("MaxBrightness", MaxBrightness);
+        framebufferShader.setFloat("Contrast", Contrast);
+        framebufferShader.setFloat("LinSectStart", LinSectStart);
+        framebufferShader.setFloat("LinSectLength", LinSectLength);
+        framebufferShader.setFloat("Black", Black);
+        framebufferShader.setFloat("Pedestal", Pedestal);
+
+        framebufferShader.setFloat("Whitepoint", Whitepoint);
+        framebufferShader.setFloat("Exposure", Exposure);
         screenQuad.draw();
     }
 }
