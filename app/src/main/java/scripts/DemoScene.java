@@ -3,6 +3,7 @@ package scripts;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_F;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 import org.joml.Vector3f;
 
@@ -15,6 +16,7 @@ import engine.components.Transform;
 import engine.rendering.ShaderPipeline;
 import imgui.ImGui;
 import imgui.type.ImBoolean;
+import imgui.type.ImInt;
 
 public class DemoScene extends MonoScript {
 
@@ -52,6 +54,13 @@ public class DemoScene extends MonoScript {
 
     Integer skyboxTexture = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/qwantani_dusk_2_puresky_1k.hdr"));
     Integer barSkybox = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/warm_restaurant_night_1k.hdr"));
+    Integer nightSkybox = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/kloppenheim_02_puresky_1k.hdr"));
+
+    Map<String, Integer> skyboxes = Map.of("dusk", skyboxTexture, "night", nightSkybox, "bar", barSkybox);
+
+    String[] skyboxArray = { "dusk", "night", "bar" };
+
+    ImInt skyboxIndex = new ImInt(0);
 
     boolean swapped = false;
     boolean pressed = false;
@@ -65,7 +74,7 @@ public class DemoScene extends MonoScript {
     protected void Start() {
         PostProcess.Enable(ShaderPipeline.BLOOM);
 
-        Scene.SetSkyboxTexture(skyboxTexture);
+        Scene.SetSkyboxTexture(skyboxes.get(skyboxArray[skyboxIndex.get()]));
 
         Vector3f offset = new Vector3f(0, 0, -5);
 
@@ -99,15 +108,6 @@ public class DemoScene extends MonoScript {
         ornament_Material.annisotropy = 1;
     }
 
-    private void swapSkybox() {
-        if (swapped) {
-            Scene.SetSkyboxTexture(skyboxTexture);
-        } else {
-            Scene.SetSkyboxTexture(barSkybox);
-        }
-        swapped = !swapped;
-    }
-
     float[] lightColour = new float[] { 1, 1, 1 };
     float[] lightDirection = new float[] { 1, 1, 1 };
 
@@ -122,19 +122,17 @@ public class DemoScene extends MonoScript {
 
     @Override
     protected void Update(double deltaTime) {
-        if (pressed == false && Input.IsKeyDown(GLFW_KEY_F)) {
-            pressed = true;
-            swapSkybox();
-        } else if (!Input.IsKeyDown(GLFW_KEY_F)) {
-            pressed = false;
-        }
-
         ImGui.begin("debug window");
 
         ImGui.text("Scene properties");
         ImGui.separator();
         ImGui.colorEdit3("lightColour", lightColour);
         ImGui.sliderFloat3("normalised light position", lightDirection, -1, 1);
+
+        if (ImGui.combo("skybox", skyboxIndex, skyboxArray)) {
+            Scene.SetSkyboxTexture(skyboxes.get(skyboxArray[skyboxIndex.get()]));
+        }
+        ;
 
         ImGui.text("bloom");
         ImGui.separator();
