@@ -12,12 +12,10 @@ import engine.*;
 import engine.components.Material;
 import engine.components.MaterialEntry;
 import engine.components.Transform;
-import engine.rendering.ColourCurve;
 import engine.rendering.ShaderPipeline;
 import engine.rendering.ColourCurve.Curve;
 import imgui.ImGui;
 import imgui.type.ImBoolean;
-import imgui.type.ImFloat;
 import imgui.type.ImInt;
 
 public class DemoScene extends MonoScript {
@@ -117,17 +115,17 @@ public class DemoScene extends MonoScript {
 
     float[] red_p0 = new float[] { 0.0f };
     float[] red_p1 = new float[] { 0.25f, 0.25f };
-    float[] red_p2 = new float[] { 0.25f, 0.25f };
+    float[] red_p2 = new float[] { 0.75f, 0.75f };
     float[] red_p3 = new float[] { 1.0f, 1.0f, 1.0f };
 
     float[] green_p0 = new float[] { 0.0f };
     float[] green_p1 = new float[] { 0.25f, 0.25f };
-    float[] green_p2 = new float[] { 0.25f, 0.25f };
+    float[] green_p2 = new float[] { 0.75f, 0.75f };
     float[] green_p3 = new float[] { 1.0f, 1.0f, 1.0f };
 
     float[] blue_p0 = new float[] { 0.0f };
     float[] blue_p1 = new float[] { 0.25f, 0.25f };
-    float[] blue_p2 = new float[] { 0.25f, 0.25f };
+    float[] blue_p2 = new float[] { 0.75f, 0.75f };
     float[] blue_p3 = new float[] { 1.0f, 1.0f, 1.0f };
 
     ImBoolean bloomEnabled = new ImBoolean(true);
@@ -135,8 +133,7 @@ public class DemoScene extends MonoScript {
     ImBoolean gradingEnabled = new ImBoolean(true);
 
     private void colourGradingUi() {
-        ImGui.text("colour grading");
-        ImGui.separator();
+
         if (ImGui.checkbox("enable colour grading", gradingEnabled)) {
             if (gradingEnabled.get()) {
                 PostProcess.Enable(ShaderPipeline.COLOUR_GRADE);
@@ -144,6 +141,9 @@ public class DemoScene extends MonoScript {
                 PostProcess.Disable(ShaderPipeline.COLOUR_GRADE);
             }
         }
+
+        ImGui.text("red");
+        ImGui.separator();
 
         boolean red_updated = false;
 
@@ -162,7 +162,9 @@ public class DemoScene extends MonoScript {
 
             PostProcess.ColourGradeCurve.update();
         }
-        ;
+
+        ImGui.text("green");
+        ImGui.separator();
 
         boolean green_updated = false;
 
@@ -181,7 +183,9 @@ public class DemoScene extends MonoScript {
 
             PostProcess.ColourGradeCurve.update();
         }
-        ;
+
+        ImGui.text("blue");
+        ImGui.separator();
 
         boolean blue_updated = false;
 
@@ -200,7 +204,6 @@ public class DemoScene extends MonoScript {
 
             PostProcess.ColourGradeCurve.update();
         }
-        ;
 
     }
 
@@ -218,34 +221,44 @@ public class DemoScene extends MonoScript {
         }
         ;
 
-        ImGui.text("bloom");
-        ImGui.separator();
-        if (ImGui.checkbox("enable bloom", bloomEnabled)) {
-            if (bloomEnabled.get()) {
-                PostProcess.Enable(ShaderPipeline.BLOOM);
-            } else {
-                PostProcess.Disable(ShaderPipeline.BLOOM);
+        ImGui.beginTabBar("Post processing");
+
+        if (ImGui.beginTabItem("Bloom")) {
+            if (ImGui.checkbox("enable bloom", bloomEnabled)) {
+                if (bloomEnabled.get()) {
+                    PostProcess.Enable(ShaderPipeline.BLOOM);
+                } else {
+                    PostProcess.Disable(ShaderPipeline.BLOOM);
+                }
             }
+
+            ImGui.sliderFloat("knee", bloomKnee, 0, 2);
+            ImGui.sliderFloat("threshold", bloomThreshold, 0, 5);
+
+            ImGui.endTabItem();
         }
 
-        ImGui.sliderFloat("knee", bloomKnee, 0, 2);
-        ImGui.sliderFloat("threshold", bloomThreshold, 0, 5);
-
-        ImGui.text("vignette");
-        ImGui.separator();
-
-        if (ImGui.checkbox("enable vignette", vignetteEnabled)) {
-            if (vignetteEnabled.get()) {
-                PostProcess.Enable(ShaderPipeline.VIGNETTE);
-            } else {
-                PostProcess.Disable(ShaderPipeline.VIGNETTE);
+        if (ImGui.beginTabItem("vignette")) {
+            if (ImGui.checkbox("enable vignette", vignetteEnabled)) {
+                if (vignetteEnabled.get()) {
+                    PostProcess.Enable(ShaderPipeline.VIGNETTE);
+                } else {
+                    PostProcess.Disable(ShaderPipeline.VIGNETTE);
+                }
             }
+
+            ImGui.sliderFloat("radius", vignetteRadius, 0, 1);
+            ImGui.sliderFloat("softness", vignetteSoftness, 0.01f, 1);
+
+            ImGui.endTabItem();
         }
 
-        ImGui.sliderFloat("radius", vignetteRadius, 0, 1);
-        ImGui.sliderFloat("softness", vignetteSoftness, 0.01f, 1);
+        if (ImGui.beginTabItem("colour grading")) {
+            colourGradingUi();
+            ImGui.endTabItem();
+        }
 
-        colourGradingUi();
+        ImGui.endTabBar();
 
         Scene.lightColour.x = lightColour[0];
         Scene.lightColour.y = lightColour[1];
