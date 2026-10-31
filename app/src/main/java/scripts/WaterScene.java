@@ -6,7 +6,7 @@ import org.joml.Vector3f;
 
 import dev.dominion.ecs.api.Entity;
 import engine.AssetManager;
-import engine.Mesh;
+import engine.rendering.Mesh;
 import engine.MonoScript;
 import engine.components.Material;
 import engine.components.MaterialEntry;
