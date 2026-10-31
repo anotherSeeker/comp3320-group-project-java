@@ -2,13 +2,13 @@
 
 in vec2 outTexCoord;
 
-//noiseTex
+//ID1
 uniform sampler2D Albedo;
-//waveVecTex
+//ID2
 uniform sampler2D RoughnessMap;
-//h0Tex
+//ID3
 uniform sampler2D AmbientOcclusionMap;
-//dyTex
+//ID4
 uniform sampler2D NormalMap;
 
 layout(location = 0) out vec4 color;
@@ -17,16 +17,16 @@ void main()
 {
     if (outTexCoord.x < 1)
     {
-        if (outTexCoord.y < 1)
+        if (outTexCoord.y > 1)
             color = texture(Albedo, outTexCoord);
         else
-            color = texture(NormalMap, outTexCoord);
+            color = texture(AmbientOcclusionMap, outTexCoord);
     }
     else
     {
-        if (outTexCoord.y < 1)
+        if (outTexCoord.y > 1)
             color = texture(RoughnessMap, outTexCoord);
         else
-            color = texture(AmbientOcclusionMap, outTexCoord);
+            color = texture(NormalMap, outTexCoord);
     }
 }

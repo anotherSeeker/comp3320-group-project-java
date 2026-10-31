@@ -1,0 +1,60 @@
+#version 430 core
+#define PI 3.14159265359
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(rgba32f, binding = 0) uniform readonly image2D waveVecTex;
+layout(rgba32f, binding = 1) uniform readonly image2D h0Tex;
+layout(rg32f, binding = 2) uniform writeonly image2D dyTex;
+layout(rg32f, binding = 3) uniform writeonly image2D dxTex;
+layout(rg32f, binding = 4) uniform writeonly image2D dzTex;
+
+uniform float time;
+
+//implementation is basically just Jump Trajectory's https://github.com/gasgiant/FFT-Ocean/blob/main/Assets/ComputeShaders/TimeDependentSpectrum.compute
+
+vec2 cMult(vec2 a, vec2 b)
+{
+    return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+}
+
+void main() 
+{
+    ivec2 rawPos = ivec2( gl_GlobalInvocationID.xy );
+
+    vec4 h0 = vec4(imageLoad(h0Tex, rawPos));
+    vec4 waveData = vec4(imageLoad(waveVecTex, rawPos));
+
+    //wavevector, angular freq, 1/magnitude
+    vec2 k = waveData.xy;
+    float omega = waveData.z;
+    float magnitude = waveData.w;
+    float phase = omega*time;
+
+	vec2 exponent = vec2(cos(phase), sin(phase));
+
+	vec2 h = cMult(h0.xy, exponent) + cMult(h0.zw, vec2(exponent.x, -exponent.y));
+	vec2 ih = vec2(-h.y, h.x);
+	
+	vec2 displacementX = ih * k.x * magnitude;
+	vec2 displacementY = h;
+	vec2 displacementZ = ih * k.y * magnitude;
+		 
+	vec2 displacementX_dx = -h * k.x * k.x * magnitude;
+	vec2 displacementY_dx = ih * k.x;
+	vec2 displacementZ_dx = -h * k.x * k.y * magnitude;
+		 
+	vec2 displacementY_dz = ih * k.y;
+	vec2 displacementZ_dz = -h * k.y * k.y * magnitude;
+	
+	vec2 Dx_Dz = vec2(displacementX.x - displacementZ.y, displacementX.y + displacementZ.x);
+	vec2 Dy_Dxz = vec2(displacementY.x - displacementZ_dx.y, displacementY.y + displacementZ_dx.x);
+	vec2 Dyx_Dyz = vec2(displacementY_dx.x - displacementY_dz.y, displacementY_dx.y + displacementY_dz.x);
+	vec2 Dxx_Dzz = vec2(displacementX_dx.x - displacementZ_dz.y, displacementX_dx.y + displacementZ_dz.x);
+
+    imageStore(dyTex, rawPos, vec4(Dy_Dxz.x, Dy_Dxz.y, 0, 0));
+    //these two textures are black but we are getting numbers outta them
+    imageStore(dxTex, rawPos, vec4(Dx_Dz.x, Dx_Dz.y, 0, 0));
+    imageStore(dzTex, rawPos, vec4(Dyx_Dyz.x, Dyx_Dyz.y, 0, 0));
+}
+

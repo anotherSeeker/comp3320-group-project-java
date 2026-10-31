@@ -29,20 +29,17 @@ import engine.AssetManager;
 
 public class WaterFFT 
 {
-    //physical parameters for the ocean
-    public static double gravity = 9.81;
-    public static double waterDensity = 1000;
-    public static double surfaceTensionCoefficient = 0.074;
-
     //I picked depth wholly at random, windspeed was an loose example stated in the wikiwaves page on jonswap kind of as a throwaway line but that's good enough for me
-    public static double depth = 50; //H or sometimes D: depth of the water, I believe technical constraints mean we can't have a different one for each point on the surface? we'd need to recalculate a new map for every part of the ocean which is kinda infeasible unless I'm horrifically mistaken
-    public static double windSpeed = 20; //U: windspeed, I believe meters per second?
-    public static double fetch = 2000; //F: distance to shore from the direction that the wind is blowing from
-    public static final double GAMMA_J = 3.3; //gamma: the "peak enhancement factor", from the JONSWAP spectrum, do not ask me I am not an oceanographer
+    public static float depth = 30.0f; //H or sometimes D: depth of the water, I believe technical constraints mean we can't have a different one for each point on the surface? we'd need to recalculate a new map for every part of the ocean which is kinda infeasible unless I'm horrifically mistaken
+    public static float windSpeed = 25.0f; //U: windspeed, I believe meters per second?
+    public static float fetch = 800000.0f; //F: distance to shore from the direction that the wind is blowing from
 
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
     public static int textureSize = 256; //these have to be powers of 2 or we lose efficiency on the fft
+
+    //Patches are 1km by 1km in physical size
+    public static float patchLength = 1000;
 
     //the wavenumbers, kx, ky, and angular frequency / dispersion relation omega
     public static ArrayList<Vector3f> waveVectorList;
@@ -76,7 +73,7 @@ public class WaterFFT
 
     public static int fComponentComputeID;
     public static int fComponentProgramID;
-    public static Path fComponentComputePath = Path.of("assets/shaders/water/waveTimeVariant.comp");
+    public static Path fComponentComputePath = Path.of("assets/shaders/water/fourierComponents.comp");//Path.of("assets/shaders/water/waveTimeVariant.comp");
 
     //bytebuffers for creating our textures
     public static ByteBuffer noiseBytes;
@@ -133,7 +130,7 @@ public class WaterFFT
         setupSpectraShader();
         //dispatches and waits for completion
         dispatchWaveSpectra();
-        System.out.println("compute");
+        System.out.println("compute spectra done");
     }
 
     private static void setupSpectraShader()
@@ -223,6 +220,14 @@ public class WaterFFT
         //need 4 values for h0(k) and h0(-k)
         glBindImageTexture( 2, h0TexId, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F );
         
+        //size of our textures and physical size of the patch of water
+        glUniform1f(glGetUniformLocation(wavespectraProgramID, "patchLength"), patchLength);
+        glUniform1i(glGetUniformLocation(wavespectraProgramID, "textureSize"), textureSize);
+        //distance to shore from the direction of wind
+        glUniform1f(glGetUniformLocation(wavespectraProgramID, "fetch_F"), fetch);
+        glUniform1f(glGetUniformLocation(wavespectraProgramID, "windSpeed_U"), windSpeed);
+        glUniform1f(glGetUniformLocation(wavespectraProgramID, "depth_H"), depth);
+
         //System.out.println("bind");
     }
 
@@ -257,28 +262,28 @@ public class WaterFFT
     {
         //create
         dyTexID = glGenTextures();
-        glActiveTexture(GL_TEXTURE0+3);
+        glActiveTexture(GL_TEXTURE0+2);
         glBindTexture(GL_TEXTURE_2D, dyTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
-        glBindImageTexture( 3, dyTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
+        glBindImageTexture( 2, dyTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
 
         dxTexID = glGenTextures();
-        glActiveTexture(GL_TEXTURE0+4);
+        glActiveTexture(GL_TEXTURE0+3);
         glBindTexture(GL_TEXTURE_2D, dxTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RG , GL_FLOAT, (FloatBuffer) null);
-        glBindImageTexture( 4, dxTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
+        glBindImageTexture( 3, dxTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
 
         dzTexID = glGenTextures();
-        glActiveTexture(GL_TEXTURE0+5);
+        glActiveTexture(GL_TEXTURE0+4);
         glBindTexture(GL_TEXTURE_2D, dzTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RG , GL_FLOAT, (FloatBuffer) null);
-        glBindImageTexture( 5, dzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
+        glBindImageTexture( 4, dzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
 
         //add to texture index for engine
         dyIndexID = AssetManager.get().AddTexture("dy_Tex",dyTexID);
@@ -291,26 +296,26 @@ public class WaterFFT
         glUseProgram( fComponentProgramID );
 
         //inputs
-        glActiveTexture(GL_TEXTURE0+1);
-        //glBindTexture(GL_TEXTURE_2D, waveVecTexID);
-        glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_READ_ONLY, GL_RG32F );
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, waveVecTexID);
+        glBindImageTexture( 0, waveVecTexID, 0, false, 0, GL_READ_ONLY, GL_RG32F );
 
-        glActiveTexture(GL_TEXTURE0+2);
-        //glBindTexture(GL_TEXTURE_2D, h0TexId);
-        glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_ONLY, GL_RGBA32F );
+        glActiveTexture(GL_TEXTURE0+1);
+        glBindTexture(GL_TEXTURE_2D, h0TexId);
+        glBindImageTexture( 1, h0TexId, 0, false, 0, GL_READ_ONLY, GL_RGBA32F );
         
         //outputs
+        glActiveTexture(GL_TEXTURE0+2);
+	    glBindTexture(GL_TEXTURE_2D, dyTexID);
+        glBindImageTexture( 2, dyTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+
         glActiveTexture(GL_TEXTURE0+3);
-	    //glBindTexture(GL_TEXTURE_2D, dyTexID);
-        glBindImageTexture( 3, dyTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+	    glBindTexture(GL_TEXTURE_2D, dxTexID);
+        glBindImageTexture( 3, dxTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
 
         glActiveTexture(GL_TEXTURE0+4);
-	    //glBindTexture(GL_TEXTURE_2D, dxTexID);
-        glBindImageTexture( 4, dxTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
-
-        glActiveTexture(GL_TEXTURE0+5);
-	    //glBindTexture(GL_TEXTURE_2D, dzTexID);
-        glBindImageTexture( 5, dzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+	    glBindTexture(GL_TEXTURE_2D, dzTexID);
+        glBindImageTexture( 4, dzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
 
         glUniform1f(glGetUniformLocation(fComponentProgramID, "time"), time);
     }
@@ -326,5 +331,7 @@ public class WaterFFT
 
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+        System.out.println("compute Fourier Components done");
     }
 }

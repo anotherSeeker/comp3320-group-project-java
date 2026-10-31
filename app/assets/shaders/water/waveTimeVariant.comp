@@ -3,15 +3,17 @@
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-layout(rgba32f, binding = 1) uniform readonly image2D waveVecTex;
-layout(rgba32f, binding = 2) uniform readonly image2D h0Tex;
-layout(rg32f, binding = 3) uniform writeonly image2D dyTex;
-layout(rg32f, binding = 4) uniform writeonly image2D dxTex;
-layout(rg32f, binding = 5) uniform writeonly image2D dzTex;
+layout(rgba32f, binding = 0) uniform readonly image2D waveVecTex;
+layout(rgba32f, binding = 1) uniform readonly image2D h0Tex;
+layout(rg32f, binding = 2) uniform writeonly image2D dyTex;
+layout(rg32f, binding = 3) uniform writeonly image2D dxTex;
+layout(rg32f, binding = 4) uniform writeonly image2D dzTex;
 
 layout (location = 0) uniform float time;
 
 //implementation very very heavily references the GPGPU FFT Ocean Simulation Paper
+    //their implementation is using the phillips spectrum tho and is different to other stuff I think?
+    //I believe this is wrong?
 
 
 struct complex
@@ -79,7 +81,7 @@ void main()
     complex hk_t_dz = cMult(dz, hk_t_dy);
 
     imageStore(dyTex, rawPos, vec4(hk_t_dy.real, hk_t_dy.im, 0, 1));
-    imageStore(dxTex, rawPos, vec4(hk_t_dx.real, hk_t_dx.im, 0, 1));
-    imageStore(dzTex, rawPos, vec4(hk_t_dz.real, hk_t_dz.im, 0, 1));
+    imageStore(dxTex, rawPos, vec4(hk_t_dx.real, hk_t_dx.im, 1, 1));
+    imageStore(dzTex, rawPos, vec4(hk_t_dz.real, hk_t_dz.im, 1, 1));
 }
 
