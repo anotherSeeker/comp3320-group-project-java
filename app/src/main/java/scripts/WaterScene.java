@@ -29,11 +29,11 @@ public class WaterScene extends MonoScript {
         //compute jonswap params
         WaterFFT.computeWaveSpectrum();
 
-        // WaterFFT.setupFourierComponentShader();
-        // WaterFFT.dispatchFComponentShader();
+        WaterFFT.setupFourierComponentShader();
+        WaterFFT.dispatchFComponentShader();
 
         //render our maps to screen
-        drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.noiseIndexId);
+        drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dyIndexID);
         //drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.noiseIndexId, WaterFFT.noiseIndexId, WaterFFT.noiseIndexId);
         //drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.dxIndexID, WaterFFT.dzIndexID, WaterFFT.dyIndexID);
 

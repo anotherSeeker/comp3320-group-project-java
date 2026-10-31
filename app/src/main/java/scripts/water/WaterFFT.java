@@ -241,7 +241,7 @@ public class WaterFFT
             System.out.println(glGetShaderInfoLog(fComponentComputeID,1024));
 
             fComponentProgramID = glCreateProgram();
-            glAttachShader(fComponentProgramID, fComponentProgramID);
+            glAttachShader(fComponentProgramID, fComponentComputeID);
             glLinkProgram(fComponentProgramID);
 
             System.out.println(glGetProgramInfoLog(fComponentProgramID,1024));
