@@ -16,8 +16,8 @@
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(rg32f, binding = 0) uniform readonly image2D gaussianData;
-layout(rgba32f, binding = 1) uniform writeonly image2D waveVecTex;
-layout(rg32f, binding = 2) uniform writeonly image2D h0Tex;
+layout(rgba32f, binding = 1) uniform image2D waveVecTex;
+layout(rg32f, binding = 2) uniform image2D h0Tex;
 
 //D(omega, theta) controls the strength of waves based on the direction relative to the direction of travel
 // float doDirectionalSpread(float omega, float theta)

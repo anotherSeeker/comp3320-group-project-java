@@ -1,32 +1,36 @@
 #version 430 core
 #define PI 3.14159265359
 
-layout(rgba32f, binding = 0) uniform readonly image2D waveVecTex;
-layout(rgba32f, binding = 1) uniform readonly image2D h0Tex;
-layout(rg32f, binding = 2) uniform writeonly image2D dy;
-layout(rg32f, binding = 3) uniform writeonly image2D dxdz;
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-uniform float time;
+layout(rgba32f, binding = 1) uniform readonly image2D waveVecTex;
+layout(rgba32f, binding = 2) uniform readonly image2D h0Tex;
+layout(rg32f, binding = 3) uniform writeonly image2D dyTex;
+layout(rg32f, binding = 4) uniform writeonly image2D dxTex;
+layout(rg32f, binding = 5) uniform writeonly image2D dzTex;
+
+layout (location = 0) uniform float time;
 
 //implementation very very heavily references the GPGPU FFT Ocean Simulation Paper
 
-struct Complex
+
+struct complex
 {
     float real;
     float im;
-}
+};
 
-Complex cMult(Complex a, Complex b)
+complex cMult(complex a, complex b)
 {
-    Complex c;
+    complex c;
 	c.real = a.real * b.real - a.im * b.im;
     c.im = a.real * b.im + a.im * b.real;
     return c;
 }
 
-Complex cAdd(Complex a, Complex b)
+complex cAdd(complex a, complex b)
 {
-    Complex c;
+    complex c;
 	c.real = a.real + b.real;
     c.im = a.im + b.im;
     return c;
@@ -35,16 +39,17 @@ Complex cAdd(Complex a, Complex b)
 void main() 
 {
     ivec2 rawPos = ivec2( gl_GlobalInvocationID.xy );
-    vec4 h0 = vec4(imageLoad(h0Tex, rawPos).xy);
-    vec3 waveData = vec4(imageLoad(waveVecTex, rawPos).xy);
+
+    vec4 h0 = vec4(imageLoad(h0Tex, rawPos));
+    vec4 waveData = vec4(imageLoad(waveVecTex, rawPos));
     
     //h0(k)
-    Complex h0k;
+    complex h0k;
     h0k.real = h0.x;
     h0k.im = h0.y;
 
     //h0(-k)
-    Complex h0_k;
+    complex h0_k;
     h0_k.real = h0.z;
     h0_k.im = h0.w;
 
@@ -52,28 +57,29 @@ void main()
     vec2 k = waveData.xy;
     float omega = waveData.z;
     float magnitude = length(k);
+    float phase = omega*time;
 
-    float cos_wt = cos(omega*time);
-    float sin_wt = sin(omega*time);
+    float cos_wt = cos(phase);
+    float sin_wt = sin(phase);
 
-    Complex e_iwt = Complex(cos(cos_wt, sin_wt));
-    Complex e_iwt_inverse = Complex(cos(cos_wt, -sin_wt));
+    complex e_iwt = complex(cos_wt, sin_wt);
+    complex e_iwt_inverse = complex(cos_wt, -sin_wt);
     
     //y coord complex amplitude
-    Complex hk_t_dy = cAdd(mul(h0k, exp_iwt), cMult(h0_k, e_iwt_inverse));
+    complex hk_t_dy = cAdd(cMult(h0k, e_iwt), cMult(h0_k, e_iwt_inverse));
 
     //x
-    Complex dx = complex(0.0, -k.x/magnitude);
+    complex dx = complex(0.0, -k.x/magnitude);
 
-    Complex hk_t_dx = cMult(dx, hk_t_dy);
+    complex hk_t_dx = cMult(dx, hk_t_dy);
 
     //z
-    Complex dz = complex(0.0, -k.y/magnitude);
+    complex dz = complex(0.0, -k.y/magnitude);
 
-    Complex hk_t_dz = cMult(dz, hk_t_dy);
+    complex hk_t_dz = cMult(dz, hk_t_dy);
 
-    imageStore(dy, rawPos, vec4(hk_t_dy, 0, 1));
-    imageStore(dxdz, rawPos, vec4(hk_t_dx, hk_t_dz));
-
+    imageStore(dyTex, rawPos, vec4(hk_t_dy.real, hk_t_dy.im, 0, 1));
+    imageStore(dxTex, rawPos, vec4(hk_t_dx.real, hk_t_dx.im, 0, 1));
+    imageStore(dzTex, rawPos, vec4(hk_t_dz.real, hk_t_dz.im, 0, 1));
 }
 

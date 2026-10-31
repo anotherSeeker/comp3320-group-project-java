@@ -2,40 +2,31 @@
 
 in vec2 outTexCoord;
 
+//noiseTex
 uniform sampler2D Albedo;
+//waveVecTex
 uniform sampler2D RoughnessMap;
+//h0Tex
 uniform sampler2D AmbientOcclusionMap;
+//dyTex
+uniform sampler2D NormalMap;
 
 layout(location = 0) out vec4 color;
 
-float negativeComponent = 0.0f;
-
 void main() 
 {
-    if (outTexCoord.x < 1)
+    if (outTexCoord.x <= 1)
     {
-        if (outTexCoord.y < 1)
+        if (outTexCoord.y <= 1)
             color = texture(Albedo, outTexCoord);
         else
-            color = texture(RoughnessMap, outTexCoord);
+            color = texture(NormalMap, outTexCoord);
     }
     else
     {
-        if (outTexCoord.y < 1)
-            color = vec4(0.1,0.1,0.1,1);
+        if (outTexCoord.y <= 1)
+            color = texture(RoughnessMap, outTexCoord);
         else
             color = texture(AmbientOcclusionMap, outTexCoord);
     }
-
-    // if (color.x < 0)
-    // {
-    //     negativeComponent += 0.5;
-    //     color = vec4(-(color.x/2),color.y,negativeComponent,1);
-    // }
-
-    // if (color.y < 0)
-    // {
-    //     negativeComponent += 0.5;
-    //     color = vec4(color.x,-(color.y/2),negativeComponent,1);
-    // }
 }

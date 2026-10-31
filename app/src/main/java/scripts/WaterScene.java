@@ -29,8 +29,12 @@ public class WaterScene extends MonoScript {
         //compute jonswap params
         WaterFFT.computeWaveSpectrum();
 
+        WaterFFT.setupFourierComponentShader();
+        WaterFFT.dispatchFComponentShader();
+
         //render our maps to screen
-        drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID);
+        //drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dyIndexID);
+        drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.noiseIndexId, WaterFFT.noiseIndexId, WaterFFT.noiseIndexId);
 
         //makeWaterPlane();
 
@@ -69,19 +73,19 @@ public class WaterScene extends MonoScript {
         NoisePlane.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
     }
 
-    private void drawMapQuads(int ID1, int ID2, int ID3)
+    private void drawMapQuads(int ID1, int ID2, int ID3, int ID4)
     {
         Integer quadShader = Assets.LoadShader(
             Path.of("assets/shaders/water/mapDraw.vert"),
             Path.of("assets/shaders/water/mapDraw.frag")
         );
 
-        //can we do this without supplying every map?
         quadMat = Assets.createMaterial(new MaterialEntry()
             .add("SHADER", quadShader)
             .add("COLOUR",ID1)
             .add("ROUGHNESS",ID2)
             .add("AMBIENT_OCCLUSION",ID3)
+            .add("NORMAL", ID4)
         );
 
         Mesh quadMesh = Mesh.Quad();
@@ -104,7 +108,6 @@ public class WaterScene extends MonoScript {
             .add("SHADER", waterShader)
             .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")))
             .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")))
-            .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")))
             .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg")))
         );
 

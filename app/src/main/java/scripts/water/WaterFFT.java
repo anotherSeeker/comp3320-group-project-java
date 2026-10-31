@@ -17,6 +17,7 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
+import static org.lwjgl.glfw.GLFW.*;
 
 import engine.AssetManager;
 
@@ -56,10 +57,13 @@ public class WaterFFT
     public static int h0IndexID;
 
     public static int dyTexID;
-    public static int dxdzTexID;
-
     public static int dyIndexID;
-    public static int dxdzIndexID;
+
+    public static int dxTexID;
+    public static int dxIndexID;
+
+    public static int dzTexID;
+    public static int dzIndexID;
 
     //compute shader details
     public static boolean spectraShaderCreated = false;
@@ -149,12 +153,12 @@ public class WaterFFT
             glLinkProgram(wavespectraProgramID);
 
             System.out.println(glGetProgramInfoLog(wavespectraProgramID,1024));
-
-            //make the textures
-            genSpectrumTex();
             
             spectraShaderCreated = true;
         }
+
+        //make the textures
+        genSpectrumTex();
 
         //System.out.println("setup");
     }
@@ -219,68 +223,108 @@ public class WaterFFT
         //need 4 values for h0(k) and h0(-k)
         glBindImageTexture( 2, h0TexId, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F );
         
-        System.out.println("bind");
+        //System.out.println("bind");
     }
-
-    private static void printFloatBuffer(FloatBuffer buffer)
-    {
-        while (buffer.hasRemaining())
-        {
-            System.out.println(buffer.get());
-        }
-
-        buffer.rewind();
-    }
-
 
     //h(k,t) textures gen
 
-    private static void setupFourierComponentShader()
+    public static void setupFourierComponentShader()
     {
         if (!fComponentShaderCreated)
         {
-            String source = AssetManager.get().ReadCompute(wavespectraComputePath);
+            String source = AssetManager.get().ReadCompute(fComponentComputePath);
             
-            wavespectraComputeID = glCreateShader(GL_COMPUTE_SHADER);
-            glShaderSource(wavespectraComputeID, source);
-            glCompileShader(wavespectraComputeID);
+            fComponentComputeID = glCreateShader(GL_COMPUTE_SHADER);
+            glShaderSource(fComponentComputeID, source);
+            glCompileShader(fComponentComputeID);
             
-            System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
+            System.out.println(glGetShaderInfoLog(fComponentComputeID,1024));
 
-            wavespectraProgramID = glCreateProgram();
-            glAttachShader(wavespectraProgramID, wavespectraComputeID);
-            glLinkProgram(wavespectraProgramID);
+            fComponentProgramID = glCreateProgram();
+            glAttachShader(fComponentProgramID, fComponentProgramID);
+            glLinkProgram(fComponentProgramID);
 
-            System.out.println(glGetProgramInfoLog(wavespectraProgramID,1024));
+            System.out.println(glGetProgramInfoLog(fComponentProgramID,1024));
 
             //make the textures
-            genSpectrumTex();
-            
-            spectraShaderCreated = true;
+            genFComponentTex();
+
+            fComponentShaderCreated = true;
         }
     }
 
-    private static void genFComponentTex()
+    public static void genFComponentTex()
     {
         //create
         dyTexID = glGenTextures();
-        glActiveTexture(GL_TEXTURE0+2);
-        glBindTexture(GL_TEXTURE_2D, waveVecTexID);
+        glActiveTexture(GL_TEXTURE0+3);
+        glBindTexture(GL_TEXTURE_2D, dyTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
-        glBindImageTexture( 2, waveVecTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
+        glBindImageTexture( 3, dyTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
 
-        dxdzTexID = glGenTextures();
-        glActiveTexture(GL_TEXTURE0+3);
-        glBindTexture(GL_TEXTURE_2D, dxdzTexID);
+        dxTexID = glGenTextures();
+        glActiveTexture(GL_TEXTURE0+4);
+        glBindTexture(GL_TEXTURE_2D, dxTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
-        glBindImageTexture( 3, dxdzTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RG , GL_FLOAT, (FloatBuffer) null);
+        glBindImageTexture( 4, dxTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
+
+        dzTexID = glGenTextures();
+        glActiveTexture(GL_TEXTURE0+5);
+        glBindTexture(GL_TEXTURE_2D, dzTexID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RG , GL_FLOAT, (FloatBuffer) null);
+        glBindImageTexture( 5, dzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
 
         //add to texture index for engine
-        dyIndexID = AssetManager.get().AddTexture("dyTex",dyTexID);
-        dxdzIndexID = AssetManager.get().AddTexture("dxdzTex",dxdzTexID);
+        dyIndexID = AssetManager.get().AddTexture("dy_Tex",dyTexID);
+        dxIndexID = AssetManager.get().AddTexture("dx_Tex",dxTexID);
+        dzIndexID = AssetManager.get().AddTexture("dz_Tex",dzTexID);
+    }
+
+    private static void useFComponentShader(float time)
+    {
+        glUseProgram( fComponentProgramID );
+
+        //inputs
+        glActiveTexture(GL_TEXTURE0+1);
+        //glBindTexture(GL_TEXTURE_2D, waveVecTexID);
+        glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_READ_ONLY, GL_RG32F );
+
+        glActiveTexture(GL_TEXTURE0+2);
+        //glBindTexture(GL_TEXTURE_2D, h0TexId);
+        glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_ONLY, GL_RGBA32F );
+        
+        //outputs
+        glActiveTexture(GL_TEXTURE0+3);
+	    //glBindTexture(GL_TEXTURE_2D, dyTexID);
+        glBindImageTexture( 3, dyTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+
+        glActiveTexture(GL_TEXTURE0+4);
+	    //glBindTexture(GL_TEXTURE_2D, dxTexID);
+        glBindImageTexture( 4, dxTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+
+        glActiveTexture(GL_TEXTURE0+5);
+	    //glBindTexture(GL_TEXTURE_2D, dzTexID);
+        glBindImageTexture( 5, dzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+
+        glUniform1f(glGetUniformLocation(fComponentProgramID, "time"), time);
+    }
+
+    public static void dispatchFComponentShader()
+    {
+        float currentTime = (float) glfwGetTime();
+        //use our program and bind our textures
+        useFComponentShader(currentTime);
+        //send it
+        //System.out.println("dispatch");
+        glDispatchCompute(textureSize, textureSize, 1);
+
+        //wait for completion
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
     }
 }
