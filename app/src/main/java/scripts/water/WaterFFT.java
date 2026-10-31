@@ -153,12 +153,12 @@ public class WaterFFT
             glLinkProgram(wavespectraProgramID);
 
             System.out.println(glGetProgramInfoLog(wavespectraProgramID,1024));
+
+            //make the textures
+            genSpectrumTex();
             
             spectraShaderCreated = true;
         }
-
-        //make the textures
-        genSpectrumTex();
 
         //System.out.println("setup");
     }

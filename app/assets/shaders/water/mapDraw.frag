@@ -18,15 +18,15 @@ void main()
     if (outTexCoord.x < 1)
     {
         if (outTexCoord.y < 1)
-            color = vec4(0,0,1,1);//texture(RoughnessMap, outTexCoord);
+            color = texture(Albedo, outTexCoord);
         else
-            color = vec4(1,1,1,1);//texture(AmbientOcclusionMap, outTexCoord);
+            color = texture(NormalMap, outTexCoord);
     }
     else
     {
         if (outTexCoord.y < 1)
-            color = vec4(1,0,0,1);//texture(Albedo, outTexCoord);
+            color = texture(RoughnessMap, outTexCoord);
         else
-            color = vec4(0,1,0,1);//texture(NormalMap, outTexCoord);
+            color = texture(AmbientOcclusionMap, outTexCoord);
     }
 }
