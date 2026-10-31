@@ -15,18 +15,18 @@ layout(location = 0) out vec4 color;
 
 void main() 
 {
-    if (outTexCoord.x <= 1)
+    if (outTexCoord.x < 1)
     {
-        if (outTexCoord.y <= 1)
-            color = texture(Albedo, outTexCoord);
+        if (outTexCoord.y < 1)
+            color = vec4(0,0,1,1);//texture(RoughnessMap, outTexCoord);
         else
-            color = texture(NormalMap, outTexCoord);
+            color = vec4(1,1,1,1);//texture(AmbientOcclusionMap, outTexCoord);
     }
     else
     {
-        if (outTexCoord.y <= 1)
-            color = texture(RoughnessMap, outTexCoord);
+        if (outTexCoord.y < 1)
+            color = vec4(1,0,0,1);//texture(Albedo, outTexCoord);
         else
-            color = texture(AmbientOcclusionMap, outTexCoord);
+            color = vec4(0,1,0,1);//texture(NormalMap, outTexCoord);
     }
 }
