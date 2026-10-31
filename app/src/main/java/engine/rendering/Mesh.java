@@ -1,4 +1,4 @@
-package engine;
+package engine.rendering;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
