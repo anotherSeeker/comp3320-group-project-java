@@ -8,8 +8,15 @@ layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout uniform float time;
 
 
-public void main()
+void main()
 {
     int size_n = imageSize(gaussianData).x;
+
+
+
 }
 
+vec2 FFT(float[] P)
+{
+    int size_n = length(P);
+}

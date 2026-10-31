@@ -58,26 +58,28 @@ float dispersionRelation_omega(float kx, float kz, float magnitude)
 {
     float aFreq = 0.0f;
 
-    // #ifdef doCapillaryWaves
-    //     //includes variables for capillary waves? might look better?
-    //     aFreq = sqrt((gravity_g * magnitude_k + (surfaceTensionCoefficient_sigma/waterDensity_rho) * pow(magnitude_k, 3)) * tanh(magnitude_k * depth_H));
-    //     return aFreq;
-    // #endif
+    #ifdef doCapillaryWaves
+        //includes variables for capillary waves? might look better?
+        aFreq = sqrt((gravity_g * magnitude + (surfaceTensionCoefficient_sigma/waterDensity_rho) * pow(magnitude, 3)) * tanh(magnitude * depth_H));
+        return aFreq;
+    #endif
 
     aFreq = sqrt(gravity_g * magnitude * tanh(magnitude * depth_H));
     return aFreq;
 }
 
 float omegaDerivative(float magnitude, float omega)
-{
-	float th = tanh(min(magnitude * depth_H, 20));
+{    
+    #ifdef doCapillaryWaves
+        float a = depth_H * (surfaceTensionCoefficient_sigma/waterDensity_rho) * magnitude * magnitude * magnitude;
+        float b = 1/pow(cosh(depth_H*magnitude), 2);
+
+        return (a * b + omega * omega) / (2 * omega);
+    #endif
+
+    float th = tanh(min(magnitude * depth_H, 20));
 	float ch = cosh(magnitude * depth_H);
 	return gravity_g * (depth_H * magnitude / (ch * ch) + th) / omega / 2;
-}
-
-float dispersionDerivative()
-{
-    return 0.0;
 }
 
 //angle of the wave as compared to the wind direction
@@ -195,6 +197,9 @@ void main()
     float omega = dispersionRelation_omega(kx, kz, magnitude_k);
     float omegaMin = dispersionRelation_omega(kxmin, kzmin, magnitude_k);
 
+    float dOmegadk = omegaDerivative(magnitude_k, omega);
+    float dOmegadkMin = omegaDerivative(magnitude_k, omegaMin);
+
     //peak frequency of the wave spectrum
     float omegaPeak = omega_p_J();
 
@@ -210,12 +215,12 @@ void main()
     float tmaMin = tmaCorrection(omegaMin);
 
     //we missed a 2 in here
-    float h0 = (1.0/(sqrt(2.0))) * sqrt(2*S*D*tma*deltaK*deltaK);
+    float h0 = (1.0/(sqrt(2.0))) * sqrt(2 * S * D * tma * abs(dOmegadk) / magnitude_k * deltaK * deltaK);
     float h0_real    = h0 * noise_xi.x ;
     float h0_complex = h0 * noise_xi.y;
 
-    //we also need h0(-k) for the fourier transform
-    float h0M = (1.0/(sqrt(2.0))) * sqrt(2*SMin*DMin*tmaMin*deltaK*deltaK);
+    //we also need h0(-k) for the fourier transform(?)
+    float h0M = (1.0/(sqrt(2.0))) * sqrt(2 * SMin * DMin * tmaMin * abs(dOmegadkMin) / magnitude_k * deltaK * deltaK);
     float h0M_real    = h0M * noise_xi.x;
     float h0M_complex = h0M * noise_xi.y;
 
