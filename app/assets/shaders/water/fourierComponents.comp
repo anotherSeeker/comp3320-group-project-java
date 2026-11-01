@@ -5,9 +5,10 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(rgba32f, binding = 0) uniform readonly image2D waveVecTex;
 layout(rgba32f, binding = 1) uniform readonly image2D h0Tex;
-layout(rg32f, binding = 2) uniform writeonly image2D dyTex;
-layout(rg32f, binding = 3) uniform writeonly image2D dxTex;
-layout(rg32f, binding = 4) uniform writeonly image2D dzTex;
+layout(rg32f, binding = 2) uniform writeonly image2D dxdzTex;
+layout(rg32f, binding = 3) uniform writeonly image2D dydxzTex;
+layout(rg32f, binding = 4) uniform writeonly image2D dyxdyzTex;
+layout(rg32f, binding = 5) uniform writeonly image2D dxxdzzTex;
 
 uniform float time;
 
@@ -51,10 +52,10 @@ void main()
 	vec2 Dy_Dxz = vec2(displacementY.x - displacementZ_dx.y, displacementY.y + displacementZ_dx.x);
 	vec2 Dyx_Dyz = vec2(displacementY_dx.x - displacementY_dz.y, displacementY_dx.y + displacementY_dz.x);
 	vec2 Dxx_Dzz = vec2(displacementX_dx.x - displacementZ_dz.y, displacementX_dx.y + displacementZ_dz.x);
-
-    imageStore(dyTex, rawPos, vec4(Dy_Dxz.x, Dy_Dxz.y, 0, 0));
-    //these two textures are black but we are getting numbers outta them
-    imageStore(dxTex, rawPos, vec4(Dx_Dz.x, Dx_Dz.y, 0, 0));
-    imageStore(dzTex, rawPos, vec4(Dyx_Dyz.x, Dyx_Dyz.y, 0, 0));
+	
+	imageStore(dxdzTex, rawPos, vec4(Dx_Dz.x, Dx_Dz.y, 0, 1));
+	imageStore(dydxzTex, rawPos, vec4(Dy_Dxz.x, Dy_Dxz.y, 0, 1));
+	imageStore(dyxdyzTex, rawPos, vec4(Dyx_Dyz.x, Dyx_Dyz.y, 0, 1));
+	imageStore(dxxdzzTex, rawPos, vec4(Dyx_Dyz.x, Dyx_Dyz.y, 0, 1));
 }
 

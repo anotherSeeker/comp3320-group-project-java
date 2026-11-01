@@ -6,32 +6,48 @@
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
+//"butterfly texture"
+layout(rgba32f, binding = 0) uniform image2D PrecomputedBuffer;
 //kx, kz, omega, 1/magnitude
-layout(rgba32f, binding = 1) uniform image2D waveVecTex;
+layout(rgba32f, binding = 1) uniform image2D data;
 
-layout uniform float time;
 
+layout(rgba32f, binding = 4) uniform image2D buffer0;
+layout(rgba32f, binding = 5) uniform image2D buffer1;
+
+
+uniform float texSize;
+
+
+vec2 cMult(vec2 a, vec2 b)
+{
+    return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+}
+
+vec2 cExp(vec2 a)
+{
+    return vec2(cos(a.y), sin(a.y)) * exp(a.x);
+}
+
+vec2 FFT()
+{
+
+
+
+
+}
 
 void main()
 {
-    ivec2 pos_X = ;
+    bool pingpong = true;
+    ivec2 pos_X = gl_GlobalInvocationID.xy;
 
     //if image size of 2^8 then N is 2^16 and r is 2^8? I think this is correct? Kinda unsure overall tbh
     int N = texSize*texSize;
     int r = texSize;
 
-    vec2 h_kt[];
-
     for (int i = 0; i<texSize*texSize; i++)
     {
 
     }
-}
-
-vec2 FFT(v)
-{
-
-
-
-
 }

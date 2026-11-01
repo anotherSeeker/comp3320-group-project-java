@@ -36,7 +36,8 @@ public class WaterFFT
 
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
-    public static int textureSize = 256; //these have to be powers of 2 or we lose efficiency on the fft
+    public static int BUTTERFLY_SIZE = 8; //is the power we raise 2 to
+    public static int textureSize = 256; //gotta be a power of 2
     //to dispatch the correct number of work group based on their local size.
     public static int localGroupSize = 8;
 
@@ -55,14 +56,17 @@ public class WaterFFT
     public static int waveVecIndexID;
     public static int h0IndexID;
 
-    public static int dyTexID;
-    public static int dyIndexID;
+    public static int dxdzTexID;
+    public static int dxdzIndexID;
 
-    public static int dxTexID;
-    public static int dxIndexID;
+    public static int dydxzTexID;
+    public static int dydxzIndexID;
 
-    public static int dzTexID;
-    public static int dzIndexID;
+    public static int dyxdyzTexID;
+    public static int dyxdyzIndexID;
+
+    public static int dxxdzzTexID;
+    public static int dxxdzzIndexID;
 
     //compute shader details
     public static boolean spectraShaderCreated = false;
@@ -263,34 +267,43 @@ public class WaterFFT
     public static void genFComponentTex()
     {
         //create
-        dyTexID = glGenTextures();
+        dxdzTexID = glGenTextures();
         glActiveTexture(GL_TEXTURE0+2);
-        glBindTexture(GL_TEXTURE_2D, dyTexID);
+        glBindTexture(GL_TEXTURE_2D, dxdzTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
-        glBindImageTexture( 2, dyTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
+        glBindImageTexture( 2, dxdzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
 
-        dxTexID = glGenTextures();
+        dydxzTexID = glGenTextures();
         glActiveTexture(GL_TEXTURE0+3);
-        glBindTexture(GL_TEXTURE_2D, dxTexID);
+        glBindTexture(GL_TEXTURE_2D, dydxzTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RG , GL_FLOAT, (FloatBuffer) null);
-        glBindImageTexture( 3, dxTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
+        glBindImageTexture( 3, dydxzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
 
-        dzTexID = glGenTextures();
+        dyxdyzTexID = glGenTextures();
         glActiveTexture(GL_TEXTURE0+4);
-        glBindTexture(GL_TEXTURE_2D, dzTexID);
+        glBindTexture(GL_TEXTURE_2D, dyxdyzTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RG , GL_FLOAT, (FloatBuffer) null);
-        glBindImageTexture( 4, dzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
+        glBindImageTexture( 4, dyxdyzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
+
+        dxxdzzTexID = glGenTextures();
+        glActiveTexture(GL_TEXTURE0+5);
+	    glBindTexture(GL_TEXTURE_2D, dxxdzzTexID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RG , GL_FLOAT, (FloatBuffer) null);
+        glBindImageTexture( 5, dxxdzzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
 
         //add to texture index for engine
-        dyIndexID = AssetManager.get().AddTexture("dy_Tex",dyTexID);
-        dxIndexID = AssetManager.get().AddTexture("dx_Tex",dxTexID);
-        dzIndexID = AssetManager.get().AddTexture("dz_Tex",dzTexID);
+        dxdzIndexID = AssetManager.get().AddTexture("dxdz_Tex",dxdzTexID);
+        dydxzIndexID = AssetManager.get().AddTexture("dydxz_Tex",dydxzTexID);
+        dyxdyzIndexID = AssetManager.get().AddTexture("dyxdyz_Tex",dyxdyzTexID);
+        dxxdzzIndexID = AssetManager.get().AddTexture("dxxdzz_Tex",dxxdzzTexID);
     }
 
     private static void useFComponentShader(float time)
@@ -305,19 +318,23 @@ public class WaterFFT
         glActiveTexture(GL_TEXTURE0+1);
         glBindTexture(GL_TEXTURE_2D, h0TexId);
         glBindImageTexture( 1, h0TexId, 0, false, 0, GL_READ_ONLY, GL_RGBA32F );
-        
+
         //outputs
         glActiveTexture(GL_TEXTURE0+2);
-	    glBindTexture(GL_TEXTURE_2D, dyTexID);
-        glBindImageTexture( 2, dyTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+	    glBindTexture(GL_TEXTURE_2D, dxdzTexID);
+        glBindImageTexture( 2, dxdzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
 
         glActiveTexture(GL_TEXTURE0+3);
-	    glBindTexture(GL_TEXTURE_2D, dxTexID);
-        glBindImageTexture( 3, dxTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+	    glBindTexture(GL_TEXTURE_2D, dydxzTexID);
+        glBindImageTexture( 3, dydxzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
 
         glActiveTexture(GL_TEXTURE0+4);
-	    glBindTexture(GL_TEXTURE_2D, dzTexID);
-        glBindImageTexture( 4, dzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+	    glBindTexture(GL_TEXTURE_2D, dyxdyzTexID);
+        glBindImageTexture( 4, dyxdyzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+
+        glActiveTexture(GL_TEXTURE0+5);
+	    glBindTexture(GL_TEXTURE_2D, dxxdzzTexID);
+        glBindImageTexture( 5, dxxdzzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
 
         glUniform1f(glGetUniformLocation(fComponentProgramID, "time"), time);
     }
@@ -335,5 +352,25 @@ public class WaterFFT
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
         System.out.println("compute Fourier Components done");
+    }
+
+    public static void useButterflyShader()
+    {
+        
+    }
+
+
+    public static void dispatchButterflyPrecomputeShader()
+    {
+        //use our program and bind our textures
+        useButterflyShader();
+
+        //dispatch - x size is log2(N) and y size is N/2
+        glDispatchCompute(BUTTERFLY_SIZE, textureSize/2/localGroupSize, 1);
+
+        //wait for completion
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+        System.out.println("precompute fourier buffer done");
     }
 }
