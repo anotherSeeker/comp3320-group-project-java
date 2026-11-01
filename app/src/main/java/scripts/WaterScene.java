@@ -33,9 +33,9 @@ public class WaterScene extends MonoScript {
         WaterFFT.dispatchFComponentShader();
 
         //render our maps to screen
-        //drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dyIndexID);
+        drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dyIndexID);
         //drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.noiseIndexId, WaterFFT.noiseIndexId, WaterFFT.noiseIndexId);
-        drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.dyIndexID, WaterFFT.dxIndexID, WaterFFT.dzIndexID);
+        //drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.dyIndexID, WaterFFT.dxIndexID, WaterFFT.dzIndexID);
 
         //makeWaterPlane();
 

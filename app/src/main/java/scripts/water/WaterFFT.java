@@ -37,6 +37,8 @@ public class WaterFFT
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
     public static int textureSize = 256; //these have to be powers of 2 or we lose efficiency on the fft
+    //to dispatch the correct number of work group based on their local size.
+    public static int localGroupSize = 8;
 
     //Patches are 1km by 1km in physical size
     public static float patchLength = 1000;
@@ -166,7 +168,7 @@ public class WaterFFT
         useSpectraShader();
         //send it
         //System.out.println("dispatch");
-        glDispatchCompute(textureSize, textureSize, 1);
+        glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
 
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -327,7 +329,7 @@ public class WaterFFT
         useFComponentShader(currentTime);
         //send it
         //System.out.println("dispatch");
-        glDispatchCompute(textureSize, textureSize, 1);
+        glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
 
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
