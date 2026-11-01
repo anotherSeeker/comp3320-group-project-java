@@ -36,8 +36,8 @@ public class WaterFFT
 
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
-    public static int BUTTERFLY_SIZE = 8; //is the power we raise 2 to
-    public static int textureSize = 256; //gotta be a power of 2
+    public static int texSizePower = 8; //textureSize = 2^texSizePower;
+    public static int textureSize; //gotta be a power of 2
     //to dispatch the correct number of work group based on their local size.
     public static int localGroupSize = 8;
 
@@ -68,6 +68,9 @@ public class WaterFFT
     public static int dxxdzzTexID;
     public static int dxxdzzIndexID;
 
+    public static int butterflyTexID;
+    public static int butterflyIndexID;
+
     //compute shader details
     public static boolean spectraShaderCreated = false;
     public static boolean fComponentShaderCreated = false;
@@ -81,11 +84,32 @@ public class WaterFFT
     public static int fComponentProgramID;
     public static Path fComponentComputePath = Path.of("assets/shaders/water/fourierComponents.comp");//Path.of("assets/shaders/water/waveTimeVariant.comp");
 
+    public static int butterflyComputeID;
+    public static int butterflyProgramID;
+    public static Path butterflyComputePath = Path.of("assets/shaders/water/precomputeFFTBuffer.comp");
+
+    public static int ifftHorizComputeID;
+    public static int ifftHorizProgramID;
+    public static Path ifftHorizComputePath = Path.of("assets/shaders/water/horizIFFT.comp");
+
+    public static int ifftVertComputeID;
+    public static int ifftVertProgramID;
+    public static Path ifftVertComputePath = Path.of("assets/shaders/water/vertIFFT.comp");
+
     //bytebuffers for creating our textures
     public static ByteBuffer noiseBytes;
     public static FloatBuffer noiseFloats;    
 
     public WaterFFT() {}
+
+    public static void setSizeParams()
+    {
+        textureSize = 1;
+        for (int i = 0; i < texSizePower; i++)
+        {
+            textureSize *= 2;
+        }
+    }
 
     public static boolean noiseSetup()
     {
@@ -366,11 +390,64 @@ public class WaterFFT
         useButterflyShader();
 
         //dispatch - x size is log2(N) and y size is N/2
-        glDispatchCompute(BUTTERFLY_SIZE, textureSize/2/localGroupSize, 1);
+        glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
 
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
         System.out.println("precompute fourier buffer done");
+    }
+
+
+    private static void ifft_use(int inputTexID, int bufferTexID, int ifftProgramID)
+    {
+        glUseProgram( ifftProgramID );
+
+        //inputs
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, butterflyTexID);
+        glBindImageTexture( 0, butterflyTexID, 0, false, 0, GL_READ_ONLY, GL_RGBA32F );
+
+        glActiveTexture(GL_TEXTURE0+1);
+        glBindTexture(GL_TEXTURE_2D, inputTexID);
+        glBindImageTexture( 1, inputTexID, 0, false, 0, GL_READ_ONLY, GL_RGBA32F );
+
+        glActiveTexture(GL_TEXTURE0+2);
+        glBindTexture(GL_TEXTURE_2D, bufferTexID);
+        glBindImageTexture( 2, bufferTexID, 0, false, 0, GL_READ_ONLY, GL_RGBA32F );
+
+        glUniform1f(glGetUniformLocation(ifftProgramID, "Size"), textureSize);
+    }
+
+    private static void IFFT(int inputTexID, int bufferTexID, int pingpong, int direction)
+    {
+        ifft_use(inputTexID, bufferTexID, ifftHorizProgramID); 
+
+        int stepID = glGetUniformLocation(ifftHorizProgramID, "Step");
+        int pingpongID = glGetUniformLocation(ifftHorizProgramID, "pingpong");
+        for (int i = 0; i < texSizePower; i++)
+        {
+            pingpong = (pingpong+1) % 2;
+            glUniform1f(stepID, i);
+            glUniform1i(pingpongID, pingpong);
+
+            glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
+            //DO WE NEED TO WAIT?? I ASSUME SO??
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        }
+
+        ifft_use(inputTexID, bufferTexID, ifftVertProgramID); 
+        stepID = glGetUniformLocation(ifftVertProgramID, "Step");
+        pingpongID = glGetUniformLocation(ifftVertProgramID, "pingpong");
+        for (int i = 0; i < texSizePower; i++)
+        {
+            pingpong = (pingpong+1) % 2;
+            glUniform1f(stepID, i);
+            glUniform1i(pingpongID, pingpong);
+
+            glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
+            //DO WE NEED TO WAIT?? I ASSUME SO??
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        }
     }
 }
