@@ -10,7 +10,9 @@ layout(rgba32f, binding = 1) uniform image2D buffer0;
 layout(rgba32f, binding = 2) uniform image2D buffer1;
 
 
-uniform float Size;
+uniform float size;
+uniform int pingpong;
+uniform int stage;
 
 
 vec2 cMult(vec2 a, vec2 b)

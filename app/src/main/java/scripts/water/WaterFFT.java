@@ -416,20 +416,20 @@ public class WaterFFT
         glBindTexture(GL_TEXTURE_2D, bufferTexID);
         glBindImageTexture( 2, bufferTexID, 0, false, 0, GL_READ_ONLY, GL_RGBA32F );
 
-        glUniform1f(glGetUniformLocation(ifftProgramID, "Size"), textureSize);
+        glUniform1f(glGetUniformLocation(ifftProgramID, "size"), textureSize);
     }
 
-    private static void IFFT(int inputTexID, int bufferTexID, int pingpong, int direction)
+    private static void _IFFT(int inputTexID, int bufferTexID, int pingpong, boolean outputToInput)
     {
         ifft_use(inputTexID, bufferTexID, ifftHorizProgramID); 
 
-        int stepID = glGetUniformLocation(ifftHorizProgramID, "Step");
-        int pingpongID = glGetUniformLocation(ifftHorizProgramID, "pingpong");
+        int stepLocation = glGetUniformLocation(ifftHorizProgramID, "step");
+        int ppongLocation = glGetUniformLocation(ifftHorizProgramID, "pingpong");
         for (int i = 0; i < texSizePower; i++)
         {
             pingpong = (pingpong+1) % 2;
-            glUniform1f(stepID, i);
-            glUniform1i(pingpongID, pingpong);
+            glUniform1f(stepLocation, i);
+            glUniform1i(ppongLocation, pingpong);
 
             glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
             //DO WE NEED TO WAIT?? I ASSUME SO??
@@ -437,17 +437,27 @@ public class WaterFFT
         }
 
         ifft_use(inputTexID, bufferTexID, ifftVertProgramID); 
-        stepID = glGetUniformLocation(ifftVertProgramID, "Step");
-        pingpongID = glGetUniformLocation(ifftVertProgramID, "pingpong");
+        stepLocation = glGetUniformLocation(ifftVertProgramID, "step");
+        ppongLocation = glGetUniformLocation(ifftVertProgramID, "pingpong");
         for (int i = 0; i < texSizePower; i++)
         {
             pingpong = (pingpong+1) % 2;
-            glUniform1f(stepID, i);
-            glUniform1i(pingpongID, pingpong);
+            glUniform1f(stepLocation, i);
+            glUniform1i(ppongLocation, pingpong);
 
             glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
             //DO WE NEED TO WAIT?? I ASSUME SO??
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        }
+
+        if (pingPong == 1 && outputToInput)
+        {
+            glCopyImageSubData(bufferTexID, inputTexID);
+        }
+
+        if (!pingPong && !outputToInput)
+        {
+            glCopyImageSubData(inputTexID, bufferTexID);
         }
     }
 }
