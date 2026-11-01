@@ -14,40 +14,31 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
-import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL30 .*;
 
 import static org.lwjgl.system.MemoryUtil.*;
+
+import engine.Mesh;
 
 
 
 public class MeshAnim {
-
+    private Mesh mesh;
     private Vector3f aabbMax;
     private Vector3f aabbMin;
-    private float[] bitangents;
     private int[] boneIndices;
-    private int[] indices;
     private int materialIdx;
-    private float[] normals;
-    private float[] positions;
-    private float[] tangents;
-    private float[] textCoords;
     private float[] weights;
 
-    public MeshAnim(float[] positions, float[] normals, float[] tangents, float[] bitangents,
-                    float[] textCoords, int[] indices, int[] boneIndices, float[] weights,
-                    Vector3f aabbMin, Vector3f aabbMax) {
+    public static final int MAX_WEIGHTS = 4;
+
+    public MeshAnim(Mesh mesh, int[] boneIndices, float[] weights) {
         materialIdx = 0;
-        this.positions = positions;
-        this.normals = normals;
-        this.tangents = tangents;
-        this.bitangents = bitangents;
-        this.textCoords = textCoords;
-        this.indices = indices;
+        this.mesh = mesh;
         this.boneIndices = boneIndices;
         this.weights = weights;
-        this.aabbMin = aabbMin;
-        this.aabbMax = aabbMax;
+        //this.aabbMin = aabbMin;
+        //this.aabbMax = aabbMax;
     }
 
     public static class AnimatedFrame {
@@ -83,36 +74,12 @@ public class MeshAnim {
         return aabbMin;
     }
 
-    public float[] getBitangents() {
-        return bitangents;
-    }
-
     public int[] getBoneIndices() {
         return boneIndices;
     }
 
-    public int[] getIndices() {
-        return indices;
-    }
-
     public int getMaterialIdx() {
         return materialIdx;
-    }
-
-    public float[] getNormals() {
-        return normals;
-    }
-
-    public float[] getPositions() {
-        return positions;
-    }
-
-    public float[] getTangents() {
-        return tangents;
-    }
-
-    public float[] getTextCoords() {
-        return textCoords;
     }
 
     public float[] getWeights() {
@@ -121,5 +88,9 @@ public class MeshAnim {
 
     public void setMaterialIdx(int materialIdx) {
         this.materialIdx = materialIdx;
+    }
+
+    public Mesh getMesh() {
+        return mesh;
     }
 }

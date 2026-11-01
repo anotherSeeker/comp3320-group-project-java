@@ -2,6 +2,8 @@ package scripts.Animation;
 
 
 import org.joml.Matrix4f;
+import engine.*;
+import engine.components.Material;
 
 import java.util.*;
 
@@ -10,17 +12,22 @@ public class Model {
     private final String id;
     private List<Animation> animationList;
     private List<Entity> entitiesList;
-    private List<Material> materialList;
+    private List<Material> materialList = new ArrayList<>();
+
+    public Material getMaterial(Integer assetID) {
+        return materialList.get(assetID);
+    }
+
+    public void LoadMaterial(Material material){
+
+        materialList.add(material);
+    }
 
     public Model(String id, List<Material> materialList, List<Animation> animationList) {
         entitiesList = new ArrayList<>();
         this.id = id;
         this.materialList = materialList;
         this.animationList = animationList;
-    }
-
-    public void cleanup() {
-        materialList.forEach(Material::cleanup);
     }
 
     public List<Animation> getAnimationList() {
@@ -35,7 +42,7 @@ public class Model {
         return id;
     }
 
-    public List<Material> getMaterialList() {
+    public List<Material> getmaterialList() {
         return materialList;
     }
 

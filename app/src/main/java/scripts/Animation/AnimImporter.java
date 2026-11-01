@@ -1,11 +1,11 @@
 package scripts.Animation;
 
-import org.jcp.xml.dsig.internal.dom.Utils;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.lwjgl.PointerBuffer;
 
 import engine.components.Material;
+import engine.components.MaterialEntry;
 
 import org.joml.Vector4f;
 import org.lwjgl.assimp.*;
@@ -13,12 +13,14 @@ import org.lwjgl.system.MemoryStack;
 
 import java.io.File;
 import java.nio.IntBuffer;
+import java.nio.file.Path;
 import java.util.*;
 
 import static org.lwjgl.assimp.Assimp.*;
 import engine.*;
 
 public class AnimImporter {
+    private static AssetManager Assets = AssetManager.get();
 
     private AnimImporter() {
         // Utility class
@@ -57,7 +59,7 @@ public class AnimImporter {
         List<Bone> boneList = new ArrayList<>();
         for (int i = 0; i < numMeshes; i++) {
             AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
-            Mesh mesh = processMesh(aiMesh, boneList);
+            MeshAnim mesh = processMesh(aiMesh, boneList);
             int materialIdx = aiMesh.mMaterialIndex();
             Material material;
             if (materialIdx >= 0 && materialIdx < materialList.size()) {
@@ -65,14 +67,12 @@ public class AnimImporter {
             } else {
                 material = defaultMaterial;
             }
-            material.getMeshList().add(mesh);
+            Assets.LoadMesh(mesh.getMesh(),modelPath);
         }
 
-        if (!defaultMaterial.getMeshList().isEmpty()) {
-            materialList.add(defaultMaterial);
-        }
-
-        
+        // if (!defaultMaterial.getMeshList().isEmpty()) {
+        //     materialList.add(defaultMaterial);
+        // }
 
         List<Model.Animation> animations = new ArrayList<>();
         int numAnimations = aiScene.mNumAnimations();
@@ -197,7 +197,7 @@ public class AnimImporter {
         for (int i = 0; i < numVertices; i++) {
             List<VertexWeight> vertexWeightList = weightSet.get(i);
             int size = vertexWeightList != null ? vertexWeightList.size() : 0;
-            for (int j = 0; j < Mesh.MAX_WEIGHTS; j++) {
+            for (int j = 0; j < MeshAnim.MAX_WEIGHTS; j++) {
                 if (j < size) {
                     VertexWeight vw = vertexWeightList.get(j);
                     weights.add(vw.weight());
@@ -213,26 +213,35 @@ public class AnimImporter {
     }
 
     private static Material processMaterial(AIMaterial aiMaterial, String modelDir, Map<Integer, Texture> textureCache) {
-        Material material = new Material();
+        MaterialEntry materialEntry = new MaterialEntry();
+            
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            AIColor4D color = AIColor4D.create();
-
-            int result = aiGetMaterialColor(aiMaterial, AI_MATKEY_COLOR_DIFFUSE, aiTextureType_NONE, 0,
-                    color);
-            if (result == aiReturn_SUCCESS) {
-                material.setDiffuseColor(new Vector4f(color.r(), color.g(), color.b(), color.a()));
-            }
 
             AIString aiTexturePath = AIString.calloc(stack);
             aiGetMaterialTexture(aiMaterial, aiTextureType_DIFFUSE, 0, aiTexturePath, (IntBuffer) null,
                     null, null, null, null, null);
             String texturePath = aiTexturePath.dataString();
             if (texturePath != null && texturePath.length() > 0) {
-                material.setTexturePath(modelDir + File.separator + new File(texturePath).getName());
-                textureCache.createTexture(material.getTexturePath());
-                material.setDiffuseColor(Material.DEFAULT_COLOR);
+                materialEntry.add("COLOUR", Assets.LoadTexture(Path.of(modelDir + File.separator + new File(texturePath).getName())));
             }
 
+            AIString aiRoughnessMapPath = AIString.calloc(stack);
+            aiGetMaterialTexture(aiMaterial, aiTextureType_DIFFUSE_ROUGHNESS, 0, aiRoughnessMapPath, (IntBuffer) null,
+                    null, null, null, null, null);
+            String roughnessMapPath = aiRoughnessMapPath.dataString();
+            if (roughnessMapPath != null && roughnessMapPath.length() > 0) {
+                materialEntry.add("ROUGHNESS", Assets.LoadTexture(Path.of(modelDir + File.separator + new File(roughnessMapPath).getName())));
+            }
+
+            AIString aiNormalMapPath = AIString.calloc(stack);
+            aiGetMaterialTexture(aiMaterial, aiTextureType_NORMALS, 0, aiNormalMapPath, (IntBuffer) null,
+                    null, null, null, null, null);
+            String normalMapPath = aiNormalMapPath.dataString();
+            if (normalMapPath != null && normalMapPath.length() > 0) {
+                materialEntry.add("NORMAL", Assets.LoadTexture(Path.of(modelDir + File.separator + new File(normalMapPath).getName())));
+            }
+
+            Material material = Assets.createMaterial(materialEntry);
             return material;
         }
     }
@@ -288,7 +297,7 @@ public class AnimImporter {
         return data;
     }
 
-    private static Mesh processMesh(AIMesh aiMesh, List<Bone> boneList) {
+    private static MeshAnim processMesh(AIMesh aiMesh, List<Bone> boneList) {
         float[] vertices = processVertices(aiMesh);
         float[] normals = processNormals(aiMesh);
         float[] textCoords = processTextCoords(aiMesh);
@@ -303,7 +312,9 @@ public class AnimImporter {
         float[] tangents = processTangents(aiMesh, normals);
         float[] bitangents = processBitangents(aiMesh, normals);
 
-        return new Mesh(vertices, normals, tangents, bitangents, textCoords, indices, animMeshData.boneIds, animMeshData.weights);
+       Mesh mesh = new Mesh(vertices, textCoords, normals, tangents, bitangents, indices);
+
+       return new MeshAnim(mesh, animMeshData.boneIds, animMeshData.weights);
     }
     private static int[] processIndices(AIMesh aiMesh) {
         List<Integer> indices = new ArrayList<>();

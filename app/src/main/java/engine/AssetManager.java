@@ -30,8 +30,11 @@ import java.util.stream.Collectors;
 public class AssetManager {
     private Map<Integer, Shader> shaderIndex = new HashMap<>();
     private Map<Integer, Mesh> meshIndex = new HashMap<>();
+    private Map<Integer, MeshAnim> meshAnimIndex = new HashMap<>();
     private Map<Integer, Texture> textureIndex = new HashMap<>();
     private Map<Integer, CubeTexture> cubeTextureIndex = new HashMap<>();
+    private int meshAnimcounter = 0;
+
 
     public Integer defaultTexture = "DEFAULT".hashCode();
     public Integer whiteTexture = "WHITE".hashCode();
@@ -207,6 +210,8 @@ public class AssetManager {
         return ID;
     }
 
+
+
     public Integer LoadMesh(Path filePath) {
         Integer ID = filePath.toAbsolutePath().hashCode();
 
@@ -331,6 +336,14 @@ public class AssetManager {
         return ID;
     }
 
+        public Integer LoadMeshAnim(MeshAnim meshAnim, String name) {
+        Integer ID = meshAnimcounter;
+        meshAnimcounter++;
+        meshAnimIndex.put(ID, meshAnim);
+
+        return ID;
+    }
+
     
     public Integer LoadTexture(Path filePath) {
         Integer ID = filePath.toAbsolutePath().hashCode();
@@ -406,9 +419,14 @@ public class AssetManager {
         return meshIndex.get(assetID);
     }
 
+    public MeshAnim getMeshAnim(Integer assetID) {
+        return meshAnimIndex.get(assetID);
+    }
+
     public Texture getTexture(Integer assetID) {
         return textureIndex.get(assetID);
     }
+
 
     public CubeTexture getCubeTexture(Integer assetID) {
         return cubeTextureIndex.get(assetID);

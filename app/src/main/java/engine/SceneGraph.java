@@ -13,6 +13,7 @@ import dev.dominion.ecs.api.Entity;
 import engine.components.GameObject;
 import engine.components.Material;
 import engine.components.Transform;
+import scripts.Animation.AnimationData;
 
 public class SceneGraph {
     static {
@@ -109,6 +110,17 @@ public class SceneGraph {
             material.bindAsUniform();
 
             gameObject.mesh.bind();
+
+            for (Entity entity : entities) {
+                material.shader.setUniform("modelMatrix", entity.getModelMatrix());
+                AnimationData animationData = entity.getAnimationData();
+                if (animationData == null) {
+                    material.shader.setUniform("bonesMatrices", AnimationData.DEFAULT_BONES_MATRICES);
+                } else {
+                    material.shader.setUniform("bonesMatrices", animationData.getCurrentFrame().boneMatrices());
+                }
+            }
+
             gameObject.mesh.draw();
         }
     }
