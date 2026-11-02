@@ -56,6 +56,7 @@ public class AssetManager {
     public Integer bloomPostProcessB = "BLOOM_B".hashCode();
     public Integer vignettePostProcess = "VIGNETTE".hashCode();
     public Integer colourGradeProcess = "COLOUR_GRADE".hashCode();
+    public Integer fogProcess = "FOG".hashCode();
 
     public Integer defaultShader = "DEFAULT".hashCode();
 
@@ -166,6 +167,7 @@ public class AssetManager {
         this.loadInternalComputeShader(bloomPostProcessB, Path.of("assets/shaders/internal/bloomB.glsl"));
         this.loadInternalComputeShader(vignettePostProcess, Path.of("assets/shaders/internal/vignette.glsl"));
         this.loadInternalComputeShader(colourGradeProcess, Path.of("assets/shaders/internal/colour_grade.glsl"));
+        this.loadInternalComputeShader(fogProcess, Path.of("assets/shaders/internal/fog.glsl"));
 
         textureIndex.put(defaultTexture, new Texture(data, width, height, GL_RGBA));
         textureIndex.put(whiteTexture, new Texture(whiteData, width, height, GL_R));

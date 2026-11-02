@@ -67,8 +67,7 @@ public class DemoScene extends MonoScript {
 
     @Override
     protected void Start() {
-        PostProcess.Enable(ShaderPipeline.BLOOM);
-        PostProcess.Enable(ShaderPipeline.COLOUR_GRADE);
+        PostProcess.Enable(ShaderPipeline.FOG);
 
         Scene.SetSkyboxTexture(skyboxes.get(skyboxArray[skyboxIndex.get()]));
 
