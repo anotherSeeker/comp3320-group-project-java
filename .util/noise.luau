@@ -37,42 +37,8 @@ function module.genPerlinTexture(image: Image,octaves: number,lacunarity: number
     end
 end
 
-function traverseVectorField(x0: number,y0: number,image: Image,vectorField: Image)
-    local x = x0
-    local y = y0
-
-    const MAX_ATTEMPTS = 100
-    local attempts = 0
-
-    while true do
-        local grad = vectorField:GetPixel(x, y)
-        local dx = math.map(grad.Red,0,1,-1,1)
-        local dy = math.map(grad.Green,0,1,-1,1)
- 
-        x += dx * 20 // 1
-        y += dy * 20 // 1
-
-        attempts += 1
-
-        if attempts > MAX_ATTEMPTS then break end
-
-        if x < 0 or y < 0 or x > image.Width - 1 or y > image.Height - 1 then 
-            x = math.clamp(x,0,image.Width - 1)
-            y = math.clamp(x,0,image.Height - 1)
-
-            image:SetPixel(x, y,colour.New(1,1,1,1))
-
-            break 
-        end
-
-        image:SetPixel(x, y,colour.New(1,1,1,1))
-    end
-end
-
 function module.genCurlTexture(image: Image, perlinImage: Image)
     local epsilon = 1
-
-    local vectorField = media.Image(buffer.create(image.Width * image.Height * 4 * 4)):Dimensions(image.Width, image.Height)
 
     for y = 0,image.Height - 1 do
         for x = 0,image.Width - 1 do
@@ -91,16 +57,9 @@ function module.genCurlTexture(image: Image, perlinImage: Image)
 
             local pixel = colour.New(vx, vy, 0,1)
 
-            vectorField:SetPixel(x, y, pixel)
+            image:SetPixel(x, y, pixel)
         end
     end
-
-    for y = 0,image.Height - 1,20 do
-        for x = 0,image.Width - 1,20 do
-            traverseVectorField(x,y,image,vectorField)
-        end
-    end
-
 end
 
 return module
