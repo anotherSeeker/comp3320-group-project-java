@@ -44,6 +44,8 @@ public class AssetManager {
     public Integer blackTexture = "BLACK".hashCode();
     public Integer normalTexture = "NORMAL".hashCode();
 
+    public Integer perlinTexture = "PERLIN".hashCode();
+
     public Integer cubemapShader = "CUBEMAP".hashCode();
     public Integer skyboxShader = "SKYBOX".hashCode();
     public Integer irradianceShader = "IRRADIANCE".hashCode();
@@ -169,6 +171,8 @@ public class AssetManager {
         this.loadInternalComputeShader(colourGradeProcess, Path.of("assets/shaders/internal/colour_grade.glsl"));
         this.loadInternalComputeShader(fogProcess, Path.of("assets/shaders/internal/fog.glsl"));
 
+        this.loadInternalTexture(perlinTexture, Path.of("assets/textures/internal/perlin.png"));
+
         textureIndex.put(defaultTexture, new Texture(data, width, height, GL_RGBA));
         textureIndex.put(whiteTexture, new Texture(whiteData, width, height, GL_R));
         textureIndex.put(blackTexture, new Texture(blackData, width, height, GL_R));
@@ -206,6 +210,36 @@ public class AssetManager {
         shader.initCompute(computeSource);
 
         shaderIndex.put(ID, shader);
+    }
+
+    private void loadInternalTexture(Integer ID, Path filePath) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+
+            IntBuffer width = stack.mallocInt(1);
+            IntBuffer height = stack.mallocInt(1);
+            IntBuffer channels = stack.mallocInt(1);
+
+            ByteBuffer data = STBImage.stbi_load(filePath.toString(), width, height, channels, 0);
+            if (data == null) {
+                throw new RuntimeException(
+                        "could not load texture " + filePath.toString() + " " + STBImage.stbi_failure_reason()
+                );
+            }
+
+            int channelFormat = GL_RGBA;
+
+            if (channels.get(0) == 3) {
+                channelFormat = GL_RGB;
+            } else if (channels.get(0) == 1) {
+                channelFormat = GL_RED;
+            }
+
+            Texture texture = new Texture(data, width.get(0), height.get(0), channelFormat);
+
+            textureIndex.put(ID, texture);
+
+            STBImage.stbi_image_free(data);
+        }
     }
 
     public Integer LoadShader(Path vertexPath, Path fragmentPath) {

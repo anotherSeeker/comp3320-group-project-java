@@ -6,6 +6,7 @@ layout(rgba16f,binding = 1) writeonly uniform image2D outputImage;
 layout(rgba16f,binding = 2) readonly uniform image2D rawImage;
 
 uniform sampler2D DepthBuffer;
+uniform sampler2D PerlinMap;
 
 float getDepth(){
     ivec2 gid = ivec2(gl_GlobalInvocationID.xy);
@@ -28,12 +29,16 @@ void main(){
     }
 
     vec3 baseColour = imageLoad(rawImage,gid).rgb;
+    vec2 uv = (vec2(gid) + 0.5) / vec2(size);
+
+    float perlin = texture(PerlinMap,uv * 3).r;
+    float depth = getDepth();
 
     float fog_density = 0.05;
 
-    float depth = getDepth();
+    float density = mix(0.8,1.2,perlin);
 
-    float fog_factor = exp(-depth*fog_density);
+    float fog_factor = exp(-depth*fog_density * density);
 
     vec3 output_colour = mix(vec3(1.0),baseColour,fog_factor); 
 

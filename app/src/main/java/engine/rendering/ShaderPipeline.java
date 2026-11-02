@@ -53,6 +53,8 @@ public class ShaderPipeline {
     private Shader colourGrade = assets.getShader(assets.colourGradeProcess);
     private Shader fog = assets.getShader(assets.fogProcess);
 
+    private Texture perlinTexture = assets.getTexture(assets.perlinTexture);
+
     private int featureMask = 0;
     public static int BLOOM = 1 << 0;
     public static int VIGNETTE = 1 << 1;
@@ -236,6 +238,7 @@ public class ShaderPipeline {
             int target = currentTexture == pingBuffer ? pongBuffer : pingBuffer;
 
             fog.use();
+            fog.setTexture("PerlinMap", perlinTexture, 1);
             runShader(fog, currentTexture, target);
 
             currentTexture = target;
