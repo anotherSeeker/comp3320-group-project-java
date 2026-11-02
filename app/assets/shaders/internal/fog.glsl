@@ -42,21 +42,20 @@ void main(){
     vec3 baseColour = imageLoad(rawImage,gid).rgb;
     vec2 uv = (vec2(gid) + 0.5) / vec2(size);
 
-    float rawDepth = texture(DepthBuffer,uv).r * 2.0 - 1.0;
+    float rawDepth = texture(DepthBuffer,uv).r;
     if (rawDepth > 0.9999) {
         imageStore(outputImage,gid,vec4(baseColour,1));
         return;
     }
 
 
-    float phase = fract(Time * CurlStrength);
+    float phase = Time * CurlStrength;
 
-    vec2 curl = texture(CurlMap,uv).rg * 2.0 - 1.0;
+    vec2 curl = texture(CurlMap,uv).rg * 20;
 
-    float perlinA = getFogNoise(uv, curl, phase);
-    float perlinB = getFogNoise(uv, curl, (phase - 1.0));
+    float perlin = getFogNoise(uv + vec2(phase,phase * 0.37), curl, phase * 0.1);
 
-    float perlin = mix(perlinA,perlinB,phase);
+    perlin *= perlin;
 
     float depth = getDepth(uv);
     float density = mix(0.6,1.2,perlin);

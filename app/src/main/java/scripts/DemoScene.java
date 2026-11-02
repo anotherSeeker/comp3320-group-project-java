@@ -138,7 +138,7 @@ public class DemoScene extends MonoScript {
     float[] exposure = new float[] { -1.5f };
 
     float[] fogDensity = new float[] { 0.05f };
-    float[] curlStrength = new float[] { 0.5f };
+    float[] curlStrength = new float[] { 0.04f };
 
     ImBoolean bloomEnabled = new ImBoolean(true);
     ImBoolean vignetteEnabled = new ImBoolean(false);
