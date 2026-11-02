@@ -88,3 +88,11 @@ tasks.register<JavaExec>("reefCheck") {
     jvmArgs(application.applicationDefaultJvmArgs)
 }
 distributions { main { contents { from("assets") { into("assets") } } } }
+
+
+tasks.register<JavaExec>("generationCheck") {
+    description = "Verify procedural coral geometry, seeded placement and height collision without a graphics window"
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("coral.ReefGenerationCheck")
+    workingDir = projectDir
+}

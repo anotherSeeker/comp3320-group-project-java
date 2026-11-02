@@ -15,12 +15,14 @@ uniform sampler2D Albedo;
 uniform sampler2D RoughnessMap;
 uniform sampler2D AmbientOcclusionMap;
 uniform sampler2D NormalMap;
+uniform sampler2D MetallicMap;
 
 uniform vec3 LightDirection;
 uniform vec3 ViewPosition;
 
 uniform float Roughness = 0.2;
 uniform float AmbientOcclusion = 0.5;
+uniform float Metallic = 0;
 
 uniform float Subsurface = 0;
 uniform float Sheen = 0;
@@ -33,6 +35,7 @@ uniform vec3 DiffuseColour = vec3(1,1,1);
 struct Material {
     float roughness;
     float ambientOcclusion;
+    float metallic;
     vec3 albedo;
 };
 
@@ -43,11 +46,11 @@ uniform sampler2D brdfIntMap;
 Material getMaterial(){
     Material material;
 
-    float roughness = max(Roughness,0.1);
-
-    material.roughness = clamp(texture(RoughnessMap,UV).r,roughness,1);
+    material.roughness = max(texture(RoughnessMap,UV).r * Roughness,0.02);
     material.ambientOcclusion = texture(AmbientOcclusionMap,UV).r * AmbientOcclusion;
     material.albedo = pow(texture(Albedo,UV).rgb,vec3(2.2));
+
+    material.metallic = clamp(texture(MetallicMap,UV).r * Metallic,0,1);
 
     return material;
 }
@@ -81,7 +84,7 @@ vec3 burleyDiffuse(Material material,float nDotL,float nDotV,float lDotH){
 
     vec3 fresnelSheen = schlickFresnel(lDotH) * Sheen * pow(SheenColour,vec3(2.2));
 
-    return mix(diffuse,ss,Subsurface) + fresnelSheen;
+    return (mix(diffuse,ss,Subsurface) + fresnelSheen) * (1 - material.metallic);
 }
 
 vec3 disneySpecular(Material material,vec3 norm,vec3 halfway,vec3 viewDirection,vec3 lightDirection){
@@ -105,7 +108,10 @@ vec3 disneySpecular(Material material,vec3 norm,vec3 halfway,vec3 viewDirection,
 
     float distribution = GTR2Aniso(nDotH,xDotH,yDotH,ax,ay);
     float fresnelHalfWay = schlickFresnel(lDotH);
-    vec3 fresnelResponse = mix(SpecularStrength * vec3(0.8),vec3(1.0),fresnelHalfWay);
+
+    vec3 cSpec0 = mix(SpecularStrength * vec3(0.8),material.albedo,material.metallic);
+
+    vec3 fresnelResponse = mix(cSpec0,vec3(1.0),fresnelHalfWay);
 
     float geometricAttenuation = smithG_GGX_aniso(nDotL,xDotL,yDotL,ax,ay);
     geometricAttenuation *= smithG_GGX_aniso(nDotV,xDotV,yDotV,ax,ay);
@@ -142,8 +148,11 @@ vec3 generateAmbientLight(Material material,vec3 norm){
     float nDotV = max(dot(norm,viewDirection),0.0f);
 
     vec3 baseReflectivity = vec3(0.04);
-    vec3 kS = baseReflectivity + (max(vec3(1.0 - material.roughness),baseReflectivity) - baseReflectivity) * pow((1 - nDotV),5.0);
-    vec3 kD = 1.0 - kS;
+
+    vec3 F0 = mix(baseReflectivity,material.albedo,material.metallic);
+
+    vec3 kS = F0 + (max(vec3(1.0 - material.roughness),F0) - F0) * pow((1 - nDotV),5.0);
+    vec3 kD = (1.0 - kS) * (1.0 - material.metallic);
 
     vec3 diffuse = texture(IrradianceMap,norm).rgb * material.albedo * kD;
 
@@ -154,7 +163,7 @@ vec3 generateAmbientLight(Material material,vec3 norm){
 
     vec3 specular = prefilterColour * (kS * brdfIBL.r + brdfIBL.g);
 
-    return (diffuse + specular) * material.ambientOcclusion;
+    return (diffuse * material.ambientOcclusion + specular) ;
 }
 
 void main() {
@@ -167,8 +176,6 @@ void main() {
     vec3 ambientLight = generateAmbientLight(material,norm);
 
     vec3 colour = brdf(material,norm) + ambientLight;
-    colour = colour / (colour + vec3(1.0));
-    colour = pow(colour,vec3(1/2.2));
 
-    fragColour = vec4(colour,1.0);
+    fragColour = vec4(colour ,1.0);
 }

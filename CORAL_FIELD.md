@@ -1,10 +1,10 @@
 # Coral field in the latest Java engine
 
-Based on [anotherSeeker/comp3320-group-project-java](https://github.com/anotherSeeker/comp3320-group-project-java), `main` commit `139ea60ca7619ab6893bf6a77837a4886f1a2306`. The remote main revision was checked again on 21 October 2026. This is a local working copy; nothing has been pushed to GitHub. Previous coral demo folders remain separate.
+Based on [anotherSeeker/comp3320-group-project-java](https://github.com/anotherSeeker/comp3320-group-project-java), `main` commit `7dacb44a7897df263815a522a61e60eb0efd143d`, fetched on 2 November 2026. The local integration branch is `nirmit/coral-latest-engine`. Nothing has been pushed to GitHub. The complete pre-update source and a checkpoint branch are retained in Archive/Git history.
 
 ## Run and demonstrate
 
-On the supplied Apple Silicon Mac, double-click **Coral Field.app**. Its Java runtime, native libraries and assets are included. It opens at seed 42 with 448 corals and a controllable character.
+On the supplied Apple Silicon Mac, double-click **Coral Field.app**. Its Java runtime, native libraries and assets are included. It opens at seed 42 with 448 algorithmically generated corals and a controllable character in the current team scene. The team skybox, PBR material objects and glTF sample share the same depth buffer and HDR output as the generated field.
 
 - **WASD** move relative to the camera; **Q/E** down/up; **Shift** faster.
 - **Right mouse drag** or **arrow keys** orbit; **scroll** or **-/+** zoom.
@@ -42,7 +42,7 @@ Paths below are relative to this source folder.
 | `coral/CoralGenerator.java`, `CoralMesh.java`, `CoralParams.java`, `CoralType.java`, `CoralSet.java` under the Java folder | Existing procedural geometry and preset helpers copied from the prior solid-trunk version. |
 | `coral/ReefLayout.java`, `ReefGround.java` | New field placements, shape variation/detail settings, and flat ground. |
 | `scripts/ReefScene.java` | Creates/replaces mesh pools, places colonies, handles growth/UI, culls, batches and draws. |
-| `engine/InstancedMesh.java` | Adds a per-instance position/scale/yaw/phase/tint buffer to the existing mesh format. |
+| `engine/rendering/InstancedMesh.java` | Adds a per-instance position/scale/yaw/phase/tint buffer to the existing mesh format. |
 | `scripts/ReefPlayer.java`, `ReefCamera.java` | Character movement and follow/overview camera. |
 | `scripts/CoralInteraction.java` | Existing proximity/wake tracking reused. |
 | `coral/TrunkCollision.java` | Existing no-climb collision plus rotated/scaled placement and a spatial lookup grid. |
@@ -50,7 +50,7 @@ Paths below are relative to this source folder.
 | `app/assets/textures/coral/` | Three reused coral colour textures. |
 | `engine/App.java`, `MonoScript.java` | One-frame rendering, a script render/cleanup hook, correct input/UI initialization and resource cleanup. |
 | `engine/SceneGraph.java` | Fixes camera quaternion mutation, preserves the original skybox path, extends clip distance, and supplies shader time. |
-| `engine/Shader.java`, `GraphicsPlatform.java` | Checks shader errors, caches uniform locations, uses compatible GLSL/OpenGL on macOS. |
+| `engine/rendering/Shader.java`, `engine/GraphicsPlatform.java` | Checks shader errors, caches uniform locations, uses compatible GLSL/OpenGL on macOS. |
 | `engine/AssetManager.java`, `engine/components/Material.java` | Adds cached plain-colour textures and coral tint. Existing material maps remain intact. |
 | `app/build.gradle.kts`, `gradlew` | Host-specific native libraries, macOS first-thread launch, run/check tasks, packaged assets, executable wrapper. ImGui changes from 1.86.10 to 1.89.0 because the old Mac native binary was Intel-only. |
 | `engine/ReefCheck.java`, `coral/TrunkCollisionCheck.java`, `FrameCapture.java` | Actual-render and geometry/collision checks, with screenshot capture. |
@@ -73,7 +73,9 @@ On Windows use `gradlew.bat`. Gradle downloads dependencies on the first build. 
 
 The source ZIP contains the complete engine, Gradle wrapper, shaders and assets, without development caches, logs, binaries or old drafts. `README.md` includes the upstream guidance and relocated local build paths; this file explains the coral addition. The original material-test scene remains available with `--engine-demo`; combine it with `--check` to smoke-test and exit.
 
-## Verification
+## Earlier coral-demo verification (before the November merge)
+
+The results below describe the previously verified build; they are not new GPU results for the merged renderer.
 
 - Gradle build and distribution completed successfully; the upstream project has no JUnit test source files, so verification uses the explicit `reefCheck` task.
 - Repeated seeds produce exactly equal CPU vertices, indices and placements; alternate seeds visibly change the rendered field. Render comparison allows at most four colour levels of GPU interpolation rounding on under 0.2% of pixels.
@@ -97,3 +99,34 @@ Source folder with the commands above. The executable wrapper uses the sibling
 `../../Archive/Backups and records/Current source backup/Latest Engine Source.zip`.
 The texture-authoring Blender file is archived under Previews and working files;
 the exported textures and runtime models remain in the source assets.
+
+## Integration with current GitHub main — 2 November 2026
+
+The default scene now registers the latest upstream `DemoScene` alongside
+`ReefPlayer`, `ReefScene` and `ReefCamera`. `ReefScene.regenerate()` builds its
+meshes directly with `CoralGenerator.generate()` and obtains seeded positions
+from `ReefLayout.generate()`. These live vertex/index buffers are instanced into
+the environment; coral OBJ files are not loaded or required. R changes the seed
+and regenerates both geometry and placement. G replays growth.
+
+Coral rendering runs after the environment objects and before the team's HDR
+postprocessing. The latest renderer package layout, glTF scene parser, PBR
+material API, new assets and Uchimura tone mapping are retained. The supplied
+upstream environment is the material-test/glTF scene; this repository revision
+does not contain the finished castle or underwater terrain.
+
+On OpenGL 4.3 hardware, the team's compute bloom passes remain enabled. On this
+Mac's OpenGL 4.1 context, they are skipped; the same HDR framebuffer and Uchimura
+tone mapping still run. Vertex/fragment shader versions are adapted for 4.1.
+Compute shaders are not relabelled or emulated.
+
+Use `./gradlew :app:generationCheck` for a graphics-free generation/collision
+check, or `./gradlew :app:reefCheck` for the actual GPU checks. `Game
+--check-generation` also runs the CPU checks before creating a window.
+
+All 38 Java source files compile against the application's dependency JARs.
+CPU checks pass for repeatable geometry, changed seeds, reduced-detail meshes,
+three density settings, spawn/path clearance, environment coverage, and the
+finite-height collision regressions. Full Gradle execution is blocked in this
+automation session by its local-socket restriction. Current GPU verification
+status is recorded in Archive/Verification/GitHub update 2026-11-02.

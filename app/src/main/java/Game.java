@@ -3,15 +3,17 @@ import scripts.*;
 
 public class Game {
     public static void main(String[] args) throws Exception {
-        boolean check=false,original=false;long seed=42;
+        boolean check=false,original=false,generationCheck=false;long seed=42;
         for(int i=0;i<args.length;i++) {
             switch(args[i]) {
                 case "--check" -> check=true;
+                case "--check-generation" -> generationCheck=true;
                 case "--engine-demo" -> original=true;
                 case "--seed" -> seed=Long.parseLong(args[++i]);
                 default -> throw new IllegalArgumentException("Unknown option: "+args[i]);
             }
         }
+        if(generationCheck){coral.ReefGenerationCheck.run();return;}
         App app=new App();
         try {
             if(!app.init(1100,800,"Coral Field — Latest Engine",!check))throw new IllegalStateException("Cannot open graphics window");
@@ -24,6 +26,7 @@ public class Game {
                     System.out.println("PASS: original engine demo renders with material controls.");
                 }else app.run();
             } else {
+                app.registerScript(new DemoScene(false));
                 ReefPlayer player=new ReefPlayer();
                 ReefScene reef=new ReefScene(seed);reef.player=player;
                 ReefCamera camera=new ReefCamera();camera.player=player;

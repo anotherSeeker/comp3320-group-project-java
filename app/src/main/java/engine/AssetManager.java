@@ -1,6 +1,11 @@
 package engine;
 
 import engine.components.Material;
+import engine.components.MaterialEntry;
+import engine.rendering.CubeTexture;
+import engine.rendering.Mesh;
+import engine.rendering.Shader;
+import engine.rendering.Texture;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.memAllocFloat;
@@ -33,11 +38,23 @@ public class AssetManager {
     private Map<Integer, CubeTexture> cubeTextureIndex = new HashMap<>();
 
     public Integer defaultTexture = "DEFAULT".hashCode();
+    public Integer whiteTexture = "WHITE".hashCode();
+    public Integer blackTexture = "BLACK".hashCode();
+    public Integer normalTexture = "NORMAL".hashCode();
+
     public Integer cubemapShader = "CUBEMAP".hashCode();
     public Integer skyboxShader = "SKYBOX".hashCode();
     public Integer irradianceShader = "IRRADIANCE".hashCode();
     public Integer prefilterShader = "PREFILTER".hashCode();
     public Integer brdfIntShader = "BRDF_INT".hashCode();
+
+    public Integer framebufferShader = "FRAMEBUFFER".hashCode();
+    public Integer blurPostProcess = "BLUR".hashCode();
+    public Integer bloomPostProcessA = "BLOOM_A".hashCode();
+    public Integer bloomPostProcessB = "BLOOM_B".hashCode();
+    public Integer vignettePostProcess = "VIGNETTE".hashCode();
+
+    public Integer defaultShader = "DEFAULT".hashCode();
 
     private AssetManager() {
 
@@ -77,6 +94,26 @@ public class AssetManager {
             }
         }
 
+        ByteBuffer whiteData = BufferUtils.createByteBuffer(width * height);
+
+        for (int i = 0; i < width * height; i++) {
+            whiteData.put((byte) 0xFF);
+        }
+
+        ByteBuffer blackData = BufferUtils.createByteBuffer(width * height);
+
+        for (int i = 0; i < width * height; i++) {
+            blackData.put((byte) 0x00);
+        }
+
+        ByteBuffer normalData = BufferUtils.createByteBuffer(width * height * 3);
+
+        for (int i = 0; i < width * height; i++) {
+            normalData.put((byte) 0x80);
+            normalData.put((byte) 0x80);
+            normalData.put((byte) 0xFF);
+        }
+
         this.loadInternalShader(
                 cubemapShader,
                 Path.of("assets/shaders/internal/cubemap.vert"),
@@ -107,9 +144,34 @@ public class AssetManager {
                 Path.of("assets/shaders/internal/brdfInt.frag")
         );
 
+        this.loadInternalShader(
+                framebufferShader,
+                Path.of("assets/shaders/internal/framebuffer.vert"),
+                Path.of("assets/shaders/internal/framebuffer.frag")
+        );
+
+        this.loadInternalShader(
+                defaultShader,
+                Path.of("assets/shaders/default.vert"),
+                Path.of("assets/shaders/default.frag")
+        );
+
+        if (org.lwjgl.opengl.GL.getCapabilities().OpenGL43) {
+            this.loadInternalComputeShader(blurPostProcess, Path.of("assets/shaders/internal/blur.glsl"));
+            this.loadInternalComputeShader(bloomPostProcessA, Path.of("assets/shaders/internal/bloomA.glsl"));
+            this.loadInternalComputeShader(bloomPostProcessB, Path.of("assets/shaders/internal/bloomB.glsl"));
+            this.loadInternalComputeShader(vignettePostProcess, Path.of("assets/shaders/internal/vignette.glsl"));
+        }
+
         data.flip();
+        whiteData.flip();
+        blackData.flip();
+        normalData.flip();
 
         textureIndex.put(defaultTexture, new Texture(data, width, height, GL_RGBA));
+        textureIndex.put(whiteTexture, new Texture(whiteData, width, height, GL_RED));
+        textureIndex.put(blackTexture, new Texture(blackData, width, height, GL_RED));
+        textureIndex.put(normalTexture, new Texture(normalData, width, height, GL_RGB));
     }
 
     private String readFile(Path filePath) {
@@ -132,6 +194,15 @@ public class AssetManager {
 
         Shader shader = new Shader();
         shader.init(vertexSource, fragmentSource);
+
+        shaderIndex.put(ID, shader);
+    }
+
+    private void loadInternalComputeShader(Integer ID, Path computePath) {
+        String computeSource = readFile(computePath);
+
+        Shader shader = new Shader();
+        shader.initCompute(computeSource);
 
         shaderIndex.put(ID, shader);
     }
@@ -174,6 +245,16 @@ public class AssetManager {
         PointerBuffer meshbuffer = scene.mMeshes();
         AIMesh assimpMesh = AIMesh.create(meshbuffer.get(0));
 
+        Mesh mesh = createMesh(assimpMesh);
+
+        aiReleaseImport(scene);
+
+        meshIndex.put(ID, mesh);
+
+        return ID;
+    }
+
+    public Mesh createMesh(AIMesh assimpMesh) {
         int vertexCount = assimpMesh.mNumVertices();
         int indexCount = assimpMesh.mNumFaces() * 3;
 
@@ -256,14 +337,12 @@ public class AssetManager {
         vertices.flip();
         indices.flip();
 
-        aiReleaseImport(scene);
-
-        meshIndex.put(ID, new Mesh(vertices, indices));
+        Mesh mesh = new Mesh(vertices, indices);
 
         memFree(vertices);
         memFree(indices);
 
-        return ID;
+        return mesh;
     }
 
     public Integer LoadMesh(Mesh mesh, String name) {
@@ -324,6 +403,20 @@ public class AssetManager {
         return ID;
     }
 
+    public Integer LoadTexture(ByteBuffer data, int width, int height, int channelFormat, String name) {
+
+        Integer ID = name.hashCode();
+
+        if (textureIndex.containsKey(ID))
+            return ID;
+
+        Texture texture = new Texture(data, width, height, channelFormat);
+
+        textureIndex.put(ID, texture);
+
+        return ID;
+    }
+
     // takes in a .HDR equirectangular texture and converts it to a cube map
     public Integer LoadCubeMap(Path filePath) {
         Integer ID = filePath.toAbsolutePath().hashCode();
@@ -352,6 +445,29 @@ public class AssetManager {
         return ID;
     }
 
+    public void LoadIntoScene(Path filePath, SceneGraph sceneGraph) {
+        AIScene scene = aiImportFile(
+                filePath.toString(), aiProcess_Triangulate |
+                        aiProcess_GenSmoothNormals |
+                        aiProcess_JoinIdenticalVertices |
+                        aiProcess_CalcTangentSpace
+        );
+
+        if (scene == null || scene.mRootNode() == null) {
+            System.out.printf("failed to load file %s:\n%s\n", filePath, aiGetErrorString());
+            return;
+        }
+
+        SceneParser loader = new SceneParser();
+
+        loader.loadScene(filePath, scene, sceneGraph);
+
+        System.out.printf("loaded file %s\n", filePath);
+
+        aiReleaseImport(scene);
+
+    }
+
     public Shader getShader(Integer assetID) {
         return shaderIndex.get(assetID);
     }
@@ -368,15 +484,18 @@ public class AssetManager {
         return cubeTextureIndex.get(assetID);
     }
 
-    public Material createMaterial(
-            Integer shaderID, Integer albedoID, Integer roughnessID, Integer ambientOcclusionID, Integer normalID
-    ) {
+    public Material createMaterial(MaterialEntry materialEntry) {
+
         Material material = new Material();
-        material.shader = getShader(shaderID);
-        material.albedoMap = getTexture(albedoID);
-        material.roughnessMap = getTexture(roughnessID);
-        material.ambientOcclusionMap = getTexture(ambientOcclusionID);
-        material.normalMap = getTexture(normalID);
+        material.shader = getShader(materialEntry.shaderID != null ? materialEntry.shaderID : defaultShader);
+
+        // @formatter:off
+        material.albedoMap              = getTexture(materialEntry.albedoID           != null ? materialEntry.albedoID : defaultTexture);
+        material.roughnessMap           = getTexture(materialEntry.roughnessID        != null ? materialEntry.roughnessID : blackTexture);
+        material.ambientOcclusionMap    = getTexture(materialEntry.ambientOcclusionID != null ? materialEntry.ambientOcclusionID : whiteTexture);
+        material.normalMap              = getTexture(materialEntry.normalID           != null ? materialEntry.normalID : normalTexture);
+        material.metallicMap            = getTexture(materialEntry.metallicID           != null ? materialEntry.metallicID : blackTexture);
+        // @formatter:on
 
         return material;
     }

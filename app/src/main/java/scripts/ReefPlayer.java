@@ -4,6 +4,7 @@ import dev.dominion.ecs.api.Entity;
 import engine.MonoScript;
 import coral.TrunkCollision;
 import engine.components.Material;
+import engine.components.MaterialEntry;
 import engine.components.Transform;
 import java.nio.file.Path;
 import org.joml.Vector3f;
@@ -19,7 +20,7 @@ public final class ReefPlayer extends MonoScript {
     @Override protected void Start() {
         int shader = Assets.LoadShader(Path.of("assets/shaders/coral/object.vert"), Path.of("assets/shaders/coral/object.frag"));
         int white = Assets.LoadSolidTexture(255,255,255,255);
-        Material material = Assets.createMaterial(shader, white, white, white, white);
+        Material material = Assets.createMaterial(new MaterialEntry().add("SHADER",shader).add("COLOUR",white));
         material.coralTint = new Vector3f(.95f, .70f, .28f);
         character = Scene.createObject(Assets.LoadMesh(Path.of("assets/meshes/character_combined.obj")), material);
         place();

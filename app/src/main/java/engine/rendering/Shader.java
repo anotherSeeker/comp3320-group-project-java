@@ -1,4 +1,9 @@
-package engine;
+package engine.rendering;
+
+import engine.GraphicsPlatform;
+import static org.lwjgl.opengl.GL43.*;
+import static org.lwjgl.opengl.GL42.GL_ALL_BARRIER_BITS;
+import static org.lwjgl.opengl.GL42.glMemoryBarrier;
 
 import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL20.*;
@@ -90,4 +95,33 @@ public class Shader {
         glDeleteProgram(ID);
     }
 
+
+    public boolean initCompute(String computeSource) {
+        if (!org.lwjgl.opengl.GL.getCapabilities().OpenGL43)
+            throw new IllegalStateException("Compute postprocessing needs OpenGL 4.3");
+        int computeShader = glCreateShader(GL_COMPUTE_SHADER);
+        glShaderSource(computeShader, computeSource);
+        glCompileShader(computeShader);
+        if (glGetShaderi(computeShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            String error = glGetShaderInfoLog(computeShader);
+            glDeleteShader(computeShader);
+            throw new IllegalStateException("Compute shader failed: " + error);
+        }
+        ID = glCreateProgram();
+        glAttachShader(ID, computeShader);
+        glLinkProgram(ID);
+        glDeleteShader(computeShader);
+        if (glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE) {
+            String error = glGetProgramInfoLog(ID);
+            glDeleteProgram(ID);
+            ID = 0;
+            throw new IllegalStateException("Compute program failed: " + error);
+        }
+        return true;
+    }
+
+    public void dispatchCompute(int groupsX, int groupsY, int groupsZ) {
+        glDispatchCompute(groupsX, groupsY, groupsZ);
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+    }
 }

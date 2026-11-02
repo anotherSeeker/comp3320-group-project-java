@@ -1,4 +1,4 @@
-package engine;
+package engine.rendering;
 
 import coral.CoralMesh;
 import java.nio.FloatBuffer;

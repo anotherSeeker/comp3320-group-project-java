@@ -59,3 +59,11 @@ and trunk-height collision. The wrapper selects `../JDK/Contents/Home` and keeps
 Gradle caches, generated build files and render-check output in `../../Archive`.
 The ready-to-run app is `../Coral Field.app`; it includes its own runtime.
 See `../START HERE.txt` and `CORAL_FIELD.md` for controls and project details.
+
+## Procedural coral in the current team environment
+
+Local branch `nirmit/coral-latest-engine` merges upstream main `7dacb44`.
+The default scene includes the team's current environment and seeded recursive
+coral generation. Press R for new shapes/placement, 1/2/3 for density, and G for
+growth. Source details and hardware-specific rendering behavior are documented
+in `CORAL_FIELD.md`. Run `./gradlew :app:generationCheck` for CPU verification.

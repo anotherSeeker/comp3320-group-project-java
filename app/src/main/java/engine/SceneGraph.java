@@ -14,6 +14,9 @@ import dev.dominion.ecs.api.Entity;
 import engine.components.GameObject;
 import engine.components.Material;
 import engine.components.Transform;
+import engine.rendering.CubeTexture;
+import engine.rendering.Mesh;
+import engine.rendering.Shader;
 
 public class SceneGraph {
     static {

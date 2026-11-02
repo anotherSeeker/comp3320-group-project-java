@@ -2,7 +2,9 @@ package scripts;
 
 import coral.*;
 import engine.*;
+import engine.rendering.*;
 import engine.components.Material;
+import engine.components.MaterialEntry;
 import java.nio.FloatBuffer;
 import java.nio.file.Path;
 import java.util.*;
@@ -55,7 +57,7 @@ public final class ReefScene extends MonoScript {
         int floorMesh;
         try{floorMesh=Assets.LoadMesh(new Mesh(vb,ib),"REEF_FLOOR");}finally{memFree(vb);memFree(ib);}
         int white=Assets.LoadSolidTexture(255,255,255,255);
-        Material material=Assets.createMaterial(objectShader,white,white,white,white);material.coralTint=new Vector3f(.35f,.42f,.36f);
+        Material material=Assets.createMaterial(new MaterialEntry().add("SHADER",objectShader).add("COLOUR",white));material.coralTint=new Vector3f(.35f,.42f,.36f);
         Scene.createObject(floorMesh,material);
         Scene.lightDirection=new Vector3f(1,2,1);glClearColor(.035f,.13f,.17f,1);
         player.collisions=collisions;interaction.follow(player.transform());

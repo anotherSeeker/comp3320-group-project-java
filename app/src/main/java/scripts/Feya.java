@@ -8,6 +8,7 @@ import dev.dominion.ecs.api.Entity;
 
 import engine.*;
 import engine.components.Material;
+import engine.components.MaterialEntry;
 import engine.components.Transform;
 
 public class Feya extends MonoScript {
@@ -18,13 +19,15 @@ public class Feya extends MonoScript {
 
     Integer characterMesh = Assets.LoadMesh(Path.of("assets/meshes/character_combined.obj"));
 
-    Material material = Assets.createMaterial(
-            shaderID,
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")),
-            Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg"))
+    //@formatter:off
+    Material material = Assets.createMaterial(new MaterialEntry()
+        .add("SHADER", shaderID)
+        .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")))
+        .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")))
+        .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")))
+        .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg")))
     );
+    //@formatter:on
 
     Entity character;
 
