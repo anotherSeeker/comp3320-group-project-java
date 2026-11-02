@@ -137,6 +137,9 @@ public class DemoScene extends MonoScript {
     float[] whitepoint = new float[] { 11.2f };
     float[] exposure = new float[] { -1.5f };
 
+    float[] fogDensity = new float[] { 0.05f };
+    float[] curlStrength = new float[] { 0.5f };
+
     ImBoolean bloomEnabled = new ImBoolean(true);
     ImBoolean vignetteEnabled = new ImBoolean(false);
     ImBoolean gradingEnabled = new ImBoolean(true);
@@ -267,6 +270,12 @@ public class DemoScene extends MonoScript {
             ImGui.endTabItem();
         }
 
+        if (ImGui.beginTabItem("Fog")) {
+            ImGui.sliderFloat("curl strength", curlStrength, 0.0f, 1.0f);
+            ImGui.sliderFloat("fog density", fogDensity, 0.0f, 0.25f);
+            ImGui.endTabItem();
+        }
+
         if (ImGui.beginTabItem("HDR")) {
 
             ImGui.sliderFloat("max brightness", maxBrightness, 0.3f, 20.0f);
@@ -306,6 +315,9 @@ public class DemoScene extends MonoScript {
 
         PostProcess.Exposure = exposure[0];
         PostProcess.Whitepoint = whitepoint[0];
+
+        PostProcess.FogDensity = fogDensity[0];
+        PostProcess.CurlStrength = curlStrength[0];
 
         ImGui.end();
 

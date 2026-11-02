@@ -54,6 +54,7 @@ public class ShaderPipeline {
     private Shader fog = assets.getShader(assets.fogProcess);
 
     private Texture perlinTexture = assets.getTexture(assets.perlinTexture);
+    private Texture curlTexture = assets.getTexture(assets.curlTexture);
 
     private int featureMask = 0;
     public static int BLOOM = 1 << 0;
@@ -76,6 +77,9 @@ public class ShaderPipeline {
 
     public float Whitepoint = 11.2f;
     public float Exposure = -1.5f;
+
+    public float CurlStrength = 0.5f;
+    public float FogDensity = 0.5f;
 
     public ColourCurve ColourGradeCurve = new ColourCurve(Curve.Default(), Curve.Default(), Curve.Default());
 
@@ -239,6 +243,9 @@ public class ShaderPipeline {
 
             fog.use();
             fog.setTexture("PerlinMap", perlinTexture, 1);
+            fog.setTexture("CurlMap", curlTexture, 2);
+            fog.setFloat("CurlStrength", CurlStrength);
+            fog.setFloat("FogDensity", FogDensity);
             runShader(fog, currentTexture, target);
 
             currentTexture = target;

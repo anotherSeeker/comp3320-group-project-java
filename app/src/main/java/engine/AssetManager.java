@@ -45,6 +45,7 @@ public class AssetManager {
     public Integer normalTexture = "NORMAL".hashCode();
 
     public Integer perlinTexture = "PERLIN".hashCode();
+    public Integer curlTexture = "CURL".hashCode();
 
     public Integer cubemapShader = "CUBEMAP".hashCode();
     public Integer skyboxShader = "SKYBOX".hashCode();
@@ -172,6 +173,7 @@ public class AssetManager {
         this.loadInternalComputeShader(fogProcess, Path.of("assets/shaders/internal/fog.glsl"));
 
         this.loadInternalTexture(perlinTexture, Path.of("assets/textures/internal/perlin.png"));
+        this.loadInternalTexture(curlTexture, Path.of("assets/textures/internal/curl.png"));
 
         textureIndex.put(defaultTexture, new Texture(data, width, height, GL_RGBA));
         textureIndex.put(whiteTexture, new Texture(whiteData, width, height, GL_R));
