@@ -34,9 +34,9 @@ public class WaterScene extends MonoScript {
         WaterFFT.dispatchFComponentShader();
 
         //render our maps to screen
-        //drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dxdzTexID);
-        //drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.noiseIndexId, WaterFFT.noiseIndexId, WaterFFT.noiseIndexId);
-        drawMapQuads(WaterFFT.dxdzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dyxdyzIndexID, WaterFFT.dxxdzzIndexID);
+        //drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dxdzIndexID);
+        drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dxdzIndexID);
+        //drawMapQuads(WaterFFT.dxdzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dyxdyzIndexID, WaterFFT.dxxdzzIndexID);
         //makeWaterPlane();
 
         Scene.SetSkyboxTexture(skyboxTexture);

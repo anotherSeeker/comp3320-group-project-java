@@ -16,6 +16,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.ARBCopyImage.*;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -37,7 +38,7 @@ public class WaterFFT
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
     public static int texSizePower = 8; //textureSize = 2^texSizePower;
-    public static int textureSize; //gotta be a power of 2
+    public static int textureSize = 1; //gotta be a power of 2
     //to dispatch the correct number of work group based on their local size.
     public static int localGroupSize = 8;
 
@@ -242,7 +243,6 @@ public class WaterFFT
 
         glActiveTexture(GL_TEXTURE0+1);
         glBindTexture(GL_TEXTURE_2D, waveVecTexID);
-            //store and load is not allowed for 3 valued formats like this apparently, so we're using RGBA instead of RGB
         glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F );
         
         glActiveTexture(GL_TEXTURE0+2);
@@ -296,7 +296,7 @@ public class WaterFFT
         glBindTexture(GL_TEXTURE_2D, dxdzTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RG , GL_FLOAT, (FloatBuffer) null);
         glBindImageTexture( 2, dxdzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F);
 
         dydxzTexID = glGenTextures();
@@ -450,14 +450,16 @@ public class WaterFFT
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
 
+        //if we're treating the input as output, we need to make sure the final buffer is in the input text and vice versa.
         if (pingpong == 1 && outputToInput)
         {
-            glCopyImageSubData(bufferTexID, inputTexID);
+            //copy buffer to input texture
+            glCopyImageSubData(bufferTexID, GL_TEXTURE_2D, 0, 0, 0, 0, inputTexID, GL_TEXTURE_2D, 0, 0, 0, 0, textureSize, textureSize, 1);
         }
-
-        if (!pingpong && !outputToInput)
+        if (pingpong == 0 && !outputToInput)
         {
-            glCopyImageSubData(inputTexID, bufferTexID);
+            //copy input to buffer texture
+            glCopyImageSubData(inputTexID, GL_TEXTURE_2D, 0, 0, 0, 0, bufferTexID, GL_TEXTURE_2D, 0, 0, 0, 0, textureSize, textureSize, 1);
         }
     }
 }
