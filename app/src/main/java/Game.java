@@ -1,16 +1,35 @@
 import engine.*;
+import scripts.*;
 
 public class Game {
-    public static void main(String[] args) {
-        App app = new App();
-
-        if (app.init(800, 600, "sunken castle")) {
-            app.registerScript(new scripts.DemoScene());
-            app.registerScript(new scripts.Feya());
-            app.registerScript(new scripts.Camera());
-            app.run();
+    public static void main(String[] args) throws Exception {
+        boolean check=false,original=false;long seed=42;
+        for(int i=0;i<args.length;i++) {
+            switch(args[i]) {
+                case "--check" -> check=true;
+                case "--engine-demo" -> original=true;
+                case "--seed" -> seed=Long.parseLong(args[++i]);
+                default -> throw new IllegalArgumentException("Unknown option: "+args[i]);
+            }
         }
-
-        app.close();
+        App app=new App();
+        try {
+            if(!app.init(1100,800,"Coral Field — Latest Engine",!check))throw new IllegalStateException("Cannot open graphics window");
+            if(original) {
+                app.registerScript(new DemoScene());app.registerScript(new Feya());app.registerScript(new Camera());
+                if(check){
+                    app.startScripts();for(int i=0;i<3;i++)app.renderFrame(1.0/60);
+                    coral.FrameCapture.write(coral.FrameCapture.read(),java.nio.file.Path.of(System.getProperty("reef.checkOutput","build/reef-check"),"original-engine.png"));
+                    if(org.lwjgl.opengl.GL11.glGetError()!=0)throw new IllegalStateException("Original engine graphics error");
+                    System.out.println("PASS: original engine demo renders with material controls.");
+                }else app.run();
+            } else {
+                ReefPlayer player=new ReefPlayer();
+                ReefScene reef=new ReefScene(seed);reef.player=player;
+                ReefCamera camera=new ReefCamera();camera.player=player;
+                app.registerScript(player);app.registerScript(reef);app.registerScript(camera);app.startScripts();
+                if(check)ReefCheck.run(app,reef,player,camera);else app.run();
+            }
+        } finally {app.close();}
     }
 }

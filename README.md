@@ -25,7 +25,7 @@ if you dont have gradle then theres bash and batch scripts that run gradle for y
 ./gradlew.bat run
 
 # or for macOS/linux
-./gradle run
+./gradlew :app:run
 ```
 
 ## how to make a script
@@ -51,3 +51,11 @@ then register that script to the engine
 ```java
 app.registerScript(new scripts.MyGame());
 ```
+## Local Mac project layout
+
+From this Source folder, use `./gradlew :app:build :app:installDist` to rebuild,
+`./gradlew :app:run` to launch, and `./gradlew :app:reefCheck` to verify rendering
+and trunk-height collision. The wrapper selects `../JDK/Contents/Home` and keeps
+Gradle caches, generated build files and render-check output in `../../Archive`.
+The ready-to-run app is `../Coral Field.app`; it includes its own runtime.
+See `../START HERE.txt` and `CORAL_FIELD.md` for controls and project details.

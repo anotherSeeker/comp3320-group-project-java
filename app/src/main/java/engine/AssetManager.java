@@ -277,6 +277,15 @@ public class AssetManager {
         return ID;
     }
 
+    public Integer LoadSolidTexture(int r,int g,int b,int a) {
+        int id=("SOLID_"+r+"_"+g+"_"+b+"_"+a).hashCode();
+        if(!textureIndex.containsKey(id)) {
+            ByteBuffer pixel=BufferUtils.createByteBuffer(4); pixel.put((byte)r).put((byte)g).put((byte)b).put((byte)a).flip();
+            textureIndex.put(id,new Texture(pixel,1,1,GL_RGBA));
+        }
+        return id;
+    }
+
     public Integer LoadTexture(Path filePath) {
         Integer ID = filePath.toAbsolutePath().hashCode();
 

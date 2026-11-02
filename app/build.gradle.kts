@@ -18,9 +18,17 @@ repositories {
 }
 
 val lwjglVersion = "3.4.3"
-val lwjglNatives = "natives-windows"
+val hostMac = System.getProperty("os.name").lowercase().contains("mac")
+val hostArm = System.getProperty("os.arch").lowercase() in listOf("aarch64","arm64")
+val hostLinux = System.getProperty("os.name").lowercase().contains("linux")
+val lwjglNatives = when {
+    hostMac -> if(hostArm) "natives-macos-arm64" else "natives-macos"
+    hostLinux -> if(hostArm) "natives-linux-arm64" else "natives-linux"
+    else -> if(hostArm) "natives-windows-arm64" else "natives-windows"
+}
+val imguiNatives = if(hostMac) "macos" else if(hostLinux) "linux" else "windows"
 
-val imguiVersion = "1.86.10"
+val imguiVersion = "1.89.0"
 
 dependencies {
 	implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
@@ -45,7 +53,7 @@ dependencies {
     implementation("io.github.spair:imgui-java-binding:$imguiVersion")
     implementation("io.github.spair:imgui-java-lwjgl3:$imguiVersion")
     
-    implementation("io.github.spair:imgui-java-natives-windows:$imguiVersion")
+    implementation("io.github.spair:imgui-java-natives-$imguiNatives:$imguiVersion")
 }
 
 testing {
@@ -68,4 +76,15 @@ java {
 application {
     // Define the main class for the application.
     mainClass.set("Game")
+    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED") + if(hostMac) listOf("-XstartOnFirstThread") else emptyList()
 }
+
+tasks.named<JavaExec>("run") { workingDir = projectDir }
+tasks.register<JavaExec>("reefCheck") {
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("Game")
+    args("--check")
+    workingDir = projectDir
+    jvmArgs(application.applicationDefaultJvmArgs)
+}
+distributions { main { contents { from("assets") { into("assets") } } } }

@@ -24,17 +24,26 @@ public class App {
 
     private ArrayList<MonoScript> scripts = new ArrayList<>();
 
+    private boolean scriptsStarted, guiReady;
     private int initWidth;
     private int initHeight;
 
     public boolean init(int width, int height, CharSequence title) {
+        return init(width,height,title,true);
+    }
+
+    public boolean init(int width,int height,CharSequence title,boolean visible) {
         initWidth = width;
         initHeight = height;
         GLFWErrorCallback.createPrint(System.err).set();
 
-        glfwInit();
+        if (!glfwInit()) return false;
+        glfwDefaultWindowHints();
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GraphicsPlatform.MAC ? 1 : 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+        glfwWindowHint(GLFW_VISIBLE, visible ? GLFW_TRUE : GLFW_FALSE);
 
         window = glfwCreateWindow(width, height, title, NULL, NULL);
 
@@ -47,11 +56,15 @@ public class App {
         GL.createCapabilities();
 
         ImGui.createContext();
+        ImGui.getIO().setIniFilename(null);
         imGuiGlfw = new ImGuiImplGlfw();
         imGuiGL3 = new ImGuiImplGl3();
 
+        input = new InputManager(window);
         imGuiGlfw.init(window, true);
-        imGuiGL3.init("#version 430 core");
+        imGuiGL3.init(GraphicsPlatform.MAC ? "#version 410 core" : "#version 430 core");
+        guiReady = true;
+        glfwSwapInterval(1);
 
         glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
         glViewport(0, 0, width, height);
@@ -60,8 +73,6 @@ public class App {
 
         scene = new SceneGraph();
         scene.updateAspectRatio(width, height);
-
-        input = new InputManager(window);
 
         glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
             glViewport(0, 0, new_width, new_height);
@@ -81,47 +92,41 @@ public class App {
         scripts.add(script);
     }
 
+    public void startScripts() {
+        if (!scriptsStarted) { scripts.forEach(MonoScript::start); scriptsStarted=true; }
+    }
+    public void renderFrame(double deltaTime) {
+        startScripts();
+        try(var stack=org.lwjgl.system.MemoryStack.stackPush()) {
+            var w=stack.mallocInt(1); var h=stack.mallocInt(1);
+            glfwGetFramebufferSize(window,w,h);
+            if(w.get(0)==0 || h.get(0)==0) return;
+            glViewport(0,0,w.get(0),h.get(0)); scene.updateAspectRatio(w.get(0),h.get(0));
+        }
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        imGuiGL3.newFrame(); imGuiGlfw.newFrame(); ImGui.newFrame();
+        for(MonoScript script:scripts) script.update(deltaTime);
+        scene.draw();
+        for(MonoScript script:scripts) script.afterRender();
+        ImGui.render(); imGuiGL3.renderDrawData(ImGui.getDrawData());
+    }
     public void run() {
-        glViewport(0, 0, initWidth, initHeight);
-        scripts.stream().forEach(script -> script.Start());
-
-        double currentTime = glfwGetTime();
-        double previousTime = glfwGetTime();
-        double deltaTime = 0.0;
-
-        while (!glfwWindowShouldClose(window)) {
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            currentTime = glfwGetTime();
-            deltaTime = currentTime - previousTime;
-            previousTime = currentTime;
-
-            imGuiGlfw.newFrame();
-            ImGui.newFrame();
-
-            for (int i = 0; i < scripts.size(); i++) {
-                scripts.get(i).update(deltaTime);
-            }
-
-            scene.draw();
-
-            ImGui.render();
-            imGuiGL3.renderDrawData(ImGui.getDrawData());
-
-            glfwSwapBuffers(window);
-            glfwPollEvents();
+        startScripts(); double previous=glfwGetTime();
+        while(!glfwWindowShouldClose(window)) {
+            double now=glfwGetTime(); renderFrame(now-previous); previous=now;
+            glfwSwapBuffers(window); glfwPollEvents();
         }
     }
-
     public void close() {
-        assetManager.cleanup();
-
-        imGuiGL3.dispose();
-        imGuiGlfw.dispose();
-        ImGui.destroyContext();
-
-        glfwDestroyWindow(window);
+        if(window!=NULL) {
+            for(MonoScript script:scripts) script.close();
+            if(scene!=null) scene.cleanup();
+            assetManager.cleanup();
+            if(guiReady) { imGuiGL3.shutdown(); imGuiGlfw.shutdown(); ImGui.destroyContext(); }
+            org.lwjgl.glfw.Callbacks.glfwFreeCallbacks(window);
+            glfwDestroyWindow(window);
+        }
         glfwTerminate();
-        glfwSetErrorCallback(null).free();
+        GLFWErrorCallback callback=glfwSetErrorCallback(null); if(callback!=null) callback.free();
     }
 }

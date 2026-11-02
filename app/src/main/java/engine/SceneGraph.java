@@ -7,6 +7,7 @@ import static org.lwjgl.opengl.GL11.glDepthMask;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Quaternionf;
 
 import dev.dominion.ecs.api.Dominion;
 import dev.dominion.ecs.api.Entity;
@@ -21,6 +22,7 @@ public class SceneGraph {
 
     private CubeTexture skyboxTexture = null;
     private Shader skyboxShader;
+    private float fixedAnimationTime = Float.NaN;
     private Mesh skyboxMesh = Mesh.Cube();
 
     public Transform cameraTransform = new Transform(new Matrix4f());
@@ -46,23 +48,23 @@ public class SceneGraph {
 
     public Matrix4f computeViewportMatrix() {
         Matrix4f view = new Matrix4f()
-                .rotate(cameraTransform.orientation.conjugate())
+                .rotate(new Quaternionf(cameraTransform.orientation).conjugate())
                 .translate(
                         -cameraTransform.position.x,
                         -cameraTransform.position.y,
                         -cameraTransform.position.z
                 );
 
-        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
+        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.05f, 180.0f);
 
         return projection.mul(view);
     }
 
     public Matrix4f computeSkyboxMatrix() {
         Matrix4f view = new Matrix4f()
-                .rotate(cameraTransform.orientation.conjugate()).invert();
+                .rotate(new Quaternionf(cameraTransform.orientation).conjugate());
 
-        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
+        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.05f, 180.0f);
 
         return projection.mul(view);
     }
@@ -100,6 +102,7 @@ public class SceneGraph {
             material.shader.setMatrix4("CameraMatrix", viewportMatrix);
             material.shader.setVector3("LightDirection", lightDirection);
             material.shader.setVector3("ViewPosition", cameraTransform.position);
+            material.shader.setFloat("Time",animationTime());
             material.shader.setVector3("DiffuseColour", lightColour);
 
             material.shader.setInt("IrradianceMap", 1);
@@ -112,6 +115,10 @@ public class SceneGraph {
             gameObject.mesh.draw();
         }
     }
+
+    public float animationTime() { return Float.isNaN(fixedAnimationTime) ? (float)org.lwjgl.glfw.GLFW.glfwGetTime() : fixedAnimationTime; }
+    public void setAnimationTime(float time) { fixedAnimationTime=time; }
+    public void cleanup() { skyboxMesh.delete(); ECS.close(); }
 
     public Entity createObject(Integer meshID, Material material) {
 

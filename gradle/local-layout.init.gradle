@@ -1,0 +1,12 @@
+// Keep generated build output and render checks out of the editable source tree.
+gradle.settingsEvaluated { settings ->
+    def workspace = settings.settingsDir.parentFile.parentFile
+    def archive = new File(workspace, 'Archive')
+    gradle.beforeProject { project ->
+        def part = project.path == ':' ? 'root' : project.path.substring(1).replace(':', '/')
+        project.layout.buildDirectory.set(new File(archive, 'Build support/Current build/' + part))
+        project.tasks.withType(org.gradle.api.tasks.JavaExec).configureEach {
+            systemProperty 'reef.checkOutput', new File(archive, 'Verification/Source render').absolutePath
+        }
+    }
+}

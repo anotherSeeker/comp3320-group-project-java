@@ -88,6 +88,21 @@ APP_BASE_NAME=${0##*/}
 # Discard cd standard output in case $CDPATH is set (https://github.com/gradle/gradle/issues/25036)
 APP_HOME=$( cd -P "${APP_HOME:-./}" > /dev/null && printf '%s\n' "$PWD" ) || exit
 
+
+# Local Coral Field layout: JDK and generated files stay outside editable source.
+coral_workspace=$( cd "$APP_HOME/../.." > /dev/null && pwd ) || exit
+coral_jdk="$APP_HOME/../JDK/Contents/Home"
+if [ -x "$coral_jdk/bin/java" ]; then
+    JAVA_HOME="$coral_jdk"
+    export JAVA_HOME
+fi
+if [ -d "$coral_workspace/Archive" ]; then
+    GRADLE_USER_HOME=${GRADLE_USER_HOME:-"$coral_workspace/Archive/Build support/Gradle cache"}
+    export GRADLE_USER_HOME
+    set -- --project-cache-dir "$coral_workspace/Archive/Build support/Current project cache" \
+        --init-script "$APP_HOME/gradle/local-layout.init.gradle" "$@"
+fi
+
 # Use the maximum available, or set MAX_FD != -1 to use that value.
 MAX_FD=maximum
 

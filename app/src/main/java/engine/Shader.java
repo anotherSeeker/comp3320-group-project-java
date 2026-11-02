@@ -11,15 +11,20 @@ import org.lwjgl.system.MemoryStack;
 
 public class Shader {
     private int ID;
+    private final java.util.Map<String,Integer> locations = new java.util.HashMap<>();
+    private int location(String name) { return locations.computeIfAbsent(name, n -> glGetUniformLocation(ID,n)); }
 
     public boolean init(String vertexSource, String fragmentSource) {
+        vertexSource = GraphicsPlatform.shaderSource(vertexSource);
+        fragmentSource = GraphicsPlatform.shaderSource(fragmentSource);
         int vertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader, vertexSource);
         glCompileShader(vertexShader);
 
         if (glGetShaderi(vertexShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.out.println("VERTEX");
-            System.err.println(glGetShaderInfoLog(vertexShader, 1024));
+            String error = glGetShaderInfoLog(vertexShader);
+            glDeleteShader(vertexShader);
+            throw new IllegalStateException("Vertex shader failed: " + error);
         }
 
         int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -27,14 +32,24 @@ public class Shader {
         glCompileShader(fragmentShader);
 
         if (glGetShaderi(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.out.println("FRAGMENT");
-            System.err.println(glGetShaderInfoLog(fragmentShader, 1024));
+            String error = glGetShaderInfoLog(fragmentShader);
+            glDeleteShader(vertexShader);
+            glDeleteShader(fragmentShader);
+            throw new IllegalStateException("Fragment shader failed: " + error);
         }
 
         ID = glCreateProgram();
         glAttachShader(ID, vertexShader);
         glAttachShader(ID, fragmentShader);
         glLinkProgram(ID);
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+        if (glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE) {
+            String error = glGetProgramInfoLog(ID);
+            glDeleteProgram(ID);
+            ID = 0;
+            throw new IllegalStateException("Shader program failed: " + error);
+        }
 
         return true;
     }
@@ -45,26 +60,26 @@ public class Shader {
 
         matrix.get(floatBuffer);
 
-        glUniformMatrix4fv(glGetUniformLocation(ID, uniformName), false, floatBuffer);
+        glUniformMatrix4fv(location(uniformName), false, floatBuffer);
 
         stack.pop();
     }
 
     public void setInt(String uniformName, int value) {
-        glUniform1i(glGetUniformLocation(ID, uniformName), value);
+        glUniform1i(location(uniformName), value);
     }
 
     public void setFloat(String uniformName, float value) {
-        glUniform1f(glGetUniformLocation(ID, uniformName), value);
+        glUniform1f(location(uniformName), value);
     }
 
     public void setVector3(String uniformName, Vector3f vector) {
-        glUniform3f(glGetUniformLocation(ID, uniformName), vector.x, vector.y, vector.z);
+        glUniform3f(location(uniformName), vector.x, vector.y, vector.z);
     }
 
     public void setTexture(String uniformName, Texture texture, int textureSlot) {
         texture.use(textureSlot);
-        glUniform1i(glGetUniformLocation(ID, uniformName), textureSlot);
+        glUniform1i(location(uniformName), textureSlot);
     }
 
     public void use() {
