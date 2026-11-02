@@ -1,7 +1,6 @@
 package engine.components;
 
-import engine.Mesh;
-import engine.MeshAnim;
+import engine.rendering.Mesh;
 
 public class GameObject {
     public Mesh mesh;

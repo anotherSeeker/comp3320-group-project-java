@@ -14,6 +14,9 @@ import engine.components.GameObject;
 import engine.components.Material;
 import engine.components.Transform;
 import scripts.Animation.AnimationData;
+import engine.rendering.CubeTexture;
+import engine.rendering.Mesh;
+import engine.rendering.Shader;
 
 public class SceneGraph {
     static {

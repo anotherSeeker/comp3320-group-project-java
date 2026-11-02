@@ -2,6 +2,10 @@ package engine;
 
 import engine.components.Material;
 import engine.components.MaterialEntry;
+import engine.rendering.CubeTexture;
+import engine.rendering.Mesh;
+import engine.rendering.Shader;
+import engine.rendering.Texture;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.memAllocFloat;
@@ -53,6 +57,8 @@ public class AssetManager {
     public Integer bloomPostProcessB = "BLOOM_B".hashCode();
     public Integer vignettePostProcess = "VIGNETTE".hashCode();
 
+    public Integer defaultShader = "DEFAULT".hashCode();
+
     private AssetManager() {
 
     }
@@ -100,7 +106,7 @@ public class AssetManager {
         ByteBuffer blackData = BufferUtils.createByteBuffer(width * height);
 
         for (int i = 0; i < width * height; i++) {
-            blackData.put((byte) 0xFF);
+            blackData.put((byte) 0x00);
         }
 
         ByteBuffer normalData = BufferUtils.createByteBuffer(width * height * 3);
@@ -145,6 +151,12 @@ public class AssetManager {
                 framebufferShader,
                 Path.of("assets/shaders/internal/framebuffer.vert"),
                 Path.of("assets/shaders/internal/framebuffer.frag")
+        );
+
+        this.loadInternalShader(
+                defaultShader,
+                Path.of("assets/shaders/default.vert"),
+                Path.of("assets/shaders/default.frag")
         );
 
         this.loadInternalComputeShader(blurPostProcess, Path.of("assets/shaders/internal/blur.glsl"));
@@ -233,6 +245,16 @@ public class AssetManager {
         PointerBuffer meshbuffer = scene.mMeshes();
         AIMesh assimpMesh = AIMesh.create(meshbuffer.get(0));
 
+        Mesh mesh = createMesh(assimpMesh);
+
+        aiReleaseImport(scene);
+
+        meshIndex.put(ID, mesh);
+
+        return ID;
+    }
+
+    public Mesh createMesh(AIMesh assimpMesh) {
         int vertexCount = assimpMesh.mNumVertices();
         int indexCount = assimpMesh.mNumFaces() * 3;
 
@@ -315,14 +337,12 @@ public class AssetManager {
         vertices.flip();
         indices.flip();
 
-        aiReleaseImport(scene);
-
-        meshIndex.put(ID, new Mesh(vertices, indices));
+        Mesh mesh = new Mesh(vertices, indices);
 
         memFree(vertices);
         memFree(indices);
 
-        return ID;
+        return mesh;
     }
 
     public Integer LoadMesh(Mesh mesh, String name) {
@@ -383,6 +403,20 @@ public class AssetManager {
         return ID;
     }
 
+    public Integer LoadTexture(ByteBuffer data, int width, int height, int channelFormat, String name) {
+
+        Integer ID = name.hashCode();
+
+        if (textureIndex.containsKey(ID))
+            return ID;
+
+        Texture texture = new Texture(data, width, height, channelFormat);
+
+        textureIndex.put(ID, texture);
+
+        return ID;
+    }
+
     // takes in a .HDR equirectangular texture and converts it to a cube map
     public Integer LoadCubeMap(Path filePath) {
         Integer ID = filePath.toAbsolutePath().hashCode();
@@ -411,6 +445,29 @@ public class AssetManager {
         return ID;
     }
 
+    public void LoadIntoScene(Path filePath, SceneGraph sceneGraph) {
+        AIScene scene = aiImportFile(
+                filePath.toString(), aiProcess_Triangulate |
+                        aiProcess_GenSmoothNormals |
+                        aiProcess_JoinIdenticalVertices |
+                        aiProcess_CalcTangentSpace
+        );
+
+        if (scene == null || scene.mRootNode() == null) {
+            System.out.printf("failed to load file %s:\n%s\n", filePath, aiGetErrorString());
+            return;
+        }
+
+        SceneParser loader = new SceneParser();
+
+        loader.loadScene(filePath, scene, sceneGraph);
+
+        System.out.printf("loaded file %s\n", filePath);
+
+        aiReleaseImport(scene);
+
+    }
+
     public Shader getShader(Integer assetID) {
         return shaderIndex.get(assetID);
     }
@@ -435,7 +492,7 @@ public class AssetManager {
     public Material createMaterial(MaterialEntry materialEntry) {
 
         Material material = new Material();
-        material.shader = getShader(materialEntry.shaderID);
+        material.shader = getShader(materialEntry.shaderID != null ? materialEntry.shaderID : defaultShader);
 
         // @formatter:off
         material.albedoMap              = getTexture(materialEntry.albedoID           != null ? materialEntry.albedoID : defaultTexture);

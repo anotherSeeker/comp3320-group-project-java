@@ -1,4 +1,4 @@
-package engine;
+package engine.rendering;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
@@ -15,6 +15,8 @@ import java.nio.FloatBuffer;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+
+import engine.AssetManager;
 
 public class CubeTexture {
     public int ID;

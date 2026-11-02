@@ -1,4 +1,4 @@
-package engine;
+package engine.rendering;
 
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
@@ -51,7 +51,7 @@ public class ShaderPipeline {
         );
     }
 
-    ShaderPipeline(Shader framebufferShader, int width, int height) {
+    public ShaderPipeline(Shader framebufferShader, int width, int height) {
         this.FBO = glGenFramebuffers();
         this.colourBuffer = glGenTextures();
         this.pingBuffer = glGenTextures();

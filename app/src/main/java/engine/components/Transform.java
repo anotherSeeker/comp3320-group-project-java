@@ -22,6 +22,12 @@ public class Transform {
         this.model = new Matrix4f().translationRotate(position, orientation);
     }
 
+    public void setModel(Matrix4f model) {
+        this.model = model;
+        model.getTranslation(position);
+        model.getNormalizedRotation(orientation);
+    }
+
     public void setPosition(Vector3f position) {
         this.position = position;
         this.model = new Matrix4f().translationRotate(position, orientation);
