@@ -70,10 +70,15 @@ function module.genCurlTexture(image: Image, perlinImage: Image)
             local dx = (right - left) / (2 * epsilon)
             local dy = (bottom - top) / (2 * epsilon)
             
-            local vx = math.clamp(dy,-1,1) * 0.5 + 0.5
-            local vy = math.clamp(-dx,-1,1) * 0.5 + 0.5
+            local vx = dy
+            local vy = -dx
 
-            local pixel = colour.New(vx, vy, 0,1)
+            local pixel = colour.New(
+                math.clamp(vx,-1,1) * 0.5 + 0.5, 
+                math.clamp(vy,-1,1) * 0.5 + 0.5, 
+                0,
+                1
+            )
 
             image:SetPixel(x, y, pixel)
         end

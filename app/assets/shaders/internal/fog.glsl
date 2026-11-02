@@ -29,7 +29,6 @@ float getDepth(vec2 uv){
 
 // backwards particle tracing
 vec2 advection(ivec2 gid){
-    
     vec2 position = imageLoad(advectionImage,gid).rg;
 
     vec2 velocity = texture(CurlMap,position).rg * 2.0 - 1.0;
@@ -57,12 +56,10 @@ void main(){
     float perlin = texture(PerlinMap,flowUV * 3).r;
 
     float depth = getDepth(uv);
-
     float density = mix(0.8,1.2,perlin);
-
     float fog_factor = exp(-depth*FogDensity * density);
 
     vec3 output_colour = mix(vec3(1.0),baseColour,fog_factor); 
 
-    imageStore(outputImage,gid,vec4(output_colour,1));
+    imageStore(outputImage,gid,vec4(perlin,perlin,perlin,1));
 }
