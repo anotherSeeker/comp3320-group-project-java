@@ -8,7 +8,7 @@ const HEIGHT = 512;
 const BITDEPTH = 4
 
 local perlinTex = media.Image(buffer.create(WIDTH * HEIGHT * BITDEPTH * 4)):Dimensions(WIDTH, HEIGHT)
-noise.genPerlinTexture(perlinTex,4,2.0,0.5,0.015)
+noise.genPerlinTexture(perlinTex,4,2.0,0.5,1)
 perlinTex.Channels = 1
 
 local curlTex = media.Image(buffer.create(WIDTH * HEIGHT * BITDEPTH * 4)):Dimensions(WIDTH, HEIGHT)

@@ -4,14 +4,29 @@ local colour = require("@vara/colour")
 
 local module = {}
 
-function perlinNoise(x: number,y: number,octaves: number,lacunarity: number,persistence: number,scale: number)
+-- map 2d plane to torus to prevent tiling.
+function seamlessPerlin(x: number,y: number,width: number,height: number,frequency: number)
+    local u = (x/width) * math.tau * frequency
+    local v = (y/height) * math.tau * frequency
+
+    local radiusA = 6.0
+    local radiusB = 2.0
+
+    local nx = (radiusA + radiusB * math.cos(v)) * math.cos(u)
+    local ny = (radiusA + radiusB * math.cos(v)) * math.sin(u)
+    local nz = radiusB * math.sin(v)
+
+    return math.noise(nx,ny,nz)
+end
+
+function perlinNoise(x: number,y: number,width: number,height: number,octaves: number,lacunarity: number,persistence: number,scale: number)
     local result: number = 0.0
     local max_amplitude = 0
     local amplitude = 1
     local frequency = scale
 
     for i = 1,octaves do
-        local value = math.noise(x * frequency,y * frequency,12345)
+        local value = seamlessPerlin(x,y,width,height,frequency)
 
         result += value * amplitude
         max_amplitude += amplitude
@@ -28,7 +43,7 @@ function module.genPerlinTexture(image: Image,octaves: number,lacunarity: number
     for y = 0,image.Height - 1 do
         for x = 0,image.Width - 1 do
 
-            local value = perlinNoise(x,y,octaves,lacunarity,persistence,scale)
+            local value = perlinNoise(x,y,image.Width,image.Height,octaves,lacunarity,persistence,scale)
             local pixel = colour.New(value,value,value,1)
 
             image:SetPixel(x, y, pixel)
@@ -46,17 +61,17 @@ function module.genCurlTexture(image: Image, perlinImage: Image)
     for y = 0,image.Height - 1 do
         for x = 0,image.Width - 1 do
        
-            local top = math.map(perlinImage:GetPixel(x, wrap(y-epsilon, image.Height)).Red,0,1,-1,1)
-            local bottom = math.map(perlinImage:GetPixel(x, wrap(y+epsilon, image.Height)).Red,0,1,-1,1)
+            local top = perlinImage:GetPixel(x, wrap(y-epsilon, image.Height)).Red
+            local bottom = perlinImage:GetPixel(x, wrap(y+epsilon, image.Height)).Red
 
-            local left = math.map(perlinImage:GetPixel(wrap(x-epsilon, image.Width),y).Red,0,1,-1,1)
-            local right = math.map(perlinImage:GetPixel(wrap(x+epsilon, image.Width),y).Red,0,1,-1,1)
+            local left = perlinImage:GetPixel(wrap(x-epsilon, image.Width),y).Red
+            local right = perlinImage:GetPixel(wrap(x+epsilon, image.Width),y).Red
 
             local dx = (right - left) / (2 * epsilon)
             local dy = (bottom - top) / (2 * epsilon)
             
-            local vx = math.map(dy,-1,1,0,1)
-            local vy = math.map(-dx,-1,1,0,1)
+            local vx = math.clamp(dy,-1,1) * 0.5 + 0.5
+            local vy = math.clamp(-dx,-1,1) * 0.5 + 0.5
 
             local pixel = colour.New(vx, vy, 0,1)
 
