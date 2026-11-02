@@ -450,12 +450,12 @@ public class WaterFFT
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
 
-        if (pingPong == 1 && outputToInput)
+        if (pingpong == 1 && outputToInput)
         {
             glCopyImageSubData(bufferTexID, inputTexID);
         }
 
-        if (!pingPong && !outputToInput)
+        if (!pingpong && !outputToInput)
         {
             glCopyImageSubData(inputTexID, bufferTexID);
         }
