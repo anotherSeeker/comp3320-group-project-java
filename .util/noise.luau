@@ -1,7 +1,6 @@
 --!strict
 -- perlin noise
 local colour = require("@vara/colour")
-local media = require("@vara/media")
 
 local module = {}
 
