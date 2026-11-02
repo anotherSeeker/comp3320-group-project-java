@@ -7,6 +7,7 @@ import java.util.List;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.FloatBuffer;
 
@@ -31,6 +32,7 @@ public class MeshAnim {
     private float[] weights;
 
     public static final int MAX_WEIGHTS = 4;
+    int VBO;
 
     public MeshAnim(Mesh mesh, int[] boneIndices, float[] weights) {
         materialIdx = 0;
@@ -39,6 +41,28 @@ public class MeshAnim {
         this.weights = weights;
         //this.aabbMin = aabbMin;
         //this.aabbMax = aabbMax;
+
+        VBO = glGenBuffers();
+
+        // Bone weights
+        FloatBuffer weightsBuffer = MemoryUtil.memCallocFloat(weights.length);
+        weightsBuffer.put(weights).flip();
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, weightsBuffer, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(5);
+        glVertexAttribPointer(5, 4, GL_FLOAT, false, 0, 0);
+
+
+        // Bone indices
+        IntBuffer boneIndicesBuffer = MemoryUtil.memCallocInt(boneIndices.length);
+        boneIndicesBuffer.put(boneIndices).flip();
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, boneIndicesBuffer, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, 4, GL_FLOAT, false, 0, 0);
+
+        MemoryUtil.memFree(weightsBuffer);
+        MemoryUtil.memFree(boneIndicesBuffer);
     }
 
     public static class AnimatedFrame {
@@ -92,5 +116,9 @@ public class MeshAnim {
 
     public Mesh getMesh() {
         return mesh;
+    }
+    public void delete() {
+        glDeleteBuffers(VBO);
+        mesh.delete();
     }
 }

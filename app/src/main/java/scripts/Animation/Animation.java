@@ -1,8 +1,9 @@
 package scripts.Animation;
+import engine.components.Transform;
 
 import org.joml.*;
 
-public class Entity {
+public class Animation extends Transform{
 
     private final String id;
     private final String modelId;
@@ -12,7 +13,7 @@ public class Entity {
     private Quaternionf rotation;
     private float scale;
 
-    public Entity(String id, String modelId) {
+    public Animation(String id, String modelId) {
         this.id = id;
         this.modelId = modelId;
         modelMatrix = new Matrix4f();
