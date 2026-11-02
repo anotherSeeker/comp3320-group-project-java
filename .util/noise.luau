@@ -36,17 +36,21 @@ function module.genPerlinTexture(image: Image,octaves: number,lacunarity: number
     end
 end
 
+function wrap(value: number,size: number)
+    return value % size
+end
+
 function module.genCurlTexture(image: Image, perlinImage: Image)
     local epsilon = 1
 
     for y = 0,image.Height - 1 do
         for x = 0,image.Width - 1 do
        
-            local top = math.map(perlinImage:GetPixel(x, math.max(y-epsilon,0)).Red,0,1,-1,1)
-            local bottom = math.map(perlinImage:GetPixel(x, math.min(y+epsilon,image.Height - 1)).Red,0,1,-1,1)
+            local top = math.map(perlinImage:GetPixel(x, wrap(y-epsilon, image.Height)).Red,0,1,-1,1)
+            local bottom = math.map(perlinImage:GetPixel(x, wrap(y+epsilon, image.Height)).Red,0,1,-1,1)
 
-            local left = math.map(perlinImage:GetPixel(math.max(x-epsilon,0),y).Red,0,1,-1,1)
-            local right = math.map(perlinImage:GetPixel(math.min(x+epsilon,image.Width - 1),y).Red,0,1,-1,1)
+            local left = math.map(perlinImage:GetPixel(wrap(x-epsilon, image.Width),y).Red,0,1,-1,1)
+            local right = math.map(perlinImage:GetPixel(wrap(x+epsilon, image.Width),y).Red,0,1,-1,1)
 
             local dx = (right - left) / (2 * epsilon)
             local dy = (bottom - top) / (2 * epsilon)
