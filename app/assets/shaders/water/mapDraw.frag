@@ -31,8 +31,8 @@ void main()
     }
 
     //proving to myself that we are actually doing something with the fourier components, and we are
-    // if (color.r == 0 && color.g == 0)
-    // {
-    //     color = vec4(0.5,0.5,0.5,1);
-    // }
+    if (color.r == 0 && color.g == 0)
+    {
+        color = vec4(0.5,0.5,0.5,1);
+    }
 }

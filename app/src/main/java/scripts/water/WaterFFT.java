@@ -38,7 +38,7 @@ public class WaterFFT
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
     public static int texSizePower = 8; //textureSize = 2^texSizePower;
-    public static int textureSize = 1; //gotta be a power of 2
+    public static int textureSize = 256; //gotta be a power of 2
     //to dispatch the correct number of work group based on their local size.
     public static int localGroupSize = 8;
 
@@ -103,8 +103,9 @@ public class WaterFFT
 
     public WaterFFT() {}
 
-    public static void setSizeParams()
+    public static void setSizeParams(int power)
     {
+        texSizePower = power;
         textureSize = 1;
         for (int i = 0; i < texSizePower; i++)
         {

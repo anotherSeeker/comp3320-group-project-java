@@ -24,7 +24,6 @@ public class WaterScene extends MonoScript {
 
     @Override
     protected void Start() {
-        WaterFFT.setSizeParams();
         //Generate our Gaussian noise array
         WaterFFT.noiseSetup();
         //compute jonswap params
