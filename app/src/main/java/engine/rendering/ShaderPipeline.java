@@ -1,27 +1,7 @@
 package engine.rendering;
 
 import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
-import static org.lwjgl.opengl.GL11.GL_DEPTH_COMPONENT;
-import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
-import static org.lwjgl.opengl.GL11.GL_FLOAT;
-import static org.lwjgl.opengl.GL11.GL_LINEAR;
-import static org.lwjgl.opengl.GL11.GL_NEAREST;
-import static org.lwjgl.opengl.GL11.GL_RGBA;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
-import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
-import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
-import static org.lwjgl.opengl.GL11.glBindTexture;
-import static org.lwjgl.opengl.GL11.glClear;
-import static org.lwjgl.opengl.GL11.glClearColor;
-import static org.lwjgl.opengl.GL11.glDisable;
-import static org.lwjgl.opengl.GL11.glGenTextures;
-import static org.lwjgl.opengl.GL11.glTexImage2D;
-import static org.lwjgl.opengl.GL11.glTexParameteri;
+import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL42.*;
 
@@ -29,13 +9,9 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL14.GL_DEPTH_COMPONENT24;
 import static org.lwjgl.opengl.GL15.GL_READ_ONLY;
-import static org.lwjgl.opengl.GL15.GL_READ_WRITE;
 import static org.lwjgl.opengl.GL15.GL_WRITE_ONLY;
 
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-
-import org.lwjgl.BufferUtils;
 
 import engine.AssetManager;
 import engine.rendering.ColourCurve.Curve;
@@ -48,7 +24,6 @@ public class ShaderPipeline {
     private int pingBuffer;
     private int pongBuffer;
     private int depthBuffer;
-    private int advectionBuffer;
 
     private Mesh screenQuad;
     private Shader framebufferShader;
@@ -90,7 +65,7 @@ public class ShaderPipeline {
 
     public ColourCurve ColourGradeCurve = new ColourCurve(Curve.Default(), Curve.Default(), Curve.Default());
 
-    public float deltaTime;
+    public float Time = 0.0f;
 
     private int screenWidth;
     private int screenHeight;
@@ -120,41 +95,12 @@ public class ShaderPipeline {
         );
     }
 
-    private void initAdvectionTexture() {
-        FloatBuffer buffer = BufferUtils.createFloatBuffer(screenWidth * screenHeight * 4);
-
-        for (int y = 0; y < screenHeight; y++) {
-            for (int x = 0; x < screenWidth; x++) {
-                float u = (x + 0.5f) / screenWidth;
-                float v = (y + 0.5f) / screenHeight;
-
-                buffer.put(u);
-                buffer.put(v);
-                buffer.put(0.0f);
-                buffer.put(1.0f);
-            }
-        }
-
-        buffer.flip();
-
-        glBindTexture(GL_TEXTURE_2D, advectionBuffer);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-        glTexImage2D(
-                GL_TEXTURE_2D, 0, GL_RGBA16F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, buffer
-        );
-    }
-
     public ShaderPipeline(Shader framebufferShader, int width, int height) {
         this.FBO = glGenFramebuffers();
         this.colourBuffer = glGenTextures();
         this.pingBuffer = glGenTextures();
         this.pongBuffer = glGenTextures();
         this.depthBuffer = glGenTextures();
-        this.advectionBuffer = glGenTextures();
 
         this.screenQuad = Mesh.Quad();
 
@@ -167,7 +113,6 @@ public class ShaderPipeline {
         initTexture(colourBuffer);
         initTexture(pingBuffer);
         initTexture(pongBuffer);
-        initAdvectionTexture();
         initDepthTexture();
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colourBuffer, 0);
@@ -193,8 +138,6 @@ public class ShaderPipeline {
 
         glBindTexture(GL_TEXTURE_2D, pongBuffer);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, (ByteBuffer) null);
-
-        initAdvectionTexture();
 
         glBindTexture(GL_TEXTURE_2D, depthBuffer);
         glTexImage2D(
@@ -287,8 +230,7 @@ public class ShaderPipeline {
             fog.setTexture("CurlMap", curlTexture, 2);
             fog.setFloat("CurlStrength", CurlStrength);
             fog.setFloat("FogDensity", FogDensity);
-            fog.setFloat("DeltaTime", deltaTime);
-            glBindImageTexture(3, advectionBuffer, 0, false, 0, GL_READ_WRITE, GL_RGBA16F);
+            fog.setFloat("Time", Time);
 
             runShader(fog, currentTexture, target);
 

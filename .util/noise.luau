@@ -19,6 +19,17 @@ function seamlessPerlin(x: number,y: number,width: number,height: number,frequen
     return math.noise(nx,ny,nz)
 end
 
+function warpedPerlin(x: number,y: number,width: number,height: number,frequency: number,warpStrength: number)
+    
+    local warpX = seamlessPerlin(x,y,width,height,frequency * 0.5)
+    local warpY = seamlessPerlin(x + 100,y + 100,width,height,frequency * 0.5)
+
+    local warpedX = x + warpX * width * warpStrength
+    local warpedY = y + warpY * height * warpStrength
+
+    return seamlessPerlin(warpedX, warpedY, width, height, frequency)
+end
+
 function perlinNoise(x: number,y: number,width: number,height: number,octaves: number,lacunarity: number,persistence: number,scale: number)
     local result: number = 0.0
     local max_amplitude = 0
@@ -26,7 +37,7 @@ function perlinNoise(x: number,y: number,width: number,height: number,octaves: n
     local frequency = scale
 
     for i = 1,octaves do
-        local value = seamlessPerlin(x,y,width,height,frequency)
+        local value = warpedPerlin(x,y,width,height,frequency,0.2)
 
         result += value * amplitude
         max_amplitude += amplitude

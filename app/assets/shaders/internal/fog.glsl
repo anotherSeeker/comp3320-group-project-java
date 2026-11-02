@@ -4,7 +4,6 @@ layout(local_size_x = 8,local_size_y = 8,local_size_z = 1) in;
 layout(rgba16f,binding = 0) readonly uniform image2D inputImage;
 layout(rgba16f,binding = 1) writeonly uniform image2D outputImage;
 layout(rgba16f,binding = 2) readonly uniform image2D rawImage;
-layout(rgba16f,binding = 3) uniform image2D advectionImage;
 
 uniform sampler2D DepthBuffer;
 uniform sampler2D PerlinMap;
@@ -13,29 +12,23 @@ uniform sampler2D CurlMap;
 uniform float CurlStrength = 0.5;
 uniform float FogDensity = 0.05;
 
-uniform float DeltaTime;
+uniform float Time;
 
 float getDepth(vec2 uv){
-    ivec2 gid = ivec2(gl_GlobalInvocationID.xy);
-    ivec2 size = imageSize(inputImage);
-
     float near = 0.1;
     float far = 100.0;
 
-    float depth = texture(DepthBuffer,uv).r * 2.0 - 1.0;
+    float depth = texture(DepthBuffer,uv).r;
 
-    return (2.0 * near * far) / (far + near - depth * (far - near));
+    return (near * far) / (far - depth * (far - near));
 }
 
-// backwards particle tracing
-vec2 advection(ivec2 gid){
-    vec2 position = imageLoad(advectionImage,gid).rg;
+float getFogNoise(vec2 uv,vec2 curl,float phase){
+    float perlinLarge = texture(PerlinMap,uv * 0.5 + curl * phase * 0.2).r;
+    float perlinMed = texture(PerlinMap,uv * 1.5 + curl * phase * 0.7).r;
+    float perlinFine = texture(PerlinMap,uv * 4.0 + curl * phase).r;
 
-    vec2 velocity = texture(CurlMap,position).rg * 2.0 - 1.0;
-
-    position -= velocity * DeltaTime * CurlStrength;
-
-    return fract(position);
+    return perlinLarge * 0.55 + perlinMed * 0.3 + perlinFine * 0.15;
 }
 
 void main(){
@@ -49,17 +42,28 @@ void main(){
     vec3 baseColour = imageLoad(rawImage,gid).rgb;
     vec2 uv = (vec2(gid) + 0.5) / vec2(size);
 
-    vec2 flowUV = advection(gid);
+    float rawDepth = texture(DepthBuffer,uv).r * 2.0 - 1.0;
+    if (rawDepth > 0.9999) {
+        imageStore(outputImage,gid,vec4(baseColour,1));
+        return;
+    }
 
-    imageStore(advectionImage,gid,vec4(flowUV,0.0,1.0));
 
-    float perlin = texture(PerlinMap,flowUV * 3).r;
+    float phase = fract(Time * CurlStrength);
+
+    vec2 curl = texture(CurlMap,uv).rg * 2.0 - 1.0;
+
+    float perlinA = getFogNoise(uv, curl, phase);
+    float perlinB = getFogNoise(uv, curl, (phase - 1.0));
+
+    float perlin = mix(perlinA,perlinB,phase);
 
     float depth = getDepth(uv);
-    float density = mix(0.8,1.2,perlin);
-    float fog_factor = exp(-depth*FogDensity * density);
+    float density = mix(0.6,1.2,perlin);
 
-    vec3 output_colour = mix(vec3(1.0),baseColour,fog_factor); 
+    float transmittance = exp(-depth*FogDensity * density);
 
-    imageStore(outputImage,gid,vec4(perlin,perlin,perlin,1));
+    vec3 output_colour = mix(vec3(1.0),baseColour,transmittance); 
+
+    imageStore(outputImage,gid,vec4(output_colour,1));
 }

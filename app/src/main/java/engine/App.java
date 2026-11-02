@@ -118,7 +118,7 @@ public class App {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             scene.draw();
 
-            pipeline.deltaTime = (float) deltaTime;
+            pipeline.Time += (float) deltaTime;
 
             pipeline.process();
             pipeline.render();
