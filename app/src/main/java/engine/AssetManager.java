@@ -159,10 +159,12 @@ public class AssetManager {
                 Path.of("assets/shaders/internal/framebuffer.frag")
         );
 
-        this.loadInternalShader(
+        this.loadInternalShaderWithTess(
                 defaultShader,
                 Path.of("assets/shaders/default.vert"),
-                Path.of("assets/shaders/default.frag")
+                Path.of("assets/shaders/default.frag"),
+                Path.of("assets/shaders/default.tesc"),
+                Path.of("assets/shaders/default.tese")
         );
 
         this.loadInternalComputeShader(blurPostProcess, Path.of("assets/shaders/internal/blur.glsl"));
@@ -201,6 +203,25 @@ public class AssetManager {
 
         Shader shader = new Shader();
         shader.init(vertexSource, fragmentSource);
+
+        shaderIndex.put(ID, shader);
+    }
+
+    private void loadInternalShaderWithTess(
+            Integer ID, Path vertexPath,
+            Path fragmentPath,
+            Path tessControlPath,
+            Path tessEvalPath
+    ) {
+        String vertexSource = readFile(vertexPath);
+        String fragmentSource = readFile(fragmentPath);
+        String tessControlSource = readFile(tessControlPath);
+        String tessEvalSource = readFile(tessEvalPath);
+
+        Shader shader = new Shader();
+        if (!shader.withTesselation(vertexSource, fragmentSource, tessControlSource, tessEvalSource)) {
+            throw new RuntimeException("failed to load shader with tesselation shaders");
+        }
 
         shaderIndex.put(ID, shader);
     }

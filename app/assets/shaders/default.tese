@@ -1,5 +1,7 @@
 #version 430
 
+layout(triangles, equal_spacing, ccw) in;
+
 in TC_OUT {
     vec3 position;
     vec3 normal;
@@ -62,5 +64,5 @@ void main(){
 
     TBN = mat3(tangent,bitangent,normal);
 
-    gl_Position = CameraMatrix * Model * vec4(displaced,1);
+    gl_Position = CameraMatrix * Model * vec4(localPosition,1);
 }

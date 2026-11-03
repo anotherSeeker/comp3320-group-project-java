@@ -119,7 +119,7 @@ public class SceneGraph {
             material.bindAsUniform();
 
             gameObject.mesh.bind();
-            gameObject.mesh.draw();
+            gameObject.mesh.drawPatches();
         }
     }
 

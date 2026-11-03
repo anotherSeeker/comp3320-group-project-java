@@ -26,10 +26,10 @@ void main(){
     tc_out[gl_InvocationID].bitangent = tc_in[gl_InvocationID].bitangent;
 
     if(gl_InvocationID == 0){
-        gl_TessLevelOuter[0] = 16.0;
-        gl_TessLevelOuter[1] = 16.0;
-        gl_TessLevelOuter[2] = 16.0;
-        gl_TessLevelInner[0] = 16.0;
+        gl_TessLevelOuter[0] = 8.0;
+        gl_TessLevelOuter[1] = 8.0;
+        gl_TessLevelOuter[2] = 8.0;
+        gl_TessLevelInner[0] = 8.0;
     }
 
 }
