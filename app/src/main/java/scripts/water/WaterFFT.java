@@ -397,13 +397,33 @@ public class WaterFFT
         //System.out.println("compute Fourier Components done");
     }
 
-    public static void useButterflyShader()
+    public static void fourierComponentCompute()
+    {
+        WaterFFT.setupFourierComponentShader();
+        WaterFFT.dispatchFComponentShader();
+    }
+
+    private static void setupButterflyCompute()
+    {
+        glUseProgram( fComponentProgramID );
+
+        //inputs
+        glUniform1f(glGetUniformLocation(fComponentProgramID, "texSize"), textureSize);
+
+        //outputs
+        glActiveTexture(GL_TEXTURE0);
+	    glBindTexture(GL_TEXTURE_2D, butterflyProgramID);
+        glBindImageTexture( 0, butterflyProgramID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+
+    }
+
+    private static void useButterflyShader()
     {
         
     }
 
 
-    public static void dispatchButterflyPrecomputeShader()
+    private static void dispatchButterflyPrecomputeShader()
     {
         //use our program and bind our textures
         useButterflyShader();
@@ -420,6 +440,12 @@ public class WaterFFT
         GLErrors.printIfError("postDisptach dispatchButterflyPrecomputeShader");
     }
 
+    public static void precomputeButterflyTexture()
+    {
+        setupButterflyCompute();
+        dispatchButterflyPrecomputeShader();
+    }
+
 
     private static void ifft_use(int inputTexID, int bufferTexID, int ifftProgramID)
     {
@@ -432,11 +458,11 @@ public class WaterFFT
 
         glActiveTexture(GL_TEXTURE0+1);
         glBindTexture(GL_TEXTURE_2D, inputTexID);
-        glBindImageTexture( 1, inputTexID, 0, false, 0, GL_READ_ONLY, GL_RGBA32F );
+        glBindImageTexture( 1, inputTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
 
         glActiveTexture(GL_TEXTURE0+2);
         glBindTexture(GL_TEXTURE_2D, bufferTexID);
-        glBindImageTexture( 2, bufferTexID, 0, false, 0, GL_READ_ONLY, GL_RGBA32F );
+        glBindImageTexture( 2, bufferTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
 
         glUniform1f(glGetUniformLocation(ifftProgramID, "size"), textureSize);
     }

@@ -42,7 +42,7 @@ vec2 horizStep()
 	else
 	{
 		vec2 out0 = vec2(imageLoad(buffer1, vec2(inputsIndices.x, id.y)) + cMult(vec2(butterfly.x, -butterfly.y)), imageLoad(buffer1, vec2(inputsIndices.y, id.y)) );
-		imageStore(buffer1, invocID, vec4(out0.x, out0.y, 0, 0));
+		imageStore(buffer0, invocID, vec4(out0.x, out0.y, 0, 0));
 	}
 }
 

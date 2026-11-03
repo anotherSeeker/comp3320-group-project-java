@@ -6,9 +6,8 @@ layout(local_size_x = 1, local_size_y = 8, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform image2D butterflyTex;
 
 uniform float texSize;
-uniform float time;
 
-//generating our "butterfly texture" for the fft
+//generating our "butterfly texture" for the fft based primarily on 
 
 vec2 cExp(vec2 a)
 {

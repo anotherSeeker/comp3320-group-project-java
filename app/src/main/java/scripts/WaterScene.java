@@ -40,15 +40,21 @@ public class WaterScene extends MonoScript {
 
         GLErrors.printIfError("waveSpec WScene");
 
-        WaterFFT.setupFourierComponentShader();
-        WaterFFT.dispatchFComponentShader();
+        //move to update loop later
+        WaterFFT.fourierComponentCompute();
 
         GLErrors.printIfError("fComp WScene");
 
+        WaterFFT.precomputeButterflyTexture();
+
+        GLErrors.printIfError("butterflyShader WScene");
+
+        GLErrors.printIfError("ifft WScene");
+
         //render our maps to screen
         //drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dxdzIndexID);
-        drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dxdzIndexID);
-        //drawMapQuads(WaterFFT.dxdzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dyxdyzIndexID, WaterFFT.dxxdzzIndexID);
+        //drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dxdzIndexID);
+        drawMapQuads(WaterFFT.dxdzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dyxdyzIndexID, WaterFFT.dxxdzzIndexID);
         //makeWaterPlane();
 
         GLErrors.printIfError("drawMapQuads WScene");
