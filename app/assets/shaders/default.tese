@@ -51,7 +51,7 @@ void main(){
 
     localNormal = normalize(localNormal);
 
-    float height = texture(DisplacementMap,UV).r;
+    float height = textureLod(DisplacementMap,UV,0).r;
     
     localPosition += localNormal * height * 0.1;
     
