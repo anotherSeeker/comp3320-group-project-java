@@ -32,6 +32,31 @@ float getFogNoise(vec2 uv,vec2 curl,float phase){
     return perlinLarge * 0.55 + perlinMed * 0.3 + perlinFine * 0.15;
 }
 
+vec3 getBlurredColour(ivec2 pixel, float blurRadius){
+
+    ivec2 size = imageSize(inputImage);
+
+    float[7] kernel = float[](0,1,4,7,4,1,0);
+
+    float sumWeight = 0;
+    vec3 result = vec3(0.0);
+
+    for(int y = -3;y <= 3; y++){
+        for(int x = -3;x <= 3; x++){
+            vec2 offset = vec2(x,y) * blurRadius;
+            ivec2 samplePosition = clamp(pixel + ivec2(offset),ivec2(0),size - 1);
+
+            float weight = kernel[x + 3] * kernel[y + 3];
+
+            vec3 colour = imageLoad(inputImage,samplePosition).rgb;
+            result += colour * weight;
+            sumWeight += weight;
+        }
+    }
+
+    return result / sumWeight;
+}
+
 void main(){
     ivec2 gid = ivec2(gl_GlobalInvocationID.xy);
     ivec2 size = imageSize(inputImage);
@@ -43,11 +68,11 @@ void main(){
     vec3 baseColour = imageLoad(inputImage,gid).rgb;
     vec2 uv = (vec2(gid) + 0.5) / vec2(size);
 
-    float rawDepth = texture(DepthBuffer,uv).r;
-    if (rawDepth > 0.9999) {
-        imageStore(outputImage,gid,vec4(baseColour,1));
-        return;
-    }
+    // float rawDepth = texture(DepthBuffer,uv).r;
+    // if (rawDepth > 0.9999) {
+    //     imageStore(outputImage,gid,vec4(baseColour,1));
+    //     return;
+    // }
 
 
     float phase = Time * CurlStrength;
@@ -63,7 +88,13 @@ void main(){
 
     float transmittance = exp(-depth * FogDensity * density);
 
-    vec3 output_colour = mix(FogColour * (0.5 + perlin),baseColour,transmittance); 
+    int blurRadius = int((1 - transmittance) * 4.0);
+
+    vec3 blurredColour = getBlurredColour(gid,blurRadius * 10);
+
+    baseColour = mix(baseColour,blurredColour,(1 - transmittance));
+
+    vec3 output_colour = mix(FogColour * (1.0 + perlin * 0.5),baseColour,transmittance); 
 
     imageStore(outputImage,gid,vec4(output_colour,1));
 }
