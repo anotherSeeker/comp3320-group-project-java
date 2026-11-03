@@ -139,6 +139,7 @@ public class DemoScene extends MonoScript {
 
     float[] fogDensity = new float[] { 0.05f };
     float[] curlStrength = new float[] { 0.04f };
+    float[] fogColour = new float[] { 1.0f, 1.0f, 1.0f };
 
     ImBoolean bloomEnabled = new ImBoolean(true);
     ImBoolean vignetteEnabled = new ImBoolean(false);
@@ -273,6 +274,7 @@ public class DemoScene extends MonoScript {
         if (ImGui.beginTabItem("Fog")) {
             ImGui.sliderFloat("curl strength", curlStrength, 0.0f, 1.0f);
             ImGui.sliderFloat("fog density", fogDensity, 0.0f, 0.25f);
+            ImGui.colorEdit3("fog colour", fogColour);
             ImGui.endTabItem();
         }
 
@@ -318,6 +320,7 @@ public class DemoScene extends MonoScript {
 
         PostProcess.FogDensity = fogDensity[0];
         PostProcess.CurlStrength = curlStrength[0];
+        PostProcess.FogColour = new Vector3f(fogColour[0], fogColour[1], fogColour[2]);
 
         ImGui.end();
 

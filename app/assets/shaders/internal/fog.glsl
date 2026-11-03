@@ -13,6 +13,7 @@ uniform float CurlStrength = 0.5;
 uniform float FogDensity = 0.05;
 
 uniform float Time;
+uniform vec3 FogColour = vec3(1.0);
 
 float getDepth(vec2 uv){
     float near = 0.1;
@@ -60,9 +61,9 @@ void main(){
     float depth = getDepth(uv);
     float density = mix(0.6,1.2,perlin);
 
-    float transmittance = exp(-depth*FogDensity * density);
+    float transmittance = exp(-depth * FogDensity * density);
 
-    vec3 output_colour = mix(vec3(1.0),baseColour,transmittance); 
+    vec3 output_colour = mix(FogColour * (1 + perlin * 0.5),baseColour,transmittance); 
 
     imageStore(outputImage,gid,vec4(output_colour,1));
 }

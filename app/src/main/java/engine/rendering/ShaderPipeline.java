@@ -13,6 +13,8 @@ import static org.lwjgl.opengl.GL15.GL_WRITE_ONLY;
 
 import java.nio.ByteBuffer;
 
+import org.joml.Vector3f;
+
 import engine.AssetManager;
 import engine.rendering.ColourCurve.Curve;
 
@@ -62,6 +64,7 @@ public class ShaderPipeline {
 
     public float CurlStrength = 0.5f;
     public float FogDensity = 0.5f;
+    public Vector3f FogColour = new Vector3f(1.0f, 1.0f, 1.0f);
 
     public ColourCurve ColourGradeCurve = new ColourCurve(Curve.Default(), Curve.Default(), Curve.Default());
 
@@ -228,8 +231,10 @@ public class ShaderPipeline {
             fog.use();
             fog.setTexture("PerlinMap", perlinTexture, 1);
             fog.setTexture("CurlMap", curlTexture, 2);
+
             fog.setFloat("CurlStrength", CurlStrength);
             fog.setFloat("FogDensity", FogDensity);
+            fog.setVector3("FogColour", FogColour);
             fog.setFloat("Time", Time);
 
             runShader(fog, currentTexture, target);
