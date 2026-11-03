@@ -8,6 +8,9 @@ import engine.rendering.Shader;
 import engine.rendering.Texture;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.GL_R32F;
+import static org.lwjgl.opengl.GL30.GL_RGB32F;
+import static org.lwjgl.opengl.GL30.GL_RGBA32F;
 import static org.lwjgl.system.MemoryUtil.memAllocFloat;
 import static org.lwjgl.system.MemoryUtil.memAllocInt;
 import static org.lwjgl.system.MemoryUtil.memFree;
@@ -43,9 +46,7 @@ import static org.lwjgl.assimp.Assimp.aiProcess_GenSmoothNormals;
 import static org.lwjgl.assimp.Assimp.aiProcess_JoinIdenticalVertices;
 import static org.lwjgl.assimp.Assimp.aiProcess_Triangulate;
 import static org.lwjgl.assimp.Assimp.aiReleaseImport;
-import static org.lwjgl.opengl.GL11.GL_RED;
-import static org.lwjgl.opengl.GL11.GL_RGB;
-import static org.lwjgl.opengl.GL11.GL_RGBA;
+
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 import static org.lwjgl.system.MemoryUtil.memAllocFloat;
@@ -401,15 +402,18 @@ public class AssetManager {
                 );
             }
 
-            int channelFormat = GL_RGBA;
+            int transferFormat = GL_RGBA;
+            int internalFormat = GL_RGBA32F;
 
             if (channels.get(0) == 3) {
-                channelFormat = GL_RGB;
+                transferFormat = GL_RGB;
+                internalFormat = GL_RGB32F;
             } else if (channels.get(0) == 1) {
-                channelFormat = GL_RED;
+                transferFormat = GL_RED;
+                internalFormat = GL_R32F;
             }
 
-            Texture texture = new Texture(data, width.get(0), height.get(0), channelFormat);
+            Texture texture = new Texture(data, width.get(0), height.get(0), internalFormat, transferFormat);
 
             textureIndex.put(ID, texture);
 
@@ -420,14 +424,14 @@ public class AssetManager {
         return ID;
     }
 
-    public Integer LoadTexture(ByteBuffer data, int width, int height, int channelFormat, String name) {
+    public Integer LoadTexture(ByteBuffer data, int width, int height, int internalFormat, int transferFormat, String name) {
 
         Integer ID = name.hashCode();
 
         if (textureIndex.containsKey(ID))
             return ID;
 
-        Texture texture = new Texture(data, width, height, channelFormat);
+        Texture texture = new Texture(data, width, height, internalFormat, transferFormat);
 
         textureIndex.put(ID, texture);
 

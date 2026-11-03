@@ -4,6 +4,8 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
+import static org.lwjgl.opengl.GL11.GL_LINEAR;
+import static org.lwjgl.opengl.GL11.GL_LINEAR_MIPMAP_LINEAR;
 import static org.lwjgl.opengl.GL11.GL_NEAREST;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_BORDER_COLOR;
 import static org.lwjgl.opengl.GL11.GL_REPEAT;
@@ -27,7 +29,8 @@ import static org.lwjgl.opengl.GL30.*;
 public class Texture {
     public int ID;
 
-    public Texture(ByteBuffer data, int width, int height, int colourFormat) {
+     //New version of texture creation, fixed to store colour data internally with a sized format, as we need to use a sized format for internal storage or we'll get weird hardware dependent errors
+    public Texture(ByteBuffer data, int width, int height, int internalFormat, int transferFormat) {
         ID = glGenTextures();
 
         glBindTexture(GL_TEXTURE_2D, ID);
@@ -38,9 +41,26 @@ public class Texture {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, colourFormat, width, height, 0, colourFormat, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, transferFormat, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
+
+    //Old version of texture creation, fixed to store colour data internally as RGBA32F, as we need to use a sized format for internal storage or we'll get weird hardware dependent errors
+    public Texture(ByteBuffer data, int width, int height, int colorFormat) {
+        ID = glGenTextures();
+
+        glBindTexture(GL_TEXTURE_2D, ID);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, colorFormat, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+
 
     //for textures created at runtime
     public Texture(int internalFormat, int transferFormat, ByteBuffer data, int size) 
