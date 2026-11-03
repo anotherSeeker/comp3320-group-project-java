@@ -8,16 +8,16 @@
 
 #define doCapillaryWaves true
 
-layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
-layout(rg32f, binding = 0) uniform readonly image2D gaussianData;
-layout(rgba32f, binding = 1) uniform image2D waveVecTex;
-layout(rg32f, binding = 2) uniform image2D h0Tex;
-
 uniform float patchLength;
 uniform int textureSize;
 uniform float fetch_F;
 uniform float depth_H;
 uniform float windSpeed_U;
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+layout(rg32f, binding = 0) uniform readonly image2D gaussianData;
+layout(rgba32f, binding = 1) uniform image2D waveVecTex;
+layout(rg32f, binding = 2) uniform image2D h0Tex;
 
 //donelan-banner spreading function
 float doDirectionalSpread(float omega, float omegaPeak, float theta)

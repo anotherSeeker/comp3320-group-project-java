@@ -1,5 +1,7 @@
 package scripts;
 
+import static org.lwjgl.opengl.GL11.glGetError;
+
 import java.nio.file.Path;
 
 import org.joml.Vector3f;
@@ -24,10 +26,24 @@ public class WaterScene extends MonoScript {
 
     @Override
     protected void Start() {
+        int err = glGetError();
+        if (err != 0)
+            System.out.println("start Error code: "+err);
+            
         //Generate our Gaussian noise array
         WaterFFT.noiseSetup();
+
+        err = glGetError();
+        if (err != 0)
+            System.out.println("noise Error code: "+err);
+            
+        
         //compute jonswap params
         WaterFFT.computeWaveSpectrum();
+
+        err = glGetError();
+        if (err != 0)
+            System.out.println("spect Error code: "+err);
 
         WaterFFT.setupFourierComponentShader();
         WaterFFT.dispatchFComponentShader();

@@ -159,10 +159,24 @@ public class WaterFFT
 
     public static void computeWaveSpectrum()
     {
+        System.out.println("start wave spectra");
         setupSpectraShader();
+        int err = glGetError();
+        if (err != 0)
+            System.out.println("Setup Error code: "+err);
         //dispatches and waits for completion
         dispatchWaveSpectra();
+
+        err = glGetError();
+        if (err != 0)
+            System.out.println("Dispatch Error code: "+err);
         System.out.println("compute spectra done");
+
+        err = glGetError();
+        if (err != 0)
+        {
+            System.out.println("Error code: "+err);
+        }
     }
 
     private static void setupSpectraShader()
@@ -170,21 +184,43 @@ public class WaterFFT
         if (!spectraShaderCreated)
         {
             String source = AssetManager.get().ReadCompute(wavespectraComputePath);
+            int err = glGetError();
+            if (err != 0)
+                System.out.println("link 0 Error code: "+err);
             
             wavespectraComputeID = glCreateShader(GL_COMPUTE_SHADER);
+            err = glGetError();
+            if (err != 0)
+                System.out.println("link 01 Error code: "+err);
+            
+            System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
             glShaderSource(wavespectraComputeID, source);
+            err = glGetError();
+            if (err != 0)
+                System.out.println("link 02 Error code: "+err);
+            
+            System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
             glCompileShader(wavespectraComputeID);
+
+            err = glGetError();
+            if (err != 0)
+                System.out.println("link 1 Error code: "+err);
             
             System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
 
             wavespectraProgramID = glCreateProgram();
             glAttachShader(wavespectraProgramID, wavespectraComputeID);
             glLinkProgram(wavespectraProgramID);
-
+            err = glGetError();
+            if (err != 0)
+                System.out.println("link 2 Error code: "+err);
             System.out.println(glGetProgramInfoLog(wavespectraProgramID,1024));
 
             //make the textures
             genSpectrumTex();
+            err = glGetError();
+            if (err != 0)
+                System.out.println("gen Error code: "+err);
             
             spectraShaderCreated = true;
         }
@@ -202,7 +238,6 @@ public class WaterFFT
 
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
-        System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
     }
 
     //binds our kxkyfreq and complex displacement textures so we can use them in wavespectra.comp
@@ -287,6 +322,9 @@ public class WaterFFT
 
             fComponentShaderCreated = true;
         }
+        int err = glGetError();
+        if (err != 0)
+            System.out.println("setup f comp Error code: "+err);
     }
 
     public static void genFComponentTex()
@@ -366,17 +404,28 @@ public class WaterFFT
 
     public static void dispatchFComponentShader()
     {
+        System.out.println("start dispatch FComponent");
         float currentTime = (float) glfwGetTime();
         //use our program and bind our textures
         useFComponentShader(currentTime);
+        int err = glGetError();
+        if (err != 0)
+            System.out.println("use Error code: "+err);
         //send it
         //System.out.println("dispatch");
         glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
 
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        err = glGetError();
+        if (err != 0)
+            System.out.println("Dispatch Error code: "+err);
 
         System.out.println("compute Fourier Components done");
+
+        err = glGetError();
+        if (err != 0)
+            System.out.println("Error Code: "+err);
     }
 
     public static void useButterflyShader()
@@ -396,7 +445,11 @@ public class WaterFFT
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-        System.out.println("precompute fourier buffer done");
+        System.out.println("precompute butterfly texture done");
+
+        int err = glGetError();
+        if (err != 0)
+            System.out.println("Error code: "+err);
     }
 
 

@@ -25,12 +25,25 @@ vec2 cExp(vec2 a)
     return vec2(cos(a.y), sin(a.y)) * exp(a.x);
 }
 
-vec2 FFT()
+vec2 horizStep()
 {
+    ivec2 invocID = ivec2( gl_GlobalInvocationID.xy );
+    vec4 butterfly = imageLoad(ButterflyTex, invocID)//PrecomputedData[vec2(Step, id.x)];
 
+	ivec2 inputsIndices = (ivec2)butterfly.zw;
 
+    //imageLoad(buffer0, position);
 
-
+	if (PingPong)
+	{
+		vec2 out1 = vec2(imageLoad(buffer0, vec2(inputsIndices.x, id.y)) + cMult(vec2(butterfly.x, -butterfly.y)), 
+                    imageLoad(buffer0, vec2(inputsIndices.y, id.y)) );
+	}
+	else
+	{
+		vec2 out2 = vec2(imageLoad(buffer1, vec2(inputsIndices.x, id.y)) + cMult(vec2(butterfly.x, -butterfly.y)), 
+                    imageLoad(buffer1, vec2(inputsIndices.y, id.y)) );
+	}
 }
 
 void main()
