@@ -23,6 +23,7 @@ public class Material {
     public Texture ambientOcclusionMap;
     public Texture normalMap;
     public Texture metallicMap;
+    public Texture displacementMap;
 
     public void bindAsUniform() {
         this.shader.setTexture("Albedo", this.albedoMap, 4);
@@ -30,6 +31,7 @@ public class Material {
         this.shader.setTexture("AmbientOcclusionMap", this.ambientOcclusionMap, 6);
         this.shader.setTexture("NormalMap", this.normalMap, 7);
         this.shader.setTexture("MetallicMap", this.metallicMap, 8);
+        this.shader.setTexture("DisplacementMap", this.displacementMap, 9);
 
         this.shader.setFloat("Roughness", this.roughness);
         this.shader.setFloat("AmbientOcclusion", this.ambientOcclusion);

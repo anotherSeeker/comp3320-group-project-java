@@ -522,7 +522,8 @@ public class AssetManager {
         material.roughnessMap           = getTexture(materialEntry.roughnessID        != null ? materialEntry.roughnessID : blackTexture);
         material.ambientOcclusionMap    = getTexture(materialEntry.ambientOcclusionID != null ? materialEntry.ambientOcclusionID : whiteTexture);
         material.normalMap              = getTexture(materialEntry.normalID           != null ? materialEntry.normalID : normalTexture);
-        material.metallicMap            = getTexture(materialEntry.metallicID           != null ? materialEntry.metallicID : blackTexture);
+        material.metallicMap            = getTexture(materialEntry.metallicID         != null ? materialEntry.metallicID : blackTexture);
+        material.displacementMap        = getTexture(materialEntry.displacementID     != null ? materialEntry.displacementID : blackTexture);
         // @formatter:on
 
         return material;

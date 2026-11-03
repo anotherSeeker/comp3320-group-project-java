@@ -28,6 +28,7 @@ public class DemoScene extends MonoScript {
         .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")))
         .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")))
         .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg")))
+        .add("DISPLACEMENT", Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Displacement.jpg")))
     );
 
     Material brick_Material = Assets.createMaterial(new MaterialEntry()
@@ -35,6 +36,7 @@ public class DemoScene extends MonoScript {
         .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_Roughness.jpg")))
         .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_AmbientOcclusion.jpg")))
         .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_NormalGL.jpg")))
+        .add("DISPLACEMENT", Assets.LoadTexture(Path.of("assets/textures/Bricks/Bricks066_1K-JPG_Displacement.jpg")))
     );
 
     Material concrete_Material = Assets.createMaterial(new MaterialEntry()
@@ -42,6 +44,7 @@ public class DemoScene extends MonoScript {
         .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_Roughness.jpg")))
         .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_AmbientOcclusion.jpg")))
         .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_NormalGL.jpg")))
+        .add("DISPLACEMENT", Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_Displacement.jpg")))
     );
 
     Material ornament_Material = Assets.createMaterial(new MaterialEntry()
@@ -49,6 +52,7 @@ public class DemoScene extends MonoScript {
         .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Roughness.jpg")))
         .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_NormalGL.jpg")))
         .add("METAL",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Metalness.jpg")))
+        .add("DISPLACEMENT", Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Displacement.jpg")))
     );
     //@formatter:on
 

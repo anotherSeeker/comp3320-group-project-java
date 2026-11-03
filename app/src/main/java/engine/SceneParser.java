@@ -123,6 +123,11 @@ public class SceneParser {
                 );
             }
 
+            texture = loadTexture(assimpMat, aiTextureType_DISPLACEMENT);
+            if (texture != null) {
+                entry.add("DISPLACEMENT", texture);
+            }
+
             material = assetManager.createMaterial(entry);
 
             FloatBuffer value = stack.mallocFloat(1);
