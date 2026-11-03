@@ -1,6 +1,7 @@
 package engine;
 
 import engine.rendering.*;
+import engine.GLErrors;
 
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -53,6 +54,8 @@ public class App {
         glfwMakeContextCurrent(window);
         GL.createCapabilities();
 
+        GLErrors.printIfError("glCreateCapabilities  app.init");
+
         ImGui.createContext();
         imGuiGlfw = new ImGuiImplGlfw();
         imGuiGL3 = new ImGuiImplGl3();
@@ -62,8 +65,11 @@ public class App {
 
         glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
         glViewport(0, 0, width, height);
+        GLErrors.printIfError("viewport  app.init");
 
         assetManager._init();
+
+        GLErrors.printIfError("assetManager._init  app.init");
 
         scene = new SceneGraph();
         scene.updateAspectRatio(width, height);

@@ -15,6 +15,8 @@ import engine.components.MaterialEntry;
 import engine.components.Transform;
 import scripts.water.WaterFFT;
 
+import engine.GLErrors;
+
 public class WaterScene extends MonoScript {
     Integer skyboxTexture = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/qwantani_dusk_2_puresky_1k.hdr"));
 
@@ -26,33 +28,30 @@ public class WaterScene extends MonoScript {
 
     @Override
     protected void Start() {
-        int err = glGetError();
-        if (err != 0)
-            System.out.println("start Error code: "+err);
+        GLErrors.printIfError("start WScene");
             
         //Generate our Gaussian noise array
         WaterFFT.noiseSetup();
 
-        err = glGetError();
-        if (err != 0)
-            System.out.println("noise Error code: "+err);
-            
-        
+        GLErrors.printIfError("noiseSetup WScene");
+    
         //compute jonswap params
         WaterFFT.computeWaveSpectrum();
 
-        err = glGetError();
-        if (err != 0)
-            System.out.println("spect Error code: "+err);
+        GLErrors.printIfError("waveSpec WScene");
 
         WaterFFT.setupFourierComponentShader();
         WaterFFT.dispatchFComponentShader();
+
+        GLErrors.printIfError("fComp WScene");
 
         //render our maps to screen
         //drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dxdzIndexID);
         drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dxdzIndexID);
         //drawMapQuads(WaterFFT.dxdzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dyxdyzIndexID, WaterFFT.dxxdzzIndexID);
         //makeWaterPlane();
+
+        GLErrors.printIfError("drawMapQuads WScene");
 
         Scene.SetSkyboxTexture(skyboxTexture);
     }

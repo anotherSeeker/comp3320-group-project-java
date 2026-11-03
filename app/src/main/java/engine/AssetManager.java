@@ -138,47 +138,51 @@ public class AssetManager {
             normalData.put((byte) 0xFF);
         }
 
+        GLErrors.printIfError("byte buffers assetManager._init");
+
         this.loadInternalShader(
                 cubemapShader,
                 Path.of("assets/shaders/internal/cubemap.vert"),
                 Path.of("assets/shaders/internal/cubemap.frag")
         );
+        GLErrors.printIfError("loadInternalShaders 1 assetManager._init");
 
         this.loadInternalShader(
                 skyboxShader,
                 Path.of("assets/shaders/internal/skybox.vert"),
                 Path.of("assets/shaders/internal/skybox.frag")
         );
-
+        GLErrors.printIfError("loadInternalShaders 2 assetManager._init");
         this.loadInternalShader(
                 irradianceShader,
                 Path.of("assets/shaders/internal/cubemap.vert"),
                 Path.of("assets/shaders/internal/irradiance.frag")
         );
-
+        GLErrors.printIfError("loadInternalShaders 3 assetManager._init");
         this.loadInternalShader(
                 prefilterShader,
                 Path.of("assets/shaders/internal/cubemap.vert"),
                 Path.of("assets/shaders/internal/prefilter.frag")
         );
-
+        GLErrors.printIfError("loadInternalShaders 4 assetManager._init");
         this.loadInternalShader(
                 brdfIntShader,
                 Path.of("assets/shaders/internal/brdfInt.vert"),
                 Path.of("assets/shaders/internal/brdfInt.frag")
         );
-
+        GLErrors.printIfError("loadInternalShaders 5 assetManager._init");
         this.loadInternalShader(
                 framebufferShader,
                 Path.of("assets/shaders/internal/framebuffer.vert"),
                 Path.of("assets/shaders/internal/framebuffer.frag")
         );
-
+        GLErrors.printIfError("loadInternalShaders 6 assetManager._init");
         this.loadInternalShader(
                 defaultShader,
                 Path.of("assets/shaders/default.vert"),
                 Path.of("assets/shaders/default.frag")
         );
+        GLErrors.printIfError("loadInternalShaders 7 assetManager._init");
 
         this.loadInternalComputeShader(blurPostProcess, Path.of("assets/shaders/internal/blur.glsl"));
         this.loadInternalComputeShader(bloomPostProcessA, Path.of("assets/shaders/internal/bloomA.glsl"));
@@ -187,10 +191,16 @@ public class AssetManager {
 
         data.flip();
 
+        GLErrors.printIfError("loadInternalCompute assetManager._init");
+
         textureIndex.put(defaultTexture, new Texture(data, width, height, GL_RGBA));
-        textureIndex.put(whiteTexture, new Texture(whiteData, width, height, GL_R));
-        textureIndex.put(blackTexture, new Texture(blackData, width, height, GL_R));
+        GLErrors.printIfError("textureIndex.put 0 assetManager._init");
+        textureIndex.put(whiteTexture, new Texture(whiteData, width, height, GL_RED));
+        GLErrors.printIfError("textureIndex.put 1 assetManager._init");
+        textureIndex.put(blackTexture, new Texture(blackData, width, height, GL_RED));
+        GLErrors.printIfError("textureIndex.put 2 assetManager._init");
         textureIndex.put(normalTexture, new Texture(normalData, width, height, GL_RGB));
+        GLErrors.printIfError("textureIndex.put 3 assetManager._init");
     }
 
     private String readFile(Path filePath) {

@@ -21,6 +21,7 @@ import static org.lwjgl.opengl.ARBCopyImage.*;
 import static org.lwjgl.glfw.GLFW.*;
 
 import engine.AssetManager;
+import engine.GLErrors;
 
 // import static org.lwjgl.opengl.GL42.*;
 // import static org.lwjgl.opengl.GL11.*;
@@ -161,22 +162,16 @@ public class WaterFFT
     {
         System.out.println("start wave spectra");
         setupSpectraShader();
-        int err = glGetError();
-        if (err != 0)
-            System.out.println("Setup Error code: "+err);
+        GLErrors.printIfError("SetupSpectra");
+
         //dispatches and waits for completion
         dispatchWaveSpectra();
 
-        err = glGetError();
-        if (err != 0)
-            System.out.println("Dispatch Error code: "+err);
+        GLErrors.printIfError("dispatch waveSpec");
+
         System.out.println("compute spectra done");
 
-        err = glGetError();
-        if (err != 0)
-        {
-            System.out.println("Error code: "+err);
-        }
+        GLErrors.printIfError("end cWaveSpec");
     }
 
     private static void setupSpectraShader()
@@ -184,43 +179,31 @@ public class WaterFFT
         if (!spectraShaderCreated)
         {
             String source = AssetManager.get().ReadCompute(wavespectraComputePath);
-            int err = glGetError();
-            if (err != 0)
-                System.out.println("link 0 Error code: "+err);
+            GLErrors.printIfError("read compute 0 setupSpectra");
             
             wavespectraComputeID = glCreateShader(GL_COMPUTE_SHADER);
-            err = glGetError();
-            if (err != 0)
-                System.out.println("link 01 Error code: "+err);
+            GLErrors.printIfError("glCreateShader setupSpectra");
             
             System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
             glShaderSource(wavespectraComputeID, source);
-            err = glGetError();
-            if (err != 0)
-                System.out.println("link 02 Error code: "+err);
+            GLErrors.printIfError("glShaderSource setupSpectra");
             
             System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
             glCompileShader(wavespectraComputeID);
 
-            err = glGetError();
-            if (err != 0)
-                System.out.println("link 1 Error code: "+err);
+            GLErrors.printIfError("compile setupSpectra");
             
             System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
 
             wavespectraProgramID = glCreateProgram();
             glAttachShader(wavespectraProgramID, wavespectraComputeID);
             glLinkProgram(wavespectraProgramID);
-            err = glGetError();
-            if (err != 0)
-                System.out.println("link 2 Error code: "+err);
+            GLErrors.printIfError("attach + link setupSpectra");
             System.out.println(glGetProgramInfoLog(wavespectraProgramID,1024));
 
             //make the textures
             genSpectrumTex();
-            err = glGetError();
-            if (err != 0)
-                System.out.println("gen Error code: "+err);
+            GLErrors.printIfError("genTex setupSpectra");
             
             spectraShaderCreated = true;
         }
@@ -322,9 +305,7 @@ public class WaterFFT
 
             fComponentShaderCreated = true;
         }
-        int err = glGetError();
-        if (err != 0)
-            System.out.println("setup f comp Error code: "+err);
+        GLErrors.printIfError("end setupFComp");
     }
 
     public static void genFComponentTex()
@@ -404,28 +385,20 @@ public class WaterFFT
 
     public static void dispatchFComponentShader()
     {
-        System.out.println("start dispatch FComponent");
+        //System.out.println("start dispatch FComponent");
         float currentTime = (float) glfwGetTime();
         //use our program and bind our textures
         useFComponentShader(currentTime);
-        int err = glGetError();
-        if (err != 0)
-            System.out.println("use Error code: "+err);
+        GLErrors.printIfError("useFcomp dispatchFComp");
         //send it
         //System.out.println("dispatch");
         glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
 
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
-        err = glGetError();
-        if (err != 0)
-            System.out.println("Dispatch Error code: "+err);
+        GLErrors.printIfError("postDisptach dispatchFComp");
 
-        System.out.println("compute Fourier Components done");
-
-        err = glGetError();
-        if (err != 0)
-            System.out.println("Error Code: "+err);
+        //System.out.println("compute Fourier Components done");
     }
 
     public static void useButterflyShader()
@@ -438,6 +411,7 @@ public class WaterFFT
     {
         //use our program and bind our textures
         useButterflyShader();
+        GLErrors.printIfError("useButterflyShader dispatchButterflyPrecomputeShader");
 
         //dispatch - x size is log2(N) and y size is N/2
         glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
@@ -447,9 +421,7 @@ public class WaterFFT
 
         System.out.println("precompute butterfly texture done");
 
-        int err = glGetError();
-        if (err != 0)
-            System.out.println("Error code: "+err);
+        GLErrors.printIfError("postDisptach dispatchButterflyPrecomputeShader");
     }
 
 
