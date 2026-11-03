@@ -53,7 +53,7 @@ void main(){
 
     float height = textureLod(DisplacementMap,UV,0).r;
     
-    localPosition += localNormal * height * 0.1;
+    localPosition += localNormal * (height - 0.5) * 0.1;
     
     vec4 worldPosition = (Model * vec4(localPosition,1));
     position = worldPosition.xyz;

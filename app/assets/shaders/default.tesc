@@ -8,7 +8,7 @@ uniform mat4 Model;
 const int MIN_TES = 1;
 const int MAX_TES = 16;
 const float MIN_DIST = 0.0;
-const float MAX_DIST = 4.0;
+const float MAX_DIST = 12.0;
 
 in VS_OUT {
     vec3 position;
