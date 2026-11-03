@@ -14,6 +14,7 @@ public class Material {
     public float sheen = 0;
     public float annisotropy = 0.5f;
     public float specularStrength = 0.5f;
+    public float displacement = 0.1f;
 
     public Vector3f sheenColour = new Vector3f(1, 1, 1);
 
@@ -41,6 +42,7 @@ public class Material {
         this.shader.setFloat("Sheen", this.sheen);
         this.shader.setFloat("Annisotropy", this.annisotropy);
         this.shader.setFloat("SpecularStrength", this.specularStrength);
+        this.shader.setFloat("Displacement", this.displacement);
 
         this.shader.setVector3("SheenColour", this.sheenColour);
     }

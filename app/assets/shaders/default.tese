@@ -14,6 +14,7 @@ uniform mat4 CameraMatrix;
 uniform mat4 Model;
 
 uniform sampler2D DisplacementMap;
+uniform float Displacement;
 
 out vec3 position;
 out vec3 normal;
@@ -53,7 +54,7 @@ void main(){
 
     float height = textureLod(DisplacementMap,UV,0).r;
     
-    localPosition += localNormal * (height - 0.5) * 0.1;
+    localPosition += localNormal * (height - 0.5) * Displacement;
     
     vec4 worldPosition = (Model * vec4(localPosition,1));
     position = worldPosition.xyz;

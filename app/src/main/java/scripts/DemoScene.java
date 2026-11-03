@@ -85,6 +85,7 @@ public class DemoScene extends MonoScript {
         tile_material.specularStrength = 0.5f;
 
         ornament_Material.annisotropy = 1;
+        ornament_Material.displacement = 0.2f;
     }
 
     @Override
