@@ -67,8 +67,6 @@ public class DemoScene extends MonoScript {
 
     @Override
     protected void Start() {
-        PostProcess.Enable(ShaderPipeline.FOG);
-
         Scene.SetSkyboxTexture(skyboxes.get(skyboxArray[skyboxIndex.get()]));
 
         Vector3f offset = new Vector3f(0, 0, -5);
@@ -141,9 +139,10 @@ public class DemoScene extends MonoScript {
     float[] curlStrength = new float[] { 0.04f };
     float[] fogColour = new float[] { 1.0f, 1.0f, 1.0f };
 
-    ImBoolean bloomEnabled = new ImBoolean(true);
+    ImBoolean bloomEnabled = new ImBoolean(false);
     ImBoolean vignetteEnabled = new ImBoolean(false);
-    ImBoolean gradingEnabled = new ImBoolean(true);
+    ImBoolean gradingEnabled = new ImBoolean(false);
+    ImBoolean fogEnabled = new ImBoolean(false);
 
     private void colourGradingUi() {
 
@@ -272,6 +271,14 @@ public class DemoScene extends MonoScript {
         }
 
         if (ImGui.beginTabItem("Fog")) {
+            if (ImGui.checkbox("enable fog", fogEnabled)) {
+                if (fogEnabled.get()) {
+                    PostProcess.Enable(ShaderPipeline.FOG);
+                } else {
+                    PostProcess.Disable(ShaderPipeline.FOG);
+                }
+            }
+
             ImGui.sliderFloat("curl strength", curlStrength, 0.0f, 1.0f);
             ImGui.sliderFloat("fog density", fogDensity, 0.0f, 0.25f);
             ImGui.colorEdit3("fog colour", fogColour);

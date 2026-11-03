@@ -90,7 +90,7 @@ void main(){
 
     int blurRadius = int((1 - transmittance) * 4.0);
 
-    vec3 blurredColour = getBlurredColour(gid,blurRadius * 10);
+    vec3 blurredColour = getBlurredColour(gid,blurRadius * 2);
 
     baseColour = mix(baseColour,blurredColour,(1 - transmittance));
 
