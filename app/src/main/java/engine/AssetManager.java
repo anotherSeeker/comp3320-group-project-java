@@ -8,6 +8,7 @@ import engine.rendering.Shader;
 import engine.rendering.Texture;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.GL_R8;
 import static org.lwjgl.system.MemoryUtil.memAllocFloat;
 import static org.lwjgl.system.MemoryUtil.memAllocInt;
 import static org.lwjgl.system.MemoryUtil.memFree;
@@ -43,6 +44,7 @@ public class AssetManager {
     public Integer whiteTexture = "WHITE".hashCode();
     public Integer blackTexture = "BLACK".hashCode();
     public Integer normalTexture = "NORMAL".hashCode();
+    public Integer greyTexture = "GREY".hashCode();
 
     public Integer perlinTexture = "PERLIN".hashCode();
     public Integer curlTexture = "CURL".hashCode();
@@ -123,6 +125,14 @@ public class AssetManager {
             normalData.put((byte) 0xFF);
         }
 
+        ByteBuffer greyData = BufferUtils.createByteBuffer(width * height);
+
+        for (int i = 0; i < width * height; i++) {
+            greyData.put((byte) 0x80);
+        }
+
+        greyData.flip();
+
         this.loadInternalShader(
                 cubemapShader,
                 Path.of("assets/shaders/internal/cubemap.vert"),
@@ -177,10 +187,11 @@ public class AssetManager {
         this.loadInternalTexture(perlinTexture, Path.of("assets/textures/internal/perlin.png"));
         this.loadInternalTexture(curlTexture, Path.of("assets/textures/internal/curl.png"));
 
-        textureIndex.put(defaultTexture, new Texture(data, width, height, GL_RGBA));
-        textureIndex.put(whiteTexture, new Texture(whiteData, width, height, GL_R));
-        textureIndex.put(blackTexture, new Texture(blackData, width, height, GL_R));
-        textureIndex.put(normalTexture, new Texture(normalData, width, height, GL_RGB));
+        textureIndex.put(defaultTexture, new Texture(data, width, height, GL_RGBA, GL_RGBA));
+        textureIndex.put(whiteTexture, new Texture(whiteData, width, height, GL_RED, GL_R8));
+        textureIndex.put(blackTexture, new Texture(blackData, width, height, GL_RED, GL_R8));
+        textureIndex.put(normalTexture, new Texture(normalData, width, height, GL_RGB, GL_RGB));
+        textureIndex.put(greyTexture, new Texture(greyData, width, height, GL_RED, GL_R8));
     }
 
     private String readFile(Path filePath) {
@@ -250,14 +261,17 @@ public class AssetManager {
             }
 
             int channelFormat = GL_RGBA;
+            int internalFormat = GL_RGBA;
 
             if (channels.get(0) == 3) {
                 channelFormat = GL_RGB;
+                internalFormat = GL_RGB;
             } else if (channels.get(0) == 1) {
                 channelFormat = GL_RED;
+                internalFormat = GL_R8;
             }
 
-            Texture texture = new Texture(data, width.get(0), height.get(0), channelFormat);
+            Texture texture = new Texture(data, width.get(0), height.get(0), channelFormat, internalFormat);
 
             textureIndex.put(ID, texture);
 
@@ -434,14 +448,17 @@ public class AssetManager {
             }
 
             int channelFormat = GL_RGBA;
+            int internalFormat = GL_RGBA;
 
             if (channels.get(0) == 3) {
                 channelFormat = GL_RGB;
+                internalFormat = GL_RGB;
             } else if (channels.get(0) == 1) {
                 channelFormat = GL_RED;
+                internalFormat = GL_R8;
             }
 
-            Texture texture = new Texture(data, width.get(0), height.get(0), channelFormat);
+            Texture texture = new Texture(data, width.get(0), height.get(0), channelFormat, internalFormat);
 
             textureIndex.put(ID, texture);
 
@@ -452,14 +469,16 @@ public class AssetManager {
         return ID;
     }
 
-    public Integer LoadTexture(ByteBuffer data, int width, int height, int channelFormat, String name) {
+    public Integer LoadTexture(
+            ByteBuffer data, int width, int height, int channelFormat, int internalFormat, String name
+    ) {
 
         Integer ID = name.hashCode();
 
         if (textureIndex.containsKey(ID))
             return ID;
 
-        Texture texture = new Texture(data, width, height, channelFormat);
+        Texture texture = new Texture(data, width, height, channelFormat, internalFormat);
 
         textureIndex.put(ID, texture);
 
@@ -544,7 +563,7 @@ public class AssetManager {
         material.ambientOcclusionMap    = getTexture(materialEntry.ambientOcclusionID != null ? materialEntry.ambientOcclusionID : whiteTexture);
         material.normalMap              = getTexture(materialEntry.normalID           != null ? materialEntry.normalID : normalTexture);
         material.metallicMap            = getTexture(materialEntry.metallicID         != null ? materialEntry.metallicID : blackTexture);
-        material.displacementMap        = getTexture(materialEntry.displacementID     != null ? materialEntry.displacementID : blackTexture);
+        material.displacementMap        = getTexture(materialEntry.displacementID     != null ? materialEntry.displacementID : greyTexture);
         // @formatter:on
 
         return material;

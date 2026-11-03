@@ -2,6 +2,7 @@ package engine;
 
 import static org.lwjgl.assimp.Assimp.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.GL_R8;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -225,7 +226,7 @@ public class SceneParser {
                 }
 
                 try {
-                    return assetManager.LoadTexture(data, outWidth.get(0), outHeight.get(0), GL_RGBA, name);
+                    return assetManager.LoadTexture(data, outWidth.get(0), outHeight.get(0), GL_RGBA, GL_RGBA, name);
                 } finally {
                     STBImage.stbi_image_free(data);
                 }
@@ -245,7 +246,7 @@ public class SceneParser {
 
         data.flip();
 
-        return assetManager.LoadTexture(data, width, height, GL_RGBA, name);
+        return assetManager.LoadTexture(data, width, height, GL_RGBA, GL_RGBA, name);
     }
 
     private Integer loadTextureChannel(AIMaterial assimpMat, int textureType, int channel, String suffix) {
@@ -301,7 +302,7 @@ public class SceneParser {
 
                 String name = filepath + "#" + suffix + "-" + texturePath;
 
-                return assetManager.LoadTexture(extracted, w, h, GL_RED, name);
+                return assetManager.LoadTexture(extracted, w, h, GL_RED, GL_R8, name);
 
             } finally {
                 STBImage.stbi_image_free(data);
