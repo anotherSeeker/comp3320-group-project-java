@@ -90,13 +90,9 @@ public class WaterFFT
     public static int butterflyProgramID;
     public static Path butterflyComputePath = Path.of("assets/shaders/water/precomputeFFTBuffer.comp");
 
-    public static int ifftHorizComputeID;
-    public static int ifftHorizProgramID;
-    public static Path ifftHorizComputePath = Path.of("assets/shaders/water/horizIFFT.comp");
-
-    public static int ifftVertComputeID;
-    public static int ifftVertProgramID;
-    public static Path ifftVertComputePath = Path.of("assets/shaders/water/vertIFFT.comp");
+    public static int  ifftComputeID;
+    public static int  ifftProgramID;
+    public static Path ifftComputePath = Path.of("assets/shaders/water/IFFT.comp");
 
     //bytebuffers for creating our textures
     public static ByteBuffer noiseBytes;
@@ -447,14 +443,18 @@ public class WaterFFT
 
     private static void _IFFT(int inputTexID, int bufferTexID, int pingpong, boolean outputToInput)
     {
-        ifft_use(inputTexID, bufferTexID, ifftHorizProgramID); 
+        ifft_use(inputTexID, bufferTexID, ifftProgramID); 
 
-        int stepLocation = glGetUniformLocation(ifftHorizProgramID, "step");
-        int ppongLocation = glGetUniformLocation(ifftHorizProgramID, "pingpong");
+        int stepLocation = glGetUniformLocation(ifftProgramID, "step");
+        int ppongLocation = glGetUniformLocation(ifftProgramID, "pingpong");
+        int horizOrVertLocation = glGetUniformLocation(ifftProgramID, "H_or_V");
+
+        //do horizontal step
+        glUniform1i(horizOrVertLocation, 0);
         for (int i = 0; i < texSizePower; i++)
         {
             pingpong = (pingpong+1) % 2;
-            glUniform1f(stepLocation, i);
+            glUniform1i(stepLocation, i);
             glUniform1i(ppongLocation, pingpong);
 
             glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
@@ -462,9 +462,8 @@ public class WaterFFT
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
 
-        ifft_use(inputTexID, bufferTexID, ifftVertProgramID); 
-        stepLocation = glGetUniformLocation(ifftVertProgramID, "step");
-        ppongLocation = glGetUniformLocation(ifftVertProgramID, "pingpong");
+        //do vertical step
+        glUniform1i(horizOrVertLocation, 1);
         for (int i = 0; i < texSizePower; i++)
         {
             pingpong = (pingpong+1) % 2;
