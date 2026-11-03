@@ -1,7 +1,5 @@
 package scripts;
 
-import static org.lwjgl.glfw.GLFW.*;
-
 import java.nio.file.Path;
 import java.util.Map;
 
