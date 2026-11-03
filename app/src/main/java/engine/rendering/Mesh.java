@@ -14,6 +14,7 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL40.*;
 
 import static org.lwjgl.system.MemoryUtil.*;
 
@@ -151,6 +152,12 @@ public class Mesh {
     public void draw() {
         bind();
         glDrawElements(GL_TRIANGLES, indiceCount, GL_UNSIGNED_INT, 0);
+    }
+
+    public void drawPatches() {
+        bind();
+        glPatchParameteri(GL_PATCH_VERTICES, 3);
+        glDrawElements(GL_PATCHES, indiceCount, GL_UNSIGNED_INT, 0);
     }
 
     public void delete() {
