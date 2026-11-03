@@ -201,6 +201,23 @@ public class ShaderPipeline {
             currentTexture = pongBuffer;
         }
 
+        if ((featureMask & FOG) != 0) {
+            int target = currentTexture == pingBuffer ? pongBuffer : pingBuffer;
+
+            fog.use();
+            fog.setTexture("PerlinMap", perlinTexture, 1);
+            fog.setTexture("CurlMap", curlTexture, 2);
+
+            fog.setFloat("CurlStrength", CurlStrength);
+            fog.setFloat("FogDensity", FogDensity);
+            fog.setVector3("FogColour", FogColour);
+            fog.setFloat("Time", Time);
+
+            runShader(fog, currentTexture, target);
+
+            currentTexture = target;
+        }
+
         if ((featureMask & COLOUR_GRADE) != 0) {
             int target = currentTexture == pingBuffer ? pongBuffer : pingBuffer;
 
@@ -221,23 +238,6 @@ public class ShaderPipeline {
             vignette.setFloat("Radius", VignetteRadius);
             vignette.setFloat("Softness", VignetteSoftness);
             runShader(vignette, currentTexture, target);
-
-            currentTexture = target;
-        }
-
-        if ((featureMask & FOG) != 0) {
-            int target = currentTexture == pingBuffer ? pongBuffer : pingBuffer;
-
-            fog.use();
-            fog.setTexture("PerlinMap", perlinTexture, 1);
-            fog.setTexture("CurlMap", curlTexture, 2);
-
-            fog.setFloat("CurlStrength", CurlStrength);
-            fog.setFloat("FogDensity", FogDensity);
-            fog.setVector3("FogColour", FogColour);
-            fog.setFloat("Time", Time);
-
-            runShader(fog, currentTexture, target);
 
             currentTexture = target;
         }

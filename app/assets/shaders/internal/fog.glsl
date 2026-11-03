@@ -25,9 +25,9 @@ float getDepth(vec2 uv){
 }
 
 float getFogNoise(vec2 uv,vec2 curl,float phase){
-    float perlinLarge = texture(PerlinMap,uv * 0.5 + curl * phase * 0.2).r;
-    float perlinMed = texture(PerlinMap,uv * 1.5 + curl * phase * 0.7).r;
-    float perlinFine = texture(PerlinMap,uv * 4.0 + curl * phase).r;
+    float perlinLarge = texture(PerlinMap,uv * 0.5 + curl * 0.02 + vec2(phase * 0.2,phase * 0.1)).r;
+    float perlinMed = texture(PerlinMap,uv * 1.5 + curl * 0.04 + vec2(phase * 0.4,phase * 0.2)).r;
+    float perlinFine = texture(PerlinMap,uv * 4.0 + curl * 0.06 + vec2(phase * 0.6,phase * 0.3)).r;
 
     return perlinLarge * 0.55 + perlinMed * 0.3 + perlinFine * 0.15;
 }
@@ -40,7 +40,7 @@ void main(){
         return;
     }
 
-    vec3 baseColour = imageLoad(rawImage,gid).rgb;
+    vec3 baseColour = imageLoad(inputImage,gid).rgb;
     vec2 uv = (vec2(gid) + 0.5) / vec2(size);
 
     float rawDepth = texture(DepthBuffer,uv).r;
@@ -54,7 +54,7 @@ void main(){
 
     vec2 curl = texture(CurlMap,uv).rg * 20;
 
-    float perlin = getFogNoise(uv + vec2(phase,phase * 0.37), curl, phase * 0.1);
+    float perlin = getFogNoise(uv, curl, phase);
 
     perlin *= perlin;
 
@@ -63,7 +63,7 @@ void main(){
 
     float transmittance = exp(-depth * FogDensity * density);
 
-    vec3 output_colour = mix(FogColour * (1 + perlin * 0.5),baseColour,transmittance); 
+    vec3 output_colour = mix(FogColour * (0.5 + perlin),baseColour,transmittance); 
 
     imageStore(outputImage,gid,vec4(output_colour,1));
 }
