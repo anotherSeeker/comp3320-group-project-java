@@ -1,4 +1,4 @@
-package engine;
+package engine.rendering;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ import static org.lwjgl.opengl.GL30 .*;
 
 import static org.lwjgl.system.MemoryUtil.*;
 
-import engine.Mesh;
+import engine.rendering.Mesh;
 
 
 
@@ -31,7 +31,6 @@ public class MeshAnim {
     private int materialIdx;
     private float[] weights;
 
-    public static final int MAX_WEIGHTS = 4;
     int VBO;
 
     public MeshAnim(Mesh mesh, int[] boneIndices, float[] weights) {

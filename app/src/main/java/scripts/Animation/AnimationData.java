@@ -3,7 +3,7 @@ package scripts.Animation;
 import java.util.Arrays;
 
 import org.joml.Matrix4f;
-import engine.*;
+
 
 public class AnimationData {
 

@@ -7,7 +7,6 @@ import org.lwjgl.PointerBuffer;
 import engine.components.Material;
 import engine.components.MaterialEntry;
 
-import org.joml.Vector4f;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryStack;
 
@@ -17,7 +16,8 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static org.lwjgl.assimp.Assimp.*;
-import engine.*;
+import engine.rendering.*;
+import engine.AssetManager;
 
 public class AnimImporter {
     private static AssetManager Assets = AssetManager.get();
@@ -28,14 +28,14 @@ public class AnimImporter {
     public static final int MAX_BONES = 150;
     private static final Matrix4f IDENTITY_MATRIX = new Matrix4f();
 
-    public static Model loadModel(String modelId, String modelPath, Map<Integer, Texture> textureCache, boolean animation) {
-        return loadModel(modelId, modelPath, textureCache, aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices |
+    public static Model loadModel(String modelPath, Map<Integer, Texture> textureCache, boolean animation) {
+        return loadModel(modelPath, textureCache, aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices |
                 aiProcess_Triangulate | aiProcess_FixInfacingNormals | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights |
                 (animation ? 0 : aiProcess_PreTransformVertices));
 
     }
 
-    public static Model loadModel(String modelId, String modelPath, Map<Integer, Texture> textureCache, int flags) {
+    public static Model loadModel(String modelPath, Map<Integer, Texture> textureCache, int flags) {
         File file = new File(modelPath);
         if (!file.exists()) {
             throw new RuntimeException("Model path does not exist [" + modelPath + "]");
@@ -59,7 +59,7 @@ public class AnimImporter {
         List<Bone> boneList = new ArrayList<>();
         for (int i = 0; i < numMeshes; i++) {
             AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
-            MeshAnim mesh = processMesh(aiMesh, boneList);
+            Mesh mesh = processMesh(aiMesh, boneList);
             int materialIdx = aiMesh.mMaterialIndex();
             Material material;
             if (materialIdx >= 0 && materialIdx < materialList.size()) {
@@ -67,7 +67,7 @@ public class AnimImporter {
             } else {
                 material = defaultMaterial;
             }
-            Assets.LoadMesh(mesh.getMesh(),modelPath);
+            Assets.LoadMesh(mesh,modelPath);
         }
 
         // if (!defaultMaterial.getMeshList().isEmpty()) {
@@ -84,7 +84,7 @@ public class AnimImporter {
 
         aiReleaseImport(aiScene);
 
-        return new Model(modelId, materialList, animations);
+        return new Model(materialList, animations);
 
     }
 
@@ -197,7 +197,7 @@ public class AnimImporter {
         for (int i = 0; i < numVertices; i++) {
             List<VertexWeight> vertexWeightList = weightSet.get(i);
             int size = vertexWeightList != null ? vertexWeightList.size() : 0;
-            for (int j = 0; j < MeshAnim.MAX_WEIGHTS; j++) {
+            for (int j = 0; j < Mesh.MAX_WEIGHTS; j++) {
                 if (j < size) {
                     VertexWeight vw = vertexWeightList.get(j);
                     weights.add(vw.weight());
@@ -297,7 +297,7 @@ public class AnimImporter {
         return data;
     }
 
-    private static MeshAnim processMesh(AIMesh aiMesh, List<Bone> boneList) {
+    private static Mesh processMesh(AIMesh aiMesh, List<Bone> boneList) {
         float[] vertices = processVertices(aiMesh);
         float[] normals = processNormals(aiMesh);
         float[] textCoords = processTextCoords(aiMesh);
@@ -312,9 +312,7 @@ public class AnimImporter {
         float[] tangents = processTangents(aiMesh, normals);
         float[] bitangents = processBitangents(aiMesh, normals);
 
-       Mesh mesh = new Mesh(vertices, textCoords, normals, tangents, bitangents, indices);
-
-       return new MeshAnim(mesh, animMeshData.boneIds, animMeshData.weights);
+       return new Mesh(vertices, textCoords, normals, tangents, bitangents, indices, animMeshData.boneIds, animMeshData.weights);
     }
     private static int[] processIndices(AIMesh aiMesh) {
         List<Integer> indices = new ArrayList<>();

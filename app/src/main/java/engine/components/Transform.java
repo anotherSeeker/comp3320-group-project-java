@@ -4,10 +4,13 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import scripts.Animation.AnimationData;
+
 public class Transform {
     public Matrix4f model;
     public Vector3f position = new Vector3f();
     public Quaternionf orientation = new Quaternionf();
+    private AnimationData animationData;
 
     public Transform(Matrix4f model) {
         this.model = model;
@@ -49,6 +52,14 @@ public class Transform {
         this.orientation.identity().lookAlong(direction, new Vector3f(0, 1, 0));
 
         model.translationRotate(this.position, this.orientation);
+    }
+
+    public AnimationData getAnimationData() {
+        return animationData;
+    }
+
+    public void setAnimationData(AnimationData animationData) {
+        this.animationData = animationData;
     }
 
 }

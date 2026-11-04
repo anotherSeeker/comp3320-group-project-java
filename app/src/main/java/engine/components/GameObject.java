@@ -1,21 +1,22 @@
 package engine.components;
 
 import engine.rendering.Mesh;
-import engine.rendering.MeshAnim;
+import scripts.Animation.Model;
 
 public class GameObject {
     public Mesh mesh;
-    public MeshAnim meshAnim;
     public Material material;
+    public Model model;
 
     public GameObject(Mesh mesh, Material material) {
         this.mesh = mesh;
         this.material = material;
     }
 
-        public GameObject(MeshAnim meshAnim, Material material) {
-        this.meshAnim = meshAnim;
-        this.mesh = meshAnim.getMesh();
+        public GameObject(Mesh mesh, Material material, Model model) {
+        this.mesh = mesh;
         this.material = material;
+        this.model = model;
     }
+
 }

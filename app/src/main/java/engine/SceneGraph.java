@@ -114,16 +114,13 @@ public class SceneGraph {
 
             gameObject.mesh.bind();
 
-            for (Entity entity : entities) {
-                material.shader.setUniform("modelMatrix", entity.getModelMatrix());
-                AnimationData animationData = entity.getAnimationData();
-                if (animationData == null) {
-                    material.shader.setUniform("bonesMatrices", AnimationData.DEFAULT_BONES_MATRICES);
-                } else {
-                    material.shader.setUniform("bonesMatrices", animationData.getCurrentFrame().boneMatrices());
-                }
-            }
-
+            AnimationData animationData = transform.getAnimationData();
+            if (animationData == null) {
+                material.shader.setUniform("bonesMatrices", AnimationData.DEFAULT_BONES_MATRICES);
+            } else {
+                material.shader.setUniform("bonesMatrices", animationData.getCurrentFrame().boneMatrices());
+            }   
+            
             gameObject.mesh.draw();
         }
     }
