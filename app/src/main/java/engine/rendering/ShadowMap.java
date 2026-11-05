@@ -71,7 +71,22 @@ public class ShadowMap {
     }
 
     private Matrix4f computeLightMatrix(Vector3f lightDirection) {
-        return null;
+
+        Vector3f direction = new Vector3f(lightDirection).normalize();
+        Vector3f center = new Vector3f(0, 0, 0);
+
+        Vector3f lightPosition = new Vector3f(center).fma(-50.0f, direction);
+        Vector3f up = new Vector3f(0, 1, 0);
+
+        if (Math.abs(direction.dot(up)) > 0.99f) {
+            up.set(0, 0, 1);
+        }
+
+        Matrix4f view = new Matrix4f().lookAt(lightPosition, center, up);
+
+        Matrix4f projection = new Matrix4f().ortho(-30.0f, 30.0f, -30.0f, 30.0f, 0.1f, 100.0f);
+
+        return projection.mul(view);
     }
 
     public void genShadowsFromDirection(Vector3f lightDirection) {
