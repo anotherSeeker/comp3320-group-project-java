@@ -31,11 +31,8 @@ public class App {
     private int initWidth;
     private int initHeight;
 
-<<<<<<< HEAD
     private static boolean particlesEnabled = true;
 
-=======
->>>>>>> origin/main
     public boolean init(int width, int height, CharSequence title) {
         initWidth = width;
         initHeight = height;
@@ -123,13 +120,10 @@ public class App {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             scene.draw();
 
-<<<<<<< HEAD
             if (particlesEnabled) {
                 scene.drawParticles();
             }
 
-=======
->>>>>>> origin/main
             pipeline.Time += (float) deltaTime;
 
             pipeline.process();
