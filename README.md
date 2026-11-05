@@ -57,12 +57,14 @@ From this Source folder, use `./gradlew :app:build :app:installDist` to rebuild,
 `./gradlew :app:run` to launch, and `./gradlew :app:reefCheck` to verify rendering
 and trunk-height collision. The wrapper selects `../JDK/Contents/Home` and keeps
 Gradle caches, generated build files and render-check output in `../../Archive`.
-The ready-to-run app is `../Coral Field.app`; it includes its own runtime.
+The current review app is `../Coral Field Review.app`; it includes its own runtime.
+`../Coral Field.app` preserves the earlier build.
 See `../START HERE.txt` and `CORAL_FIELD.md` for controls and project details.
 
 ## Procedural coral in the current team environment
 
-Local branch `nirmit/coral-latest-engine` merges upstream main `7dacb44`.
+Local review branch `nirmit/coral-review-2026-11-05` merges upstream main `5ff91ab`.
+Nothing has been pushed; publication requires Nirmit’s final confirmation.
 The default scene includes the team's current environment and seeded recursive
 coral generation. Press R for new shapes/placement, 1/2/3 for density, and G for
 growth. Source details and hardware-specific rendering behavior are documented

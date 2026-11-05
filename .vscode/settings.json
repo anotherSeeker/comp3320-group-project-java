@@ -1,4 +1,10 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic",
-    "java.format.settings.url": "eclipse-formatter.xml"
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.format.settings.url": "eclipse-formatter.xml",
+  "luau-lsp.types.definitionFiles": {
+    "vara": "~/.vara/.typedefs/0.2.0/definitions/types.d.luau",
+    "vara/net": "~/.vara/.typedefs/0.2.0/definitions/net.d.luau",
+    "vara/ui": "~/.vara/.typedefs/0.2.0/definitions/ui.d.luau",
+    "vara/fs": "~/.vara/.typedefs/0.2.0/definitions/fs.d.luau"
+  }
 }

@@ -7,6 +7,7 @@ public class MaterialEntry {
     public Integer ambientOcclusionID = null;
     public Integer normalID = null;
     public Integer metallicID = null;
+    public Integer displacementID = null;
 
     public MaterialEntry add(String string, Integer ID) {
 
@@ -18,6 +19,7 @@ public class MaterialEntry {
             case "AMBIENT_OCCLUSION": ambientOcclusionID = ID; break;
             case "NORMAL": normalID = ID; break;
             case "METAL": metallicID = ID; break;
+            case "DISPLACEMENT": displacementID = ID; break;
 
             default: break;
         }

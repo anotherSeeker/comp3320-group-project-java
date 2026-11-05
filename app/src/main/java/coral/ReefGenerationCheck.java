@@ -56,6 +56,14 @@ public final class ReefGenerationCheck {
             }
         }
         require(!ReefLayout.generate(42, 1).equals(ReefLayout.generate(43, 1)), "New seed kept old placement");
+        var clearings = java.util.List.of(new ReefLayout.Clearing(-5,-5,3), new ReefLayout.Clearing(5,-5,3));
+        var original = ReefLayout.generate(42,1);
+        var cleared = ReefLayout.generate(42,1,clearings);
+        require(cleared.size() < original.size(), "Environment clearings removed no colonies");
+        require(original.containsAll(cleared), "Clearings changed unaffected colonies");
+        require(cleared.equals(ReefLayout.generate(42,1,clearings)), "Clearings are not deterministic");
+        for (var colony : cleared) for (var area : clearings)
+            require(!area.contains(colony.x(),colony.z()), "Environment object footprint obstructed");
         TrunkCollisionCheck.run();
         System.out.println("PASS: algorithmic shape generation, seeded variation, environment placement, density, LOD and height collision.");
     }

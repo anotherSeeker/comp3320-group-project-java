@@ -57,14 +57,6 @@ public class App {
         framebufferHeight = height;
         scene.updateAspectRatio(width, height);
         pipeline = new ShaderPipeline(assetManager.getShader(assetManager.framebufferShader), width, height);
-        // Keep the team's compute bloom on capable hardware. macOS uses the same
-        // HDR/tonemapping pipeline without unsupported OpenGL 4.3 compute passes.
-        if (GL.getCapabilities().OpenGL43) {
-            pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessA));
-            pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
-            pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
-            pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessB));
-        }
         glfwSetFramebufferSizeCallback(window, (_, w, h) -> resize(w, h));
         glEnable(GL_DEPTH_TEST);
         return true;
@@ -85,6 +77,7 @@ public class App {
         script.Assets = assetManager;
         script.Scene = scene;
         script.Input = input;
+        script.PostProcess = pipeline;
         scripts.add(script);
     }
 
@@ -117,6 +110,7 @@ public class App {
         // Generated coral meshes share the environment's depth buffer and HDR
         // target; draw them before the team's postprocessing and GUI stages.
         for (MonoScript script : scripts) script.afterRender();
+        pipeline.Time += (float) deltaTime;
         pipeline.process();
         pipeline.render();
         ImGui.render();

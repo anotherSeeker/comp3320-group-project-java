@@ -59,6 +59,41 @@ public class Shader {
         return true;
     }
 
+    private boolean tessellated;
+
+    public boolean hasTessellation() { return tessellated; }
+
+    public boolean withTesselation(
+            String vertexSource, String fragmentSource, String tessControlSource, String tessEvalSource
+    ) {
+        int[] types = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER,
+                GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER};
+        String[] sources = {vertexSource, fragmentSource, tessControlSource, tessEvalSource};
+        int[] stages = new int[types.length];
+        ID = glCreateProgram();
+        try {
+            for (int i = 0; i < types.length; i++) {
+                stages[i] = glCreateShader(types[i]);
+                glShaderSource(stages[i], GraphicsPlatform.shaderSource(sources[i]));
+                glCompileShader(stages[i]);
+                if (glGetShaderi(stages[i], GL_COMPILE_STATUS) == GL_FALSE)
+                    throw new IllegalStateException("Tessellated program stage " + types[i] + ": " + glGetShaderInfoLog(stages[i]));
+                glAttachShader(ID, stages[i]);
+            }
+            glLinkProgram(ID);
+            if (glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE)
+                throw new IllegalStateException("Tessellated program: " + glGetProgramInfoLog(ID));
+            tessellated = true;
+            return true;
+        } catch (RuntimeException error) {
+            glDeleteProgram(ID);
+            ID = 0;
+            throw error;
+        } finally {
+            for (int stage : stages) if (stage != 0) glDeleteShader(stage);
+        }
+    }
+
     public void setMatrix4(String uniformName, Matrix4f matrix) {
         MemoryStack stack = MemoryStack.stackPush();
         FloatBuffer floatBuffer = stack.mallocFloat(16);

@@ -6,8 +6,8 @@ import static org.lwjgl.opengl.GL11.glDepthFunc;
 import static org.lwjgl.opengl.GL11.glDepthMask;
 
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import dev.dominion.ecs.api.Dominion;
 import dev.dominion.ecs.api.Entity;
@@ -50,8 +50,11 @@ public class SceneGraph {
     }
 
     public Matrix4f computeViewportMatrix() {
+
+        Quaternionf conj = new Quaternionf(cameraTransform.orientation).conjugate();
+
         Matrix4f view = new Matrix4f()
-                .rotate(new Quaternionf(cameraTransform.orientation).conjugate())
+                .rotate(conj)
                 .translate(
                         -cameraTransform.position.x,
                         -cameraTransform.position.y,
@@ -64,8 +67,11 @@ public class SceneGraph {
     }
 
     public Matrix4f computeSkyboxMatrix() {
+
+        Quaternionf conj = new Quaternionf(cameraTransform.orientation).conjugate();
+
         Matrix4f view = new Matrix4f()
-                .rotate(new Quaternionf(cameraTransform.orientation).conjugate());
+                .rotate(conj);
 
         Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.05f, 180.0f);
 
@@ -115,7 +121,8 @@ public class SceneGraph {
             material.bindAsUniform();
 
             gameObject.mesh.bind();
-            gameObject.mesh.draw();
+            if (material.shader.hasTessellation()) gameObject.mesh.drawPatches();
+            else gameObject.mesh.draw();
         }
     }
 

@@ -7,6 +7,9 @@ layout(rgba16f,binding = 2) readonly uniform image2D rawImage;
 
 uniform sampler2D DepthBuffer;
 
+uniform float Threshold = 1.0;
+uniform float Knee = 0.5;
+
 float luminance(vec3 colour){
     return dot(colour,vec3(0.2126,0.7152, 0.0722));
 }
@@ -25,13 +28,10 @@ void main(){
 
     vec4 hdrValue;
 
-    float threshold = 1.0;
-    float knee = 0.5;
+    float soft = clamp(lum - Threshold + Knee,0,2.0 * Knee);
+    soft = soft * soft / (4.0 * Knee + 0.0001);
 
-    float soft = clamp(lum - threshold + knee,0,2.0 * knee);
-    soft = soft * soft / (4.0 * knee + 0.0001);
-
-    float contrib = max(lum - threshold, soft);
+    float contrib = max(lum - Threshold, soft);
 
     vec3 bloom = baseColour.rgb * contrib / max(lum,0.0001);
 

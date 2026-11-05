@@ -16,9 +16,49 @@ public final class ReefCheck {
     private static long difference(BufferedImage a,BufferedImage b){
         long count=0;for(int y=0;y<a.getHeight();y++)for(int x=0;x<a.getWidth();x++)if(a.getRGB(x,y)!=b.getRGB(x,y))count++;return count;
     }
-    public static void run(App app,ReefScene reef,ReefPlayer player,ReefCamera camera)throws Exception {
+    private static void checkEngineIntegration(App app, ReefScene reef) {
+        var materials = new java.util.HashMap<engine.components.Material, Float>();
+        int triangleObjects = 0;
+        for (var object : reef.Scene.ECS.findEntitiesWith(engine.components.GameObject.class)) {
+            var material = object.comp().material;
+            if (material.shader.hasTessellation()) materials.put(material, material.displacement);
+            else triangleObjects++;
+        }
+        require(!materials.isEmpty() && triangleObjects >= 2,
+                "Combined scene must contain tessellated environment objects, player and ground");
+        BufferedImage displaced = FrameCapture.read();
+        materials.keySet().forEach(material -> material.displacement = 0);
+        app.renderFrame(0);
+        require(difference(displaced, FrameCapture.read()) > 50, "Environment displacement has no visible effect");
+        materials.forEach((material, displacement) -> material.displacement = displacement);
+        app.renderFrame(0);
+
+        var pipeline = reef.PostProcess;
+        BufferedImage baseline = FrameCapture.read();
+        float exposure = pipeline.Exposure;
+        pipeline.Exposure = exposure + 1;
+        app.renderFrame(0);
+        require(difference(baseline, FrameCapture.read()) > 10000, "HDR controls do not affect combined scene");
+        pipeline.Exposure = exposure;
+        app.renderFrame(0);
+        for (int feature : new int[]{engine.rendering.ShaderPipeline.BLOOM,
+                engine.rendering.ShaderPipeline.FOG, engine.rendering.ShaderPipeline.COLOUR_GRADE,
+                engine.rendering.ShaderPipeline.VIGNETTE}) {
+            pipeline.Enable(feature);
+            app.renderFrame(0);
+            require(glGetError() == GL_NO_ERROR, "Postprocessing feature caused an OpenGL error");
+            if (!pipeline.SupportsCompute())
+                require(difference(baseline, FrameCapture.read()) == 0, "Unsupported effect altered the scene");
+            pipeline.Disable(feature);
+        }
+        app.renderFrame(0);
+        System.out.println("PASS: mixed tessellation/triangle rendering, displacement, HDR controls; compute effects "
+                + (pipeline.SupportsCompute() ? "smoke-tested." : "safely disabled on OpenGL 4.1 (4.3 path not runtime-tested)."));
+    }
+
+    public static void run(App app,ReefScene reef,ReefPlayer player,ReefCamera camera,PostProcess effects)throws Exception {
         TrunkCollisionCheck.run();
-        require(ReefLayout.generate(42,1).equals(ReefLayout.generate(42,1)),"Seed is not repeatable");
+        require(reef.layoutFor(42,1).equals(reef.layoutFor(42,1)),"Seed is not repeatable");
         for(int variant=0;variant<ReefLayout.VARIANTS;variant++){
             var a=CoralGenerator.generate(ReefLayout.parameters(42,variant,false));
             var b=CoralGenerator.generate(ReefLayout.parameters(42,variant,false));
@@ -26,9 +66,11 @@ public final class ReefCheck {
         }
         int previous=0;
         for(int d=0;d<3;d++) {
-            var layout=ReefLayout.generate(42,d);require(layout.size()>previous,"Density does not increase");previous=layout.size();
+            var layout=reef.layoutFor(42,d);require(layout.size()>previous,"Density does not increase");previous=layout.size();
             int[] quadrants=new int[4];
             for(var c:layout){require(Math.abs(c.x())<24&&Math.abs(c.z())<24,"Outside field");require(c.x()*c.x()+c.z()*c.z()>=16,"Spawn blocked");quadrants[(c.x()>0?1:0)+(c.z()>0?2:0)]++;}
+            for(var c:layout)for(var area:reef.clearings())
+                require(!area.contains(c.x(),c.z()),"Coral intersects an environment clearing");
             for(int n:quadrants)require(n>30,"A quadrant lacks coral coverage");
             System.out.println("Layout density="+d+" colonies="+layout.size());
         }
@@ -48,6 +90,7 @@ public final class ReefCheck {
         camera.overview(false);camera.view(.35f,.42f,9);app.renderFrame(0);
         require(reef.nearCount>0&&reef.farCount>0,"Follow view does not exercise both detail levels");
         FrameCapture.write(FrameCapture.read(),out.resolve("follow.png"));
+        checkEngineIntegration(app,reef);
         var c=reef.colonies().get(reef.count()/2);
         player.moveTo(c.position().add(0,0,1.3f));
         for(int i=0;i<80;i++) {
@@ -82,7 +125,7 @@ public final class ReefCheck {
         for(int i=0;i<60;i++){app.renderFrame(1.0/60);glFinish();}
         double ms=(System.nanoTime()-start)/60e6;
         System.out.printf("Dense overview: %d colonies, %d visible, %d draw calls, %d triangles, %.2f ms/frame (GPU synchronized)%n",reef.count(),reef.visibleCount,reef.drawCalls,reef.triangles,ms);
-        reef.showUI(true);app.renderFrame(0);FrameCapture.write(FrameCapture.read(),out.resolve("dense-ui.png"));
+        reef.showUI(true);effects.showUI(true);app.renderFrame(0);FrameCapture.write(FrameCapture.read(),out.resolve("dense-ui.png"));
         require(glGetError()==GL_NO_ERROR,"OpenGL error");
         System.out.println("PASS: field coverage, deterministic geometry/placement, density, near/far batching, regeneration, trunk collisions, proximity response, water sway, GUI and real GPU render.");
     }

@@ -12,8 +12,22 @@ public final class ReefLayout {
     public record Colony(float x,float z,float scale,float yaw,int variant,float phase,float r,float g,float b) {
         public Vector3f position(){return new Vector3f(x,0,z);}
     }
+    /** A footprint reserved for environment objects, including a clearance margin. */
+    public record Clearing(float x, float z, float radius) {
+        public Clearing {
+            if (!Float.isFinite(x) || !Float.isFinite(z) || !Float.isFinite(radius) || radius < 0)
+                throw new IllegalArgumentException("Invalid environment clearing");
+        }
+        public boolean contains(float px, float pz) {
+            float dx = px - x, dz = pz - z;
+            return dx * dx + dz * dz < radius * radius;
+        }
+    }
     private ReefLayout(){ }
     public static List<Colony> generate(long seed,int density) {
+        return generate(seed, density, List.of());
+    }
+    public static List<Colony> generate(long seed,int density,List<Clearing> clearings) {
         if(density<0||density>2) throw new IllegalArgumentException("Density must be 0, 1 or 2");
         int cells=new int[]{16,23,29}[density];
         float spacing=2*HALF_EXTENT/cells;
@@ -28,6 +42,9 @@ public final class ReefLayout {
             result.add(new Colony(px,pz,scale,random.nextFloat()*(float)(Math.PI*2),random.nextInt(VARIANTS),
                 random.nextFloat()*6.283185f,.78f+random.nextFloat()*.28f,.78f+random.nextFloat()*.28f,.78f+random.nextFloat()*.28f));
         }
+        // Filter after generating candidates so environment changes do not shuffle
+        // the shapes, colours or positions of colonies outside the cleared areas.
+        result.removeIf(c -> clearings.stream().anyMatch(area -> area.contains(c.x(), c.z())));
         return List.copyOf(result);
     }
     public static CoralParams parameters(long seed,int variant,boolean lowDetail) {

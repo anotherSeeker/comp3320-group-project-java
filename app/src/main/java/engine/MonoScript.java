@@ -1,9 +1,12 @@
 package engine;
 
+import engine.rendering.ShaderPipeline;
+
 public abstract class MonoScript {
     public AssetManager Assets = AssetManager.get();
     public SceneGraph Scene;
     public InputManager Input;
+    public ShaderPipeline PostProcess;
 
     public MonoScript() {
 

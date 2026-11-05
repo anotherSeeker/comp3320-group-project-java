@@ -36,7 +36,15 @@ public final class ReefScene extends MonoScript {
                         FloatBuffer nearInstances,FloatBuffer farInstances) {
         void close(){near.delete();far.delete();memFree(nearInstances);memFree(farInstances);}
     }
-    public ReefScene(long seed){this.seed=seed;}
+    private final List<ReefLayout.Clearing> clearings;
+    public ReefScene(long seed){this(seed, List.of());}
+    public ReefScene(long seed,List<ReefLayout.Clearing> clearings){
+        this.seed=seed;this.clearings=List.copyOf(clearings);
+    }
+    public List<ReefLayout.Colony> layoutFor(long seed,int density){
+        return ReefLayout.generate(seed,density,clearings);
+    }
+    public List<ReefLayout.Clearing> clearings(){return clearings;}
     public void animationTime(float time){Scene.setAnimationTime(time);}
     public long seed(){return seed;}
     public int density(){return density;}
@@ -64,7 +72,7 @@ public final class ReefScene extends MonoScript {
         regenerate(seed,density);
     }
     public void regenerate(long newSeed,int newDensity){
-        List<ReefLayout.Colony> layout=ReefLayout.generate(newSeed,newDensity);
+        List<ReefLayout.Colony> layout=layoutFor(newSeed,newDensity);
         Pool[] next=new Pool[ReefLayout.VARIANTS];
         try{
             for(int i=0;i<next.length;i++){

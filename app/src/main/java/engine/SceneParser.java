@@ -2,6 +2,7 @@ package engine;
 
 import static org.lwjgl.assimp.Assimp.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.GL_R8;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -9,6 +10,7 @@ import java.nio.IntBuffer;
 import java.nio.file.Path;
 
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
@@ -31,7 +33,7 @@ public class SceneParser {
     private Path filepath;
     private Path directory;
 
-    public void loadScene(Path filepath, AIScene scene, SceneGraph sceneGraph) {
+    public void loadScene(Path filepath, AIScene scene, SceneGraph sceneGraph, Vector3f rootPosition) {
         this.meshes = scene.mMeshes();
         this.materials = scene.mMaterials();
         this.scene = scene;
@@ -42,7 +44,9 @@ public class SceneParser {
 
         AINode root = scene.mRootNode();
 
-        processNode(root, new Matrix4f());
+        Matrix4f rootTransform = new Matrix4f().translate(rootPosition);
+
+        processNode(root, rootTransform);
     }
 
     private void processNode(AINode node, Matrix4f parentTransform) {
@@ -118,6 +122,11 @@ public class SceneParser {
                         "ROUGHNESS",
                         loadTextureChannel(assimpMat, aiTextureType_GLTF_METALLIC_ROUGHNESS, 1, "roughness")
                 );
+            }
+
+            texture = loadTexture(assimpMat, aiTextureType_DISPLACEMENT);
+            if (texture != null) {
+                entry.add("DISPLACEMENT", texture);
             }
 
             material = assetManager.createMaterial(entry);
@@ -217,7 +226,7 @@ public class SceneParser {
                 }
 
                 try {
-                    return assetManager.LoadTexture(data, outWidth.get(0), outHeight.get(0), GL_RGBA, name);
+                    return assetManager.LoadTexture(data, outWidth.get(0), outHeight.get(0), GL_RGBA, GL_RGBA, name);
                 } finally {
                     STBImage.stbi_image_free(data);
                 }
@@ -237,7 +246,7 @@ public class SceneParser {
 
         data.flip();
 
-        return assetManager.LoadTexture(data, width, height, GL_RGBA, name);
+        return assetManager.LoadTexture(data, width, height, GL_RGBA, GL_RGBA, name);
     }
 
     private Integer loadTextureChannel(AIMaterial assimpMat, int textureType, int channel, String suffix) {
@@ -293,7 +302,7 @@ public class SceneParser {
 
                 String name = filepath + "#" + suffix + "-" + texturePath;
 
-                return assetManager.LoadTexture(extracted, w, h, GL_RED, name);
+                return assetManager.LoadTexture(extracted, w, h, GL_RED, GL_R8, name);
 
             } finally {
                 STBImage.stbi_image_free(data);
