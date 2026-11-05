@@ -1,8 +1,8 @@
 package engine;
 
-import static org.lwjgl.opengl.GL11.GL_BLEND;
 import static org.lwjgl.opengl.GL11.GL_LEQUAL;
 import static org.lwjgl.opengl.GL11.GL_LESS;
+import static org.lwjgl.opengl.GL11.GL_BLEND;
 import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
 import static org.lwjgl.opengl.GL11.glBlendFunc;
 import static org.lwjgl.opengl.GL11.glDepthFunc;
@@ -11,14 +11,18 @@ import static org.lwjgl.opengl.GL11.glDisable;
 import static org.lwjgl.opengl.GL11.glEnable;
 
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import dev.dominion.ecs.api.Dominion;
 import dev.dominion.ecs.api.Entity;
-import engine.components.*;
-import engine.particles.BubbleParticleEmitter;
-import engine.particles.GenericParticleEmitter;
-import engine.particles.Particle;
+import engine.components.GameObject;
+import engine.components.Material;
+import engine.components.Transform;
+import engine.rendering.CubeTexture;
+import engine.rendering.Mesh;
+import engine.rendering.Shader;
+import engine.particles.*;
 
 public class SceneGraph {
     static {
@@ -33,12 +37,16 @@ public class SceneGraph {
     private GenericParticleEmitter[] genericParticleEmitters;
     private BubbleParticleEmitter[] bubbleParticleEmitters;
 
+    private Matrix4f viewMatrix;
+    private Matrix4f viewportMatrix;
+
     private CubeTexture skyboxTexture = null;
     private Shader skyboxShader;
     private Mesh skyboxMesh = Mesh.Cube();
 
     public Transform cameraTransform = new Transform(new Matrix4f());
     public Vector3f lightDirection = new Vector3f(1, 1, 0);
+    public Vector3f lightColour = new Vector3f(1, 1, 1);
 
     public int fov = 60;
     public float aspectRatio;
@@ -58,8 +66,11 @@ public class SceneGraph {
     }
 
     public Matrix4f computeViewportMatrix() {
+
+        Quaternionf conj = new Quaternionf(cameraTransform.orientation).conjugate();
+
         Matrix4f view = new Matrix4f()
-                .rotate(cameraTransform.orientation.conjugate())
+                .rotate(conj)
                 .translate(
                         -cameraTransform.position.x,
                         -cameraTransform.position.y,
@@ -71,24 +82,12 @@ public class SceneGraph {
         return projection.mul(view);
     }
 
-    public Matrix4f computeViewMatrix () {
-        Matrix4f view = new Matrix4f()
-                .rotate(cameraTransform.orientation.conjugate())
-                .translate(-cameraTransform.position.x,
-                           -cameraTransform.position.y,
-                           -cameraTransform.position.z
-                );
-        return view;
-    }
-
-    public Matrix4f computeViewportMatrix (Matrix4f viewMatrix) {
-        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
-        return projection.mul(viewMatrix);
-    }
-
     public Matrix4f computeSkyboxMatrix() {
+
+        Quaternionf conj = new Quaternionf(cameraTransform.orientation).conjugate();
+
         Matrix4f view = new Matrix4f()
-                .rotate(cameraTransform.orientation.conjugate()).invert();
+                .rotate(conj);
 
         Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
 
@@ -97,7 +96,7 @@ public class SceneGraph {
 
     public void draw() {
         var drawables = ECS.findEntitiesWith(GameObject.class, Transform.class);
-        Matrix4f viewportMatrix = computeViewportMatrix();
+        viewportMatrix = computeViewportMatrix();
 
         if (skyboxTexture != null) {
             glDepthMask(false);
@@ -126,22 +125,18 @@ public class SceneGraph {
 
             material.shader.setMatrix4("Model", transform.model);
             material.shader.setMatrix4("CameraMatrix", viewportMatrix);
-            material.shader.setTexture("Albedo", material.albedoMap, 4);
-            material.shader.setTexture("RoughnessMap", material.roughnessMap, 5);
-            material.shader.setTexture("AmbientOcclusionMap", material.ambientOcclusionMap, 6);
-            material.shader.setTexture("NormalMap", material.normalMap, 7);
             material.shader.setVector3("LightDirection", lightDirection);
             material.shader.setVector3("ViewPosition", cameraTransform.position);
+            material.shader.setVector3("DiffuseColour", lightColour);
 
             material.shader.setInt("IrradianceMap", 1);
             material.shader.setInt("PrefilterMap", 2);
             material.shader.setInt("brdfIntMap", 3);
 
-            material.shader.setFloat("Roughness", material.roughness);
-            material.shader.setFloat("AmbientOcclusion", material.ambientOcclusion);
+            material.bindAsUniform();
 
             gameObject.mesh.bind();
-            gameObject.mesh.draw();
+            gameObject.mesh.drawPatches();
         }
     }
 
@@ -159,7 +154,25 @@ public class SceneGraph {
         skyboxTexture = assetManager.getCubeTexture(cubeTexture);
     }
 
+
     // Particle methods
+
+    public Matrix4f computeViewMatrix () {
+        Quaternionf conj = new Quaternionf(cameraTransform.orientation).conjugate();
+        Matrix4f view = new Matrix4f()
+                .rotate(conj)
+                .translate(-cameraTransform.position.x,
+                           -cameraTransform.position.y,
+                           -cameraTransform.position.z
+                );
+        return view;
+    }
+
+    public Matrix4f computeViewportMatrix (Matrix4f viewMatrix) {
+        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
+        return projection.mul(viewMatrix);
+    }
+
     public void drawParticles () {
         var genericEmitters = ECS.findEntitiesWith(GenericParticleEmitter.class);
         var bubbleEmitters = ECS.findEntitiesWith(BubbleParticleEmitter.class);
@@ -167,8 +180,8 @@ public class SceneGraph {
         glDepthMask(false);
         glEnable(GL_BLEND);
 
-        Matrix4f viewMatrix = computeViewMatrix();
-        Matrix4f viewportMatrix = computeViewportMatrix(viewMatrix);
+        viewMatrix = computeViewMatrix();
+        viewportMatrix = computeViewportMatrix(viewMatrix);
 
         for (int i = 0; i < numOfEmitterTypes; i++) {
             if (i == 0) {
