@@ -187,7 +187,7 @@ float calculatePCF(vec4 projected,float bias){
     int kernelSize = 7;
     int kernelWidth = kernelSize / 2;
 
-    int blurRadius = 2;
+    int blurRadius = 5;
 
     vec2 noiseUV = floor(gl_FragCoord.xy / 4.0);
 
