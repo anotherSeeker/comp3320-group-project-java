@@ -8,10 +8,7 @@ public class Game {
             app.registerScript(new scripts.DemoScene());
             app.registerScript(new scripts.Camera());
             app.registerScript(new scripts.PostProcess());
-<<<<<<< HEAD
             app.registerScript(new scripts.ParticlesDemoScene());
-=======
->>>>>>> origin/main
             app.run();
         }
 
