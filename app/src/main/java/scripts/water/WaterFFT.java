@@ -73,10 +73,21 @@ public class WaterFFT
     public static int butterflyTexID;
     public static int butterflyIndexID;
 
+    public static int ifftBufferTexID;
+    public static int ifftBufferIndexID;
+
+    public static int displacementTexID;
+    public static int displacementIndexID;
+
+    public static int derivativeTexID;
+    public static int derivativeIndexID;
+
     //compute shader details
     public static boolean spectraShaderCreated = false;
     public static boolean fComponentShaderCreated = false;
-    public static boolean fftShaderCreated = false;
+    public static boolean butterflyShaderCreated = false;
+    public static boolean ifftShaderCreated = false;
+    public static boolean recombineShaderCreated = false;
 
     public static int wavespectraComputeID;
     public static int wavespectraProgramID;
@@ -156,21 +167,21 @@ public class WaterFFT
 
     public static void computeWaveSpectrum()
     {
-        System.out.println("start wave spectra");
-        setupSpectraShader();
-        GLErrors.printIfError("SetupSpectra");
+        //System.out.println("start wave spectra");
+        setupSpectra();
+        GLErrors.printIfError("setupSpectra");
 
         //dispatches and waits for completion
         dispatchWaveSpectra();
 
         GLErrors.printIfError("dispatch waveSpec");
 
-        System.out.println("compute spectra done");
+        System.out.println("end compute spectra");
 
         GLErrors.printIfError("end cWaveSpec");
     }
 
-    private static void setupSpectraShader()
+    private static void setupSpectra()
     {
         if (!spectraShaderCreated)
         {
@@ -178,24 +189,23 @@ public class WaterFFT
             GLErrors.printIfError("read compute 0 setupSpectra");
             
             wavespectraComputeID = glCreateShader(GL_COMPUTE_SHADER);
-            GLErrors.printIfError("glCreateShader setupSpectra");
-            
-            System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
+            if (GLErrors.printIfError("glCreateShader setupSpectra") != 0)
+                System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
+
             glShaderSource(wavespectraComputeID, source);
-            GLErrors.printIfError("glShaderSource setupSpectra");
-            
-            System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
+            if (GLErrors.printIfError("glShaderSource setupSpectra") != 0)
+                System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
+
             glCompileShader(wavespectraComputeID);
 
-            GLErrors.printIfError("compile setupSpectra");
-            
-            System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
+            if (GLErrors.printIfError("compile setupSpectra") != 0)
+                System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
 
             wavespectraProgramID = glCreateProgram();
             glAttachShader(wavespectraProgramID, wavespectraComputeID);
             glLinkProgram(wavespectraProgramID);
-            GLErrors.printIfError("attach + link setupSpectra");
-            System.out.println(glGetProgramInfoLog(wavespectraProgramID,1024));
+            if (GLErrors.printIfError("attach + link setupSpectra") != 0)
+                System.out.println(glGetProgramInfoLog(wavespectraProgramID,1024));
 
             //make the textures
             genSpectrumTex();
@@ -228,7 +238,6 @@ public class WaterFFT
         glBindTexture(GL_TEXTURE_2D, waveVecTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        //glTexStorage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize);
         //store and load is not allowed for 3 valued formats like this apparently, so we're using RGBA instead of RGB
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
         glBindImageTexture( 1, waveVecTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
@@ -238,7 +247,6 @@ public class WaterFFT
         glBindTexture(GL_TEXTURE_2D, h0TexId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        //glTexStorage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize);
         //We actually do need RGBA for h0(k) and h0(-k)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
         glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
@@ -288,20 +296,25 @@ public class WaterFFT
             glShaderSource(fComponentComputeID, source);
             glCompileShader(fComponentComputeID);
             
-            System.out.println(glGetShaderInfoLog(fComponentComputeID,1024));
+            if (GLErrors.printIfError("fcomp compile: ") != 0)
+                System.out.println(glGetProgramInfoLog(fComponentComputeID,1024));
+
 
             fComponentProgramID = glCreateProgram();
             glAttachShader(fComponentProgramID, fComponentComputeID);
             glLinkProgram(fComponentProgramID);
 
-            System.out.println(glGetProgramInfoLog(fComponentProgramID,1024));
+            if (GLErrors.printIfError("fcomp compile: ") != 0)
+                System.out.println(glGetProgramInfoLog(fComponentProgramID,1024));
 
             //make the textures
             genFComponentTex();
 
+            GLErrors.printIfError("fcomp genTex: ");
+
             fComponentShaderCreated = true;
+            GLErrors.printIfError("end setupFComp");
         }
-        GLErrors.printIfError("end setupFComp");
     }
 
     public static void genFComponentTex()
@@ -383,6 +396,9 @@ public class WaterFFT
     {
         //System.out.println("start dispatch FComponent");
         float currentTime = (float) glfwGetTime();
+        if (currentTime % 1000.0f < 1.0f)
+            System.out.println(currentTime);
+
         //use our program and bind our textures
         useFComponentShader(currentTime);
         GLErrors.printIfError("useFcomp dispatchFComp");
@@ -394,7 +410,7 @@ public class WaterFFT
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
         GLErrors.printIfError("postDisptach dispatchFComp");
 
-        //System.out.println("compute Fourier Components done");
+        //System.out.println("end compute Fourier Components");
     }
 
     public static void fourierComponentCompute()
@@ -405,21 +421,57 @@ public class WaterFFT
 
     private static void setupButterflyCompute()
     {
-        glUseProgram( fComponentProgramID );
+        if (!fComponentShaderCreated)
+        {
+            String source = AssetManager.get().ReadCompute(butterflyComputePath);
+            
+            butterflyComputeID = glCreateShader(GL_COMPUTE_SHADER);
+            glShaderSource(butterflyComputeID, source);
+            glCompileShader(butterflyComputeID);
+            
+            if (GLErrors.printIfError("butterfly compile: ") != 0)
+                System.out.println(glGetProgramInfoLog(butterflyComputeID,1024));
 
-        //inputs
-        glUniform1f(glGetUniformLocation(fComponentProgramID, "texSize"), textureSize);
+            butterflyProgramID = glCreateProgram();
+            glAttachShader(butterflyProgramID, butterflyComputeID);
+            glLinkProgram(butterflyProgramID);
+            if (GLErrors.printIfError("butterfly link: ") != 0)
+                System.out.println(glGetProgramInfoLog(butterflyProgramID,1024));
 
-        //outputs
+            //make the textures
+            genButterflyTexture();
+
+            butterflyShaderCreated = true;
+            System.out.println("end setupButterFly");
+        }
+        GLErrors.printIfError("end setupButtefly");
+    }
+
+    private static void genButterflyTexture()
+    {
+        butterflyTexID = glGenTextures();
         glActiveTexture(GL_TEXTURE0);
-	    glBindTexture(GL_TEXTURE_2D, butterflyProgramID);
-        glBindImageTexture( 0, butterflyProgramID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+        glBindTexture(GL_TEXTURE_2D, butterflyTexID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, texSizePower, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
+        glBindImageTexture( 0, butterflyTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
 
+        butterflyIndexID = AssetManager.get().AddTexture("butterflyTexture",butterflyTexID);
     }
 
     private static void useButterflyShader()
     {
-        
+        glUseProgram( butterflyProgramID );
+
+        //inputs
+        glUniform1i(glGetUniformLocation(butterflyProgramID, "texSize"), textureSize);
+        glUniform1i(glGetUniformLocation(butterflyProgramID, "sizePow"), texSizePower);
+
+        //outputs
+        glActiveTexture(GL_TEXTURE0);
+	    glBindTexture(GL_TEXTURE_2D, butterflyTexID);
+        glBindImageTexture( 0, butterflyTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
     }
 
 
@@ -435,15 +487,55 @@ public class WaterFFT
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-        System.out.println("precompute butterfly texture done");
+        System.out.println("end precompute butterfly texture");
 
-        GLErrors.printIfError("postDisptach dispatchButterflyPrecomputeShader");
+        GLErrors.printIfError("end dispatchButterflyPrecomputeShader");
     }
 
     public static void precomputeButterflyTexture()
     {
         setupButterflyCompute();
         dispatchButterflyPrecomputeShader();
+    }
+
+    public static void setupIFFT()
+    {
+        if (!ifftShaderCreated)
+        {
+            String source = AssetManager.get().ReadCompute(ifftComputePath);
+            
+            ifftComputeID = glCreateShader(GL_COMPUTE_SHADER);
+            glShaderSource(ifftComputeID, source);
+            glCompileShader(ifftComputeID);
+            
+            if (GLErrors.printIfError("ifft compile: ") != 0)
+                System.out.println(glGetProgramInfoLog(ifftComputeID,1024));
+
+            ifftProgramID = glCreateProgram();
+            glAttachShader(ifftProgramID, ifftComputeID);
+            glLinkProgram(ifftProgramID);
+            if (GLErrors.printIfError("ifft link: ") != 0)
+                System.out.println(glGetProgramInfoLog(ifftProgramID,1024));
+
+            genIFFTBuffer();
+
+            ifftShaderCreated = true;
+            System.out.println("end setupIFFT");
+
+            GLErrors.printIfError("end setupIFFT");
+        }
+    }
+
+    private static void genIFFTBuffer()
+    {
+        ifftBufferTexID = glGenTextures();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, ifftBufferTexID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
+
+        ifftBufferIndexID = AssetManager.get().AddTexture("ifftBuffer",ifftBufferTexID);
     }
 
 
@@ -458,16 +550,16 @@ public class WaterFFT
 
         glActiveTexture(GL_TEXTURE0+1);
         glBindTexture(GL_TEXTURE_2D, inputTexID);
-        glBindImageTexture( 1, inputTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+        glBindImageTexture( 1, inputTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
 
         glActiveTexture(GL_TEXTURE0+2);
         glBindTexture(GL_TEXTURE_2D, bufferTexID);
-        glBindImageTexture( 2, bufferTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+        glBindImageTexture( 2, bufferTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
 
-        glUniform1f(glGetUniformLocation(ifftProgramID, "size"), textureSize);
+        glUniform1i(glGetUniformLocation(ifftProgramID, "size"), textureSize);
     }
 
-    private static void _IFFT(int inputTexID, int bufferTexID, int pingpong, boolean outputToInput)
+    private static void doIFFT(int inputTexID, int bufferTexID, int pingpong, boolean outputToInput)
     {
         ifft_use(inputTexID, bufferTexID, ifftProgramID); 
 
@@ -493,7 +585,7 @@ public class WaterFFT
         for (int i = 0; i < texSizePower; i++)
         {
             pingpong = (pingpong+1) % 2;
-            glUniform1f(stepLocation, i);
+            glUniform1i(stepLocation, i);
             glUniform1i(ppongLocation, pingpong);
 
             glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
@@ -512,5 +604,26 @@ public class WaterFFT
             //copy input to buffer texture
             glCopyImageSubData(inputTexID, GL_TEXTURE_2D, 0, 0, 0, 0, bufferTexID, GL_TEXTURE_2D, 0, 0, 0, 0, textureSize, textureSize, 1);
         }
+    }
+
+    public static void computeFinalWaveParameters()
+    {
+        setupIFFT();
+
+        doIFFT(dxdzTexID, ifftBufferTexID, 0, true);
+        if (GLErrors.printIfError("doIFFT dxdz: ") != 0)
+                System.out.println(glGetProgramInfoLog(fComponentProgramID,1024));
+
+        doIFFT(dydxzTexID, ifftBufferTexID, 0, true);
+        if (GLErrors.printIfError("doIFFT dydxz: ") != 0)
+                System.out.println(glGetProgramInfoLog(fComponentProgramID,1024));
+
+        doIFFT(dyxdyzTexID, ifftBufferTexID, 0, true);
+        if (GLErrors.printIfError("doIFFT dyxdyz: ") != 0)
+                System.out.println(glGetProgramInfoLog(fComponentProgramID,1024));
+            
+        doIFFT(dxxdzzTexID, ifftBufferTexID, 0, true);
+        if (GLErrors.printIfError("doIFFT dxxdzz: ") != 0)
+                System.out.println(glGetProgramInfoLog(fComponentProgramID,1024));
     }
 }

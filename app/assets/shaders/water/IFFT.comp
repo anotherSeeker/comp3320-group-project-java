@@ -10,7 +10,7 @@ layout(rgba32f, binding = 1) uniform image2D buffer0;
 layout(rgba32f, binding = 2) uniform image2D buffer1;
 
 uniform int H_or_V;
-uniform float size;
+uniform int size;
 uniform int pingpong;
 uniform int stage;
 
@@ -58,14 +58,14 @@ vec2 vertStep()
 	{
 		//Buffer1[id.xy] = Buffer0[uint2(id.x, inputsIndices.x)] + ComplexMult(float2(data.r, -data.g), Buffer0[uint2(id.x, inputsIndices.y)]);
 
-		vec2 out1 = vec2(imageLoad(buffer0, vec2(id.x, inputsIndices.x)) + cMult( vec2(butterfly.x, -butterfly.y), imageLoad(buffer0, vec2(id.x, inputsIndices.y)) ) );
+		vec2 out1 = vec2(imageLoad(buffer0, vec2(id.x, inputsIndices.x)).xy + cMult( vec2(butterfly.x, -butterfly.y), imageLoad(buffer0, vec2(id.x, inputsIndices.y)).xy ) );
 		imageStore(buffer1, invocID, vec4(out1.x, out1.y, 0, 0));
 	}
 	else
 	{
 		//Buffer0[id.xy] = Buffer1[uint2(id.x, inputsIndices.x)] + ComplexMult(float2(data.r, -data.g), Buffer1[uint2(id.x, inputsIndices.y)]);
 
-		vec2 out0 = vec2(imageLoad(buffer1, vec2(id.x, inputsIndices.x)) + cMult( vec2(butterfly.x, -butterfly.y), imageLoad(buffer1, vec2(id.x, inputsIndices.y)) ) );
+		vec2 out0 = vec2(imageLoad(buffer1, vec2(id.x, inputsIndices.x)).xy + cMult( vec2(butterfly.x, -butterfly.y), imageLoad(buffer1, vec2(id.x, inputsIndices.y)).xy ) );
 		imageStore(buffer0, invocID, vec4(out0.x, out0.y, 0, 0));
 	}
 }

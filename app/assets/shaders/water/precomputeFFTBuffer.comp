@@ -5,7 +5,8 @@ layout(local_size_x = 1, local_size_y = 8, local_size_z = 1) in;
 
 layout(rgba32f, binding = 0) uniform image2D butterflyTex;
 
-uniform float texSize;
+uniform int texSize;
+uniform int sizePow;
 
 //generating our "butterfly texture" for the fft based primarily on 
 
@@ -16,11 +17,10 @@ vec2 cExp(vec2 a)
 
 void PrecomputeTwiddleFactorsAndInputIndices(ivec2 id)
 {
-	uint b = texSize >> (id.x + 1);
+	uint b = sizePow;//texSize >> (id.x + 1);
 	vec2 mult = 2 * PI * vec2(0, 1) / texSize;
 	uint i = (2 * b * (id.y / b) + id.y % b) % texSize;
 	vec2 twiddle = cExp(-mult * ((id.y / b) * b));
-
 
 	imageStore(butterflyTex, id, vec4(twiddle.x, twiddle.y, i, i + b));
 	imageStore(butterflyTex, ivec2(id.x, id.y + texSize / 2), vec4(-twiddle.x, -twiddle.y, i, i + b));
