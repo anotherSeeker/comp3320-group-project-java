@@ -1,8 +1,7 @@
 # the sunken castle (comp3320-group-project-java)
 Java rewrite of c++ engine
 
-Very basic implementation of particle effects.
-- In "ParticlesDemoScene" and "AssetManager" files you may need to alter the pathPrefix to get it working on your machine.  
+Currently has high GPU usage.
 
 ## languages
 - java
