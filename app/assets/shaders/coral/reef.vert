@@ -17,6 +17,16 @@ out vec2 uv;
 out vec3 worldPosition;
 out vec3 tint;
 out vec3 normal;
+out float canopy, colonyPhase, response;
+uniform vec3 PulseOrigin;
+uniform float PulseAge, LifeStrength;
+
+float pulseAt(vec3 world) {
+    float radius = length(world.xz - PulseOrigin.xz);
+    float front = radius - PulseAge * 6.0;
+    return exp(-front * front * 1.8) * exp(-radius * .045) *
+           step(0.0,PulseAge) * (1.0-smoothstep(8.0,10.0,PulseAge));
+}
 
 // Distance to a vertical player capsule: reacts to the body, including swimming height.
 float influence(vec3 world, vec3 feet) {
@@ -36,7 +46,12 @@ vec3 displacement(vec3 p) {
     vec2 current = vec2(sin(Time * 0.62 + SwayPhase + phaseOffset + world.z * 0.35),
                         cos(Time * 0.48 + (SwayPhase + phaseOffset) + world.x * 0.30));
     vec2 flutter = vec2(sin(Time * 1.45 + phase), cos(Time * 1.17 + phase * 1.13));
-    vec2 offset = SwayStrength * flex * (current * vec2(0.75, 0.55) + flutter * 0.42);
+    // Slow tide, smaller tip flutter and a coherent pulse response; roots stay fixed.
+    vec2 offset = SwayStrength * flex * (current * vec2(.85,.62) + flutter * .22);
+    float pulse = pulseAt(world) * LifeStrength;
+    vec2 pulseDirection = world.xz - PulseOrigin.xz;
+    pulseDirection /= sqrt(dot(pulseDirection,pulseDirection)+.1);
+    offset += pulseDirection * pulse * flex * .18;
     if (InteractionStrength > 0.0) {
         vec2 away = world.xz - PlayerPosition.xz;
         // Soft normalization stays finite even if a vertex is exactly at the player centre.
@@ -52,9 +67,11 @@ void main() {
     float c=instanceRotationPhase.x, s=instanceRotationPhase.y, scale=instancePositionScale.w;
     Model=mat4(vec4(c*scale,0,-s*scale,0),vec4(0,scale,0,0),vec4(s*scale,0,c*scale,0),vec4(instancePositionScale.xyz,1));
     phaseOffset=instanceRotationPhase.z; tint=instanceTint;
+    colonyPhase=phaseOffset;
+    canopy=clamp(aPos.y/max(SwayHeight,.001),0.0,1.0);
     vec3 world = (Model * vec4(aPos * Growth, 1.0)).xyz + displacement(aPos);
     mat3 frame = mat3(Model);
-    if (NormalDetail > 0.5 && (SwayStrength > 0.0 || InteractionStrength > 0.0)) {
+    if (NormalDetail > 0.5 && (SwayStrength > 0.0 || InteractionStrength > 0.0 || (PulseAge >= 0.0 && LifeStrength > 0.0))) {
         // Differentiate only the displacement, adding the exact model derivative, so
         // normals follow both sideways bending directions and model transforms.
         const float e = 0.002;
@@ -67,5 +84,8 @@ void main() {
     normal = normalize(transpose(inverse(frame)) * aNormal);
     uv = aUV;
     worldPosition=world;
+    response = InteractionStrength * (influence(world,PlayerPosition) +
+               .6 * influence(world,WakePosition) * min(length(PlayerVelocity)*.25,1.0))
+               + pulseAt(world) * LifeStrength;
     gl_Position = CameraMatrix * vec4(world, 1.0);
 }

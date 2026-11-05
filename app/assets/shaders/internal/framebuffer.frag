@@ -4,6 +4,8 @@ out vec4 fragColour;
 in vec2 UV;
 
 uniform sampler2D screenTexture;
+uniform sampler2D CoralGlow;
+uniform float CoralGlowIntensity;
 
 uniform float MaxBrightness = 1.0f; 
 uniform float Contrast = 1.0f;
@@ -37,6 +39,7 @@ vec3 uchimura(vec3 x){
 
 void main(){
     vec3 colour = texture(screenTexture,UV).rgb;
+    if (CoralGlowIntensity > 0.0) colour += texture(CoralGlow,UV).rgb * CoralGlowIntensity;
 
     vec3 x = colour * exp2(Exposure);    
     vec3 whitescale = uchimura(vec3(Whitepoint));

@@ -3,12 +3,14 @@ import scripts.*;
 
 public class Game {
     public static void main(String[] args) throws Exception {
-        boolean check=false,original=false,generationCheck=false;long seed=42;
+        boolean check=false,original=false,generationCheck=false,showcase=false,capture=false;long seed=42;
         for(int i=0;i<args.length;i++) {
             switch(args[i]) {
                 case "--check" -> check=true;
                 case "--check-generation" -> generationCheck=true;
                 case "--engine-demo" -> original=true;
+                case "--showcase" -> showcase=true;
+                case "--capture" -> capture=true;
                 case "--seed" -> seed=Long.parseLong(args[++i]);
                 default -> throw new IllegalArgumentException("Unknown option: "+args[i]);
             }
@@ -16,9 +18,9 @@ public class Game {
         if(generationCheck){coral.ReefGenerationCheck.run();return;}
         App app=new App();
         try {
-            if(!app.init(1100,800,"Coral Field — Latest Engine",!check))throw new IllegalStateException("Cannot open graphics window");
+            if(!app.init(1100,800,"Coral Field — Latest Engine",!check&&!capture))throw new IllegalStateException("Cannot open graphics window");
             PostProcess effects = new PostProcess();
-            effects.showUI(!check);
+            effects.showUI(!check&&!showcase&&!capture);
             app.registerScript(effects);
             if(original) {
                 app.registerScript(new DemoScene());app.registerScript(new Camera());
@@ -30,12 +32,13 @@ public class Game {
                 }else app.run();
             } else {
                 DemoScene environment = new DemoScene(true);
-                app.registerScript(environment);
+                if(!showcase)app.registerScript(environment);
                 ReefPlayer player=new ReefPlayer();
                 ReefScene reef=new ReefScene(seed,environment.coralClearings());reef.player=player;
                 ReefCamera camera=new ReefCamera();camera.player=player;
                 app.registerScript(player);app.registerScript(reef);app.registerScript(camera);app.startScripts();
-                if(check)ReefCheck.run(app,reef,player,camera,effects);else app.run();
+                if(capture)FantasyCapture.run(app,reef,player,camera);
+                else if(check)ReefCheck.run(app,reef,player,camera,effects);else app.run();
             }
         } finally {app.close();}
     }

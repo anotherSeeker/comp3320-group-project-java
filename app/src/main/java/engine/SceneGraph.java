@@ -33,6 +33,7 @@ public class SceneGraph {
     public Vector3f lightColour = new Vector3f(1, 1, 1);
 
     public int fov = 60;
+    public boolean coralAtmosphere;
     public float aspectRatio;
 
     Dominion ECS = Dominion.create();
@@ -91,6 +92,8 @@ public class SceneGraph {
 
             skyboxShader.setMatrix4("CameraMatrix", computeSkyboxMatrix());
             skyboxShader.setInt("Skybox", 0);
+            skyboxShader.setFloat("CoralAtmosphere",coralAtmosphere?1:0);
+            skyboxShader.setFloat("Time",animationTime());
 
             skyboxMesh.bind();
             skyboxMesh.draw();

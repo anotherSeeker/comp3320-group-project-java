@@ -56,6 +56,25 @@ public final class ReefCheck {
                 + (pipeline.SupportsCompute() ? "smoke-tested." : "safely disabled on OpenGL 4.1 (4.3 path not runtime-tested)."));
     }
 
+    private static void checkFantasy(App app,ReefScene reef) {
+        reef.setFlow(false);reef.setInteraction(false);reef.animationTime(1);app.renderFrame(0);
+        BufferedImage luminous=FrameCapture.read();
+        reef.PostProcess.CoralGlowIntensity=0;app.renderFrame(0);
+        require(difference(luminous,FrameCapture.read())>1000,"Coral bloom has no visible effect");
+        reef.PostProcess.CoralGlowIntensity=.75f;
+        reef.setSpores(false);app.renderFrame(0);
+        require(difference(luminous,FrameCapture.read())>30,"Spores are not visible");
+        reef.setSpores(true);reef.setLife(false);app.renderFrame(0);
+        require(difference(luminous,FrameCapture.read())>10000,"Bioluminescence toggle has no visible effect");
+        reef.setLife(true);
+        reef.animationTime(2);app.renderFrame(0);BufferedImage quiet=FrameCapture.read();
+        reef.animationTime(1);reef.sendPulse();reef.animationTime(2);app.renderFrame(0);
+        require(difference(quiet,FrameCapture.read())>1000,"Travelling coral pulse has no visible effect");
+        reef.clearPulse();reef.animationTime(1);app.renderFrame(0);
+        require(glGetError()==GL_NO_ERROR,"Fantasy effects left an OpenGL error");
+        System.out.println("PASS: Mac-compatible glow, visible spores, bioluminescence toggle and travelling light pulse.");
+    }
+
     public static void run(App app,ReefScene reef,ReefPlayer player,ReefCamera camera,PostProcess effects)throws Exception {
         TrunkCollisionCheck.run();
         require(reef.layoutFor(42,1).equals(reef.layoutFor(42,1)),"Seed is not repeatable");
@@ -91,6 +110,7 @@ public final class ReefCheck {
         require(reef.nearCount>0&&reef.farCount>0,"Follow view does not exercise both detail levels");
         FrameCapture.write(FrameCapture.read(),out.resolve("follow.png"));
         checkEngineIntegration(app,reef);
+        checkFantasy(app,reef);
         var c=reef.colonies().get(reef.count()/2);
         player.moveTo(c.position().add(0,0,1.3f));
         for(int i=0;i<80;i++) {

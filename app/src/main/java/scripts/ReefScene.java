@@ -25,6 +25,10 @@ public final class ReefScene extends MonoScript {
     private List<ReefLayout.Colony> colonies=List.of();
     private Pool[] pools;
     private Shader shader;
+    private CoralMotes motes;
+    private boolean life=true,spores=true;
+    private float pulseStart=-100;
+    private final Vector3f pulseOrigin=new Vector3f();
     private final Texture[] textures=new Texture[3];
     private long seed;
     private int density=1;
@@ -54,10 +58,16 @@ public final class ReefScene extends MonoScript {
     public void showUI(boolean enabled){showUI=enabled;}
     public void setFlow(boolean enabled){flow=enabled;}
     public void setInteraction(boolean enabled){react=enabled;}
+    public void setLife(boolean enabled){life=enabled;PostProcess.CoralGlowIntensity=enabled?.75f:0;}
+    public void setSpores(boolean enabled){spores=enabled;}
+    public void sendPulse(){pulseOrigin.set(player.transform().position);pulseStart=Scene.animationTime();}
+    public void clearPulse(){pulseStart=-100;}
+    private float pulseAge(){return pulseStart<0?-1:Scene.animationTime()-pulseStart;}
     public void finishGrowth(){growthElapsed=1.8;updateGrowth(0);}
     @Override protected void Start(){
-        int objectShader=Assets.LoadShader(Path.of("assets/shaders/coral/object.vert"),Path.of("assets/shaders/coral/object.frag"));
+        int objectShader=Assets.LoadShader(Path.of("assets/shaders/coral/object.vert"),Path.of("assets/shaders/coral/ground.frag"));
         shader=Assets.getShader(Assets.LoadShader(Path.of("assets/shaders/coral/reef.vert"),Path.of("assets/shaders/coral/reef.frag")));
+        motes=new CoralMotes();setLife(true);Scene.coralAtmosphere=true;
         String[] names={"branching","bushy","fan"};
         for(int i=0;i<3;i++)textures[i]=Assets.getTexture(Assets.LoadTexture(Path.of("assets/textures/coral/"+names[i]+".png")));
         CoralMesh floor=ReefGround.make();float[] v=floor.vertices();int[] idx=floor.indices();
@@ -85,6 +95,9 @@ public final class ReefScene extends MonoScript {
             }
         }catch(RuntimeException e){for(Pool p:next)if(p!=null)p.close();throw e;}
         if(pools!=null)for(Pool p:pools)p.close();pools=next;colonies=layout;seed=newSeed;density=newDensity;
+        float[] heights=new float[pools.length];
+        for(int i=0;i<pools.length;i++)heights[i]=pools[i].height();
+        motes.regenerate(colonies,heights,seed);clearPulse();
         growthElapsed=0;lastCollisionGrowth=-1;updateGrowth(0);
         glfwSetWindowTitle(glfwGetCurrentContext(),"Sunken Castle | "+count()+" corals | WASD swim | H overview | R regenerate | Seed "+seed);
         System.out.println("Reef seed="+seed+" density="+density+" colonies="+count()+" variants="+pools.length);
@@ -106,18 +119,25 @@ public final class ReefScene extends MonoScript {
             if(pressed(GLFW_KEY_1))requested=0;if(pressed(GLFW_KEY_2))requested=1;if(pressed(GLFW_KEY_3))requested=2;
             if(pressed(GLFW_KEY_F))flow=!flow;if(pressed(GLFW_KEY_I))react=!react;
             if(pressed(GLFW_KEY_V))wireframe=!wireframe;
+            if(pressed(GLFW_KEY_B))sendPulse();
+            if(pressed(GLFW_KEY_L))setLife(!life);
+            if(pressed(GLFW_KEY_O))spores=!spores;
+            if(pressed(GLFW_KEY_TAB))showUI=!showUI;
             if(pressed(GLFW_KEY_G)){growthElapsed=0;lastCollisionGrowth=-1;}
             if(pressed(GLFW_KEY_ESCAPE))glfwSetWindowShouldClose(glfwGetCurrentContext(),true);
         }
         if(showUI){
-            ImGui.setNextWindowPos(12,12,ImGuiCond.FirstUseEver);ImGui.setNextWindowSize(310,225,ImGuiCond.FirstUseEver);
-            ImGui.begin("Coral field");
+            ImGui.setNextWindowPos(12,12,ImGuiCond.FirstUseEver);ImGui.setNextWindowSize(330,300,ImGuiCond.FirstUseEver);
+            ImGui.begin("Enchanted reef");
             ImGui.text(count()+" colonies across 48 x 48 units");ImGui.text("Seed: "+seed);
             if(ImGui.button("Sparse"))requested=0;ImGui.sameLine();if(ImGui.button("Normal"))requested=1;ImGui.sameLine();if(ImGui.button("Dense"))requested=2;
             if(ImGui.button("New random field"))randomize=true;
             if(ImGui.button(flow?"Water: on":"Water: off"))flow=!flow;ImGui.sameLine();if(ImGui.button(react?"Reaction: on":"Reaction: off"))react=!react;
+            if(ImGui.button("Send light pulse [B]"))sendPulse();
+            if(ImGui.button(life?"Bioluminescence: on [L]":"Bioluminescence: off [L]"))setLife(!life);
+            if(ImGui.button(spores?"Spores: on [O]":"Spores: off [O]"))spores=!spores;
             ImGui.text("WASD swim | Q/E down/up | Shift faster");ImGui.text("H overview | R new field | P reset");
-            ImGui.text("Right-drag orbit | Scroll zoom");ImGui.text("Main trunks solid; small branches passable");ImGui.end();
+            ImGui.text("Right-drag orbit | Scroll zoom");ImGui.text("Tab hide panel | G replay growth");ImGui.end();
         }
         if(randomize||requested>=0)regenerate(randomize?new Random().nextLong(1_000_000_000L):seed,requested>=0?requested:density);
         updateGrowth(dt);interaction.update(dt);
@@ -128,7 +148,7 @@ public final class ReefScene extends MonoScript {
         visibleCount=nearCount=farCount=drawCalls=triangles=0;
         for(var c:colonies){
             Pool p=pools[c.variant()];float distance=camera.distance(c.x(),p.height()*c.scale()*.5f,c.z());
-            float radius=p.radius()*c.scale()+.65f;
+            float radius=p.radius()*c.scale()+1.0f;
             if(distance>85 || !frustum.testSphere(c.x(),p.height()*c.scale()*growth*.5f,c.z(),radius))continue;
             boolean near=distance<19;FloatBuffer buffer=near?p.nearInstances():p.farInstances();
             buffer.put(c.x()).put(0).put(c.z()).put(c.scale()).put((float)Math.cos(c.yaw())).put((float)Math.sin(c.yaw())).put(c.phase()).put(0).put(c.r()).put(c.g()).put(c.b());
@@ -136,16 +156,21 @@ public final class ReefScene extends MonoScript {
         }
         glPolygonMode(GL_FRONT_AND_BACK,wireframe?GL_LINE:GL_FILL);shader.use();
         shader.setMatrix4("CameraMatrix",matrix);shader.setVector3("ViewPosition",camera);shader.setVector3("LightDirection",Scene.lightDirection);
-        shader.setFloat("Time",Scene.animationTime());shader.setFloat("Growth",growth);shader.setFloat("SwayStrength",flow?.22f:0);shader.setFloat("SwayPhase",0);
+        shader.setVector3("LightColour",Scene.lightColour);
+        shader.setFloat("LifeStrength",life?1:0);
+        shader.setVector3("PulseOrigin",pulseOrigin);shader.setFloat("PulseAge",pulseAge());
+        shader.setFloat("Time",Scene.animationTime());shader.setFloat("Growth",growth);shader.setFloat("SwayStrength",flow?.32f:0);shader.setFloat("SwayPhase",0);
         shader.setVector3("PlayerPosition",interaction.position);shader.setVector3("WakePosition",interaction.wakePosition);shader.setVector3("PlayerVelocity",interaction.velocity);
-        shader.setFloat("PlayerRadius",1.6f);shader.setFloat("PlayerHeight",1.6f);shader.setFloat("InteractionStrength",react?.65f:0);
+        shader.setFloat("PlayerRadius",2.5f);shader.setFloat("PlayerHeight",1.6f);shader.setFloat("InteractionStrength",react?.65f:0);
         for(int i=0;i<pools.length;i++){
-            Pool p=pools[i];shader.setTexture("Albedo",textures[i%3],4);shader.setFloat("SwayHeight",p.height());shader.setFloat("SwayBaseHeight",p.trunk().top()+.002f);
+            Pool p=pools[i];shader.setInt("Species",i%3);shader.setTexture("Albedo",textures[i%3],4);shader.setFloat("SwayHeight",p.height());shader.setFloat("SwayBaseHeight",p.trunk().top()+.002f);
             p.nearInstances().flip();p.farInstances().flip();
             shader.setFloat("NormalDetail",1);int n=p.near().drawInstances(p.nearInstances());if(n>0){drawCalls++;triangles+=n*p.near().triangleCount();}
             shader.setFloat("NormalDetail",0);int f=p.far().drawInstances(p.farInstances());if(f>0){drawCalls++;triangles+=f*p.far().triangleCount();}
         }
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+        if(life&&spores&&!wireframe)motes.draw(matrix,camera,Scene.animationTime(),growth,
+                interaction.position,interaction.wakePosition,interaction.velocity,react?1:0,pulseOrigin,pulseAge());
     }
-    @Override protected void Destroy(){if(pools!=null){for(Pool p:pools)p.close();pools=null;}}
+    @Override protected void Destroy(){if(motes!=null)motes.close();PostProcess.CoralGlowIntensity=0;if(pools!=null){for(Pool p:pools)p.close();pools=null;}}
 }

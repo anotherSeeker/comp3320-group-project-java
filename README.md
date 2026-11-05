@@ -69,3 +69,12 @@ The default scene includes the team's current environment and seeded recursive
 coral generation. Press R for new shapes/placement, 1/2/3 for density, and G for
 growth. Source details and hardware-specific rendering behavior are documented
 in `CORAL_FIELD.md`. Run `./gradlew :app:generationCheck` for CPU verification.
+
+## Enchanted Reef fantasy preview
+
+Branch `nirmit/coral-fantasy` adds animated bioluminescent shaders, reactive
+light pulses, spores, underwater atmosphere and Mac-compatible HDR glow.
+Open `../Enchanted Reef.app`, or run `./gradlew :app:run --args='--showcase'`.
+B sends a pulse; L toggles luminescence; O toggles spores; Tab hides the coral panel.
+See [FANTASY_CORAL.md](FANTASY_CORAL.md) for controls, implementation and verification.
+The fantasy update is maintained separately from the original coral integration.

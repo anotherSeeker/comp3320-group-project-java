@@ -1,5 +1,9 @@
 # Procedural coral in the current team engine
 
+**Current local work:** `nirmit/coral-fantasy` adds the Enchanted Reef visual treatment.
+See [FANTASY_CORAL.md](FANTASY_CORAL.md). The integration notes below describe the
+published base; its simpler coral shading has been replaced in this local preview.
+
 ## Integration status — 5 November 2026
 
 Contribution branch: `nirmit/procedural-coral`.
