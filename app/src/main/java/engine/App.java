@@ -1,5 +1,7 @@
 package engine;
 
+import engine.rendering.*;
+
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
@@ -9,21 +11,31 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 import java.util.ArrayList;
 
+import imgui.ImGui;
+import imgui.gl3.ImGuiImplGl3;
+import imgui.glfw.ImGuiImplGlfw;
+
 public class App {
     private long window;
     private AssetManager assetManager = AssetManager.get();
     private SceneGraph scene;
     private InputManager input;
 
-    int initWidth = 0;
-    int initHeight = 0;
+    private ImGuiImplGlfw imGuiGlfw;
+    private ImGuiImplGl3 imGuiGL3;
+
+    private ShaderPipeline pipeline;
 
     private ArrayList<MonoScript> scripts = new ArrayList<>();
+
+    private int initWidth;
+    private int initHeight;
+
+    private static boolean particlesEnabled = true;
 
     public boolean init(int width, int height, CharSequence title) {
         initWidth = width;
         initHeight = height;
-
         GLFWErrorCallback.createPrint(System.err).set();
 
         glfwInit();
@@ -40,6 +52,13 @@ public class App {
         glfwMakeContextCurrent(window);
         GL.createCapabilities();
 
+        ImGui.createContext();
+        imGuiGlfw = new ImGuiImplGlfw();
+        imGuiGL3 = new ImGuiImplGl3();
+
+        imGuiGlfw.init(window, true);
+        imGuiGL3.init("#version 430 core");
+
         glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
         glViewport(0, 0, width, height);
 
@@ -49,10 +68,15 @@ public class App {
         scene.updateAspectRatio(width, height);
 
         input = new InputManager(window);
+        pipeline = new ShaderPipeline(
+                assetManager.getShader(assetManager.framebufferShader),
+                width,
+                height
+        );
 
         glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
             glViewport(0, 0, new_width, new_height);
-
+            pipeline.onResize(new_width, new_height);
             scene.updateAspectRatio(new_width, new_height);
         });
 
@@ -65,6 +89,7 @@ public class App {
         script.Assets = assetManager;
         script.Scene = scene;
         script.Input = input;
+        script.PostProcess = pipeline;
         scripts.add(script);
     }
 
@@ -77,26 +102,51 @@ public class App {
         double deltaTime = 0.0;
 
         while (!glfwWindowShouldClose(window)) {
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
             currentTime = glfwGetTime();
             deltaTime = currentTime - previousTime;
             previousTime = currentTime;
+
+            imGuiGlfw.newFrame();
+            ImGui.newFrame();
 
             for (int i = 0; i < scripts.size(); i++) {
                 scripts.get(i).update(deltaTime);
             }
 
+            glEnable(GL_DEPTH_TEST);
+            pipeline.bind();
+
+            glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             scene.draw();
-            scene.drawParticles();
+
+            if (particlesEnabled) {
+                scene.drawParticles();
+            }
+
+            pipeline.Time += (float) deltaTime;
+
+            pipeline.process();
+            pipeline.render();
+
+            ImGui.render();
+            imGuiGL3.renderDrawData(ImGui.getDrawData());
 
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
     }
 
+    public static void toggleParticles () {
+        App.particlesEnabled = App.particlesEnabled ? false : true;
+    }
+
     public void close() {
         assetManager.cleanup();
+
+        imGuiGL3.dispose();
+        imGuiGlfw.dispose();
+        ImGui.destroyContext();
 
         glfwDestroyWindow(window);
         glfwTerminate();
