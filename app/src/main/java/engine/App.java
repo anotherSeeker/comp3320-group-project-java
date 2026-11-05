@@ -116,7 +116,12 @@ public class App {
 
             glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
             scene.draw();
+
+            // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
             pipeline.Time += (float) deltaTime;
 
