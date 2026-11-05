@@ -39,7 +39,7 @@ public class GenericParticleEmitter extends ParticleEmitter {
         Iterator<? extends GameObject> it = particles.iterator();
         while (it.hasNext()) {
             Particle particle = (Particle) it.next();
-            if (particle.updateTtl(elapsedTime) < 0) {
+            if (particle.updateTtl(elapsedTime) < 0 || !active) {
                 it.remove();
             }
             else {
@@ -47,7 +47,7 @@ public class GenericParticleEmitter extends ParticleEmitter {
             }
         }
         int length = this.getParticles().size();
-        if (now - LastCreationTime >= this.creationPeriodMillis && length < maxParticles) {
+        if (now - LastCreationTime >= this.creationPeriodMillis && length < maxParticles && active) {
             createParticle();
             this.LastCreationTime = now;
         }

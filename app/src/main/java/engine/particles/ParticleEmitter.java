@@ -6,7 +6,7 @@ public abstract class ParticleEmitter {
     public List<Particle> particles;
     public Particle baseParticle;
     public int maxParticles;
-    public boolean active;
+    public boolean active = false;
     public long creationPeriodMillis;
     public long LastCreationTime;
     public float velocityRndRangeMin;
@@ -15,14 +15,12 @@ public abstract class ParticleEmitter {
     public float scaleRndRangeMin;
     public float scaleRndRangeMax;
 
-    
-
     public void setMaxParticles (int maxParticles) {
         this.maxParticles = maxParticles;
     }
 
-    public void setActive (boolean active) {
-        this.active = active;
+    public void setActive () {
+        this.active = this.active ? false : true;
     }
 
     public void setCreationPeriodMillis (long creationPeriodMillis) {

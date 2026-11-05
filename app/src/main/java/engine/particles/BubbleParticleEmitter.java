@@ -9,9 +9,9 @@ import org.joml.Vector3f;
 import org.joml.Matrix4f;
 
 import engine.components.GameObject;
-import engine.Mesh;
-import engine.Shader;
-import engine.Texture;
+import engine.rendering.Mesh;
+import engine.rendering.Shader;
+import engine.rendering.Texture;
 
 public class BubbleParticleEmitter extends ParticleEmitter {
     
@@ -48,7 +48,7 @@ public class BubbleParticleEmitter extends ParticleEmitter {
         Iterator<? extends GameObject> it = particles.iterator();
         while (it.hasNext()) {
             Particle particle = (Particle) it.next();
-            if (particle.updateTtl(elapsedTime) < 0) {
+            if (particle.updateTtl(elapsedTime) < 0 || !active) {
                 it.remove();
             }
             else {
@@ -56,7 +56,7 @@ public class BubbleParticleEmitter extends ParticleEmitter {
             }
         }
         int length = this.getParticles().size();
-        if (now - LastCreationTime >= this.creationPeriodMillis && length < maxParticles) {
+        if (now - LastCreationTime >= this.creationPeriodMillis && length < maxParticles && active) {
             createParticle();
             this.LastCreationTime = now;
         }

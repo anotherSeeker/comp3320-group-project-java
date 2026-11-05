@@ -1,8 +1,8 @@
 package engine.particles;
 
-import engine.Mesh;
-import engine.Shader;
-import engine.Texture;
+import engine.rendering.Mesh;
+import engine.rendering.Shader;
+import engine.rendering.Texture;
 import engine.components.*;
 
 import org.joml.Vector3f;
