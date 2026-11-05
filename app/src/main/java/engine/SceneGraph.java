@@ -2,8 +2,12 @@ package engine;
 
 import static org.lwjgl.opengl.GL11.GL_LEQUAL;
 import static org.lwjgl.opengl.GL11.GL_LESS;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11.glBindTexture;
 import static org.lwjgl.opengl.GL11.glDepthFunc;
 import static org.lwjgl.opengl.GL11.glDepthMask;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
 
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
@@ -17,11 +21,14 @@ import engine.components.Transform;
 import engine.rendering.CubeTexture;
 import engine.rendering.Mesh;
 import engine.rendering.Shader;
+import engine.rendering.ShadowMap;
 
 public class SceneGraph {
     static {
         System.setProperty("dominion.show-banner", "false");
     }
+
+    private ShadowMap shadowMap = new ShadowMap(2048, 2048);
 
     private CubeTexture skyboxTexture = null;
     private Shader skyboxShader;
@@ -46,6 +53,8 @@ public class SceneGraph {
 
     public void updateAspectRatio(int width, int height) {
         aspectRatio = (float) width / height;
+
+        shadowMap.onResize(width, height);
     }
 
     public Matrix4f computeViewportMatrix() {
@@ -75,6 +84,22 @@ public class SceneGraph {
         Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
 
         return projection.mul(view);
+    }
+
+    public void generateShadows() {
+        var drawables = ECS.findEntitiesWith(GameObject.class, Transform.class);
+
+        shadowMap.genShadowsFromDirection(lightDirection);
+        for (var iter = drawables.iterator(); iter.hasNext() != false;) {
+            var object = iter.next();
+            GameObject gameObject = object.comp1();
+            Transform transform = object.comp2();
+
+            ShadowMap.shadowPass.setMatrix4("Model", transform.model);
+            gameObject.mesh.draw();
+        }
+
+        shadowMap.end();
     }
 
     public void draw() {
@@ -112,9 +137,15 @@ public class SceneGraph {
             material.shader.setVector3("ViewPosition", cameraTransform.position);
             material.shader.setVector3("DiffuseColour", lightColour);
 
+            material.shader.setMatrix4("LightMatrix", shadowMap.lightMatrix);
+
             material.shader.setInt("IrradianceMap", 1);
             material.shader.setInt("PrefilterMap", 2);
             material.shader.setInt("brdfIntMap", 3);
+
+            glActiveTexture(GL_TEXTURE0 + 10);
+            glBindTexture(GL_TEXTURE_2D, shadowMap.shadowTexture);
+            material.shader.setInt("ShadowMap", 10);
 
             material.bindAsUniform();
 

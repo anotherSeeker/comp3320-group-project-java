@@ -112,6 +112,8 @@ public class App {
             }
 
             glEnable(GL_DEPTH_TEST);
+            scene.generateShadows();
+
             pipeline.bind();
 
             glClearColor(0.39f, 0.58f, 0.93f, 0.0f);

@@ -54,6 +54,7 @@ public class AssetManager {
     public Integer irradianceShader = "IRRADIANCE".hashCode();
     public Integer prefilterShader = "PREFILTER".hashCode();
     public Integer brdfIntShader = "BRDF_INT".hashCode();
+    public Integer shadowPassShader = "SHADOW".hashCode();
 
     public Integer framebufferShader = "FRAMEBUFFER".hashCode();
     public Integer blurPostProcess = "BLUR".hashCode();
@@ -167,6 +168,12 @@ public class AssetManager {
                 framebufferShader,
                 Path.of("assets/shaders/internal/framebuffer.vert"),
                 Path.of("assets/shaders/internal/framebuffer.frag")
+        );
+
+        this.loadInternalShader(
+                shadowPassShader,
+                Path.of("assets/shaders/internal/shadows/shadow.vert"),
+                Path.of("assets/shaders/internal/shadows/shadow.frag")
         );
 
         this.loadInternalShaderWithTess(
