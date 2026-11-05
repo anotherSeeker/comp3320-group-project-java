@@ -57,6 +57,7 @@ Material getMaterial(){
 
     return material;
 }
+// utility
 
 float GTR2Aniso(float ndotH, float hdotX, float hdotY, float ax, float ay){
     return 1 / (PI * ax*ay * pow( pow(hdotX/ax,2) + pow(hdotY/ay,2) + ndotH*ndotH,2 ));
@@ -71,6 +72,8 @@ float schlickFresnel(float u){
     float m2 = m * m;
     return m2 * m2 * m;
 }
+
+// brdf
 
 vec3 burleyDiffuse(Material material,float nDotL,float nDotV,float lDotH){
     float fresnelLight = schlickFresnel(nDotL);
@@ -145,6 +148,8 @@ vec3 brdf(Material material,vec3 norm){
     return lighting * nDotL;
 }
 
+// image based lighting
+
 vec3 generateAmbientLight(Material material,vec3 norm){
 
     vec3 viewDirection = normalize(ViewPosition - position);
@@ -169,6 +174,28 @@ vec3 generateAmbientLight(Material material,vec3 norm){
     return (diffuse * material.ambientOcclusion + specular) ;
 }
 
+// shadows
+
+float calculatePCF(vec4 projected,float bias){
+    float shadow = 0.0f;
+    vec2 texelSize = 1.0 / textureSize(ShadowMap,0);
+
+    int kernelSize = 5;
+    int kernelWidth = kernelSize / 2;
+
+    int blurRadius = 2;
+
+    for(int y = -kernelWidth; y < kernelWidth; y++) {
+        for(int x = -kernelWidth; x < kernelWidth; x++) {
+            float closestDepth = texture(ShadowMap,projected.xy + vec2(x,y) * blurRadius * texelSize).r;
+
+            shadow += step(projected.z - bias, closestDepth);
+        }
+    }
+
+    return shadow / (kernelSize * kernelSize);
+}
+
 float generateShadow(vec3 norm){
     float nDotL = dot(norm,LightDirection);
 
@@ -177,20 +204,19 @@ float generateShadow(vec3 norm){
     vec4 projected = lightSpacePosition / lightSpacePosition.w;
     projected = projected * 0.5 + 0.5;
 
-    if(projected.z > 1.0  ||
-        projected.z < 0   ||
-        projected.x < 0   ||
-        projected.x > 1.0 ||
-        projected.y < 0   ||
-        projected.y > 1.0){
+    if(projected.z > 1.0  
+    || projected.z < 0   
+    || projected.x < 0   
+    || projected.x > 1.0 
+    || projected.y < 0   
+    || projected.y > 1.0
+    ){
         return 1.0f;
     }
 
+    float bias = max(0.025 * (1.0 - nDotL),0.005 );
 
-    float closestDepth = texture(ShadowMap,projected.xy).r;
-    float bias = max(0.005 * (1.0 - nDotL),0.005 );
-
-    return step(projected.z - bias, closestDepth);
+    return calculatePCF(projected,bias);    
 }
 
 void main() {
@@ -202,7 +228,7 @@ void main() {
 
     vec3 ambientLight = generateAmbientLight(material,norm);
 
-    vec3 colour = brdf(material,norm) * generateShadow(norm) + ambientLight;
+    vec3 colour = brdf(material,norm) * generateShadow(norm) + ambientLight * mix(0.35,1.0,generateShadow(norm));
 
     fragColour = vec4(colour, 1.0);
 }
