@@ -23,6 +23,18 @@ public class Camera extends MonoScript {
         Scene.cameraTransform.lookAt(new Vector3f(0, 0, 0));
 
         Input.LockMouse();
+        Scene.cameraTransform.setOrientationEuler(new Vector3f(pitch, yaw, 0));
+    }
+
+    private void rotateCamera() {
+        Vector2f mouseDelta = Input.GetMouseDelta();
+
+        yaw -= mouseDelta.x * mouseSens;
+        pitch += mouseDelta.y * mouseSens;
+
+        pitch = Math.clamp(pitch, (float) Math.toRadians(-89), (float) Math.toRadians(89));
+
+        Scene.cameraTransform.setOrientationEuler(new Vector3f(pitch, yaw, 0));
     }
 
     @Override
@@ -60,14 +72,13 @@ public class Camera extends MonoScript {
 
         worldDirection = worldDirection.mul((float) deltaTime);
 
-        Vector2f mouseDelta = Input.GetMouseDelta();
+        if (Input.IsMouse2Down()) {
+            Input.LockMouse();
+            rotateCamera();
+        } else {
+            Input.UnlockMouse();
+        }
 
-        yaw -= mouseDelta.x * mouseSens;
-        pitch += mouseDelta.y * mouseSens;
-
-        pitch = Math.clamp(pitch, (float) Math.toRadians(-89), (float) Math.toRadians(89));
-
-        Scene.cameraTransform.setOrientationEuler(new Vector3f(pitch, yaw, 0));
         Scene.cameraTransform.setPosition(Scene.cameraTransform.position.add(worldDirection));
     }
 }
