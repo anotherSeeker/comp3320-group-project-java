@@ -1,12 +1,14 @@
 # Procedural coral in the current team engine
 
-## Review status — 5 November 2026
+## Integration status — 5 November 2026
 
-Local branch: `nirmit/coral-review-2026-11-05`.
+Contribution branch: `nirmit/procedural-coral`.
+The reviewed snapshot is preserved at `nirmit/coral-review-2026-11-05` (`89a0f30`).
 Upstream: `anotherSeeker/comp3320-group-project-java`, main commit
 `5ff91ab9b6b3a3967e82c106764dc81efc614ecd` (fetched 5 November).
 The previous integration remains at `nirmit/coral-latest-engine` (`1e31a65`).
-Nothing has been pushed. Wait for Nirmit's final confirmation before any GitHub push or PR publication.
+Nirmit approved publishing this contribution to its own GitHub branch on 5 November 2026.
+Merging into `main` is a separate team decision.
 
 The default scene combines the team's current material/glTF environment with
 live procedural coral, a controllable character, a ground surface, and follow/overview cameras.

@@ -63,8 +63,8 @@ See `../START HERE.txt` and `CORAL_FIELD.md` for controls and project details.
 
 ## Procedural coral in the current team environment
 
-Local review branch `nirmit/coral-review-2026-11-05` merges upstream main `5ff91ab`.
-Nothing has been pushed; publication requires Nirmit’s final confirmation.
+Contribution branch `nirmit/procedural-coral` merges upstream main `5ff91ab`.
+Nirmit approved publishing this branch on 5 November 2026; `main` is unchanged.
 The default scene includes the team's current environment and seeded recursive
 coral generation. Press R for new shapes/placement, 1/2/3 for density, and G for
 growth. Source details and hardware-specific rendering behavior are documented
