@@ -6,6 +6,7 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.glBindTexture;
 import static org.lwjgl.opengl.GL11.glDepthFunc;
 import static org.lwjgl.opengl.GL11.glDepthMask;
+import static org.lwjgl.opengl.GL11.glViewport;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 
@@ -40,6 +41,8 @@ public class SceneGraph {
 
     public int fov = 60;
     public float aspectRatio;
+    public int screenWidth;
+    public int screenHeight;
 
     Dominion ECS = Dominion.create();
 
@@ -55,6 +58,9 @@ public class SceneGraph {
         aspectRatio = (float) width / height;
 
         shadowMap.onResize(width, height);
+
+        screenWidth = width;
+        screenHeight = height;
     }
 
     public Matrix4f computeViewportMatrix() {
@@ -100,6 +106,7 @@ public class SceneGraph {
         }
 
         shadowMap.end();
+        glViewport(0, 0, screenWidth, screenHeight);
     }
 
     public void draw() {

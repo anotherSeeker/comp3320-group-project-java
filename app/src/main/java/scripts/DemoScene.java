@@ -76,7 +76,7 @@ public class DemoScene extends MonoScript {
         D.get(Transform.class).setPosition(new Vector3f(-5.0f, 0, -5.0f).add(offset));
 
         floor = Scene.createObject(plate, concrete_Material);
-        floor.get(Transform.class).setPosition(new Vector3f(0.0f, -5.0f, 0.0f));
+        floor.get(Transform.class).setPosition(new Vector3f(0.0f, -2f, 0.0f));
         floor.get(Transform.class).setOrientationEuler(new Vector3f((float) -Math.PI / 2.0f, 0.0f, 0.0f));
         floor.get(Transform.class).setScale(20.0f);
 

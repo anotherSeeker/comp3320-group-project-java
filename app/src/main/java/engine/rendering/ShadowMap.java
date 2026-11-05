@@ -36,6 +36,9 @@ public class ShadowMap {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, new float[] { 1, 1, 1, 1 });
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+
         glTexImage2D(
                 GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, this.width, this.height, 0, GL_DEPTH_COMPONENT,
                 GL_UNSIGNED_INT, (ByteBuffer) null
@@ -75,7 +78,7 @@ public class ShadowMap {
         Vector3f direction = new Vector3f(lightDirection).normalize();
         Vector3f center = new Vector3f(0, 0, 0);
 
-        Vector3f lightPosition = new Vector3f(center).fma(-50.0f, direction);
+        Vector3f lightPosition = new Vector3f(center).fma(50.0f, direction);
         Vector3f up = new Vector3f(0, 1, 0);
 
         if (Math.abs(direction.dot(up)) > 0.99f) {

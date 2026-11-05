@@ -16,6 +16,7 @@ uniform sampler2D RoughnessMap;
 uniform sampler2D AmbientOcclusionMap;
 uniform sampler2D NormalMap;
 uniform sampler2D MetallicMap;
+uniform sampler2D ShadowMap;
 
 uniform vec3 LightDirection;
 uniform vec3 ViewPosition;
@@ -31,6 +32,8 @@ uniform float SpecularStrength = 0.5;
 
 uniform vec3 SheenColour = vec3(1,1,1);
 uniform vec3 DiffuseColour = vec3(1,1,1);
+
+uniform mat4 LightMatrix;
 
 struct Material {
     float roughness;
@@ -166,6 +169,30 @@ vec3 generateAmbientLight(Material material,vec3 norm){
     return (diffuse * material.ambientOcclusion + specular) ;
 }
 
+float generateShadow(vec3 norm){
+    float nDotL = dot(norm,LightDirection);
+
+    vec4 lightSpacePosition = LightMatrix * vec4(position,1.0);
+
+    vec4 projected = lightSpacePosition / lightSpacePosition.w;
+    projected = projected * 0.5 + 0.5;
+
+    if(projected.z > 1.0  ||
+        projected.z < 0   ||
+        projected.x < 0   ||
+        projected.x > 1.0 ||
+        projected.y < 0   ||
+        projected.y > 1.0){
+        return 1.0f;
+    }
+
+
+    float closestDepth = texture(ShadowMap,projected.xy).r;
+    float bias = max(0.005 * (1.0 - nDotL),0.005 );
+
+    return step(projected.z - bias, closestDepth);
+}
+
 void main() {
 
     Material material = getMaterial();
@@ -175,7 +202,7 @@ void main() {
 
     vec3 ambientLight = generateAmbientLight(material,norm);
 
-    vec3 colour = brdf(material,norm) + ambientLight;
+    vec3 colour = brdf(material,norm) * generateShadow(norm) + ambientLight;
 
-    fragColour = vec4(colour ,1.0);
+    fragColour = vec4(colour, 1.0);
 }
