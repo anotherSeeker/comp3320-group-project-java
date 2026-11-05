@@ -8,6 +8,7 @@ public class Transform {
     public Matrix4f model;
     public Vector3f position = new Vector3f();
     public Quaternionf orientation = new Quaternionf();
+    public float scale = 1.0f;
 
     public Transform(Matrix4f model) {
         this.model = model;
@@ -41,6 +42,13 @@ public class Transform {
     public void setOrientationEuler(Vector3f eulerAngles) {
         this.orientation = new Quaternionf().rotationYXZ(eulerAngles.y, eulerAngles.x, eulerAngles.z);
         this.model = new Matrix4f().translationRotate(position, orientation);
+    }
+
+    public void setScale(float scale) {
+        this.model.scale(1.0f / this.scale, 1.0f / this.scale, 1.0f / this.scale);
+
+        this.scale = scale;
+        this.model.scale(this.scale, this.scale, this.scale);
     }
 
     public void lookAt(Vector3f target) {

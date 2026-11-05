@@ -2,7 +2,6 @@ package scripts;
 
 import java.nio.file.Path;
 
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import dev.dominion.ecs.api.Entity;
@@ -79,6 +78,7 @@ public class DemoScene extends MonoScript {
         floor = Scene.createObject(plate, concrete_Material);
         floor.get(Transform.class).setPosition(new Vector3f(0.0f, -5.0f, 0.0f));
         floor.get(Transform.class).setOrientationEuler(new Vector3f((float) -Math.PI / 2.0f, 0.0f, 0.0f));
+        floor.get(Transform.class).setScale(20.0f);
 
         Assets.LoadIntoScene(Path.of("assets/DamagedHelmet.glb"), Scene, new Vector3f(0, 0, 0));
 
@@ -95,8 +95,6 @@ public class DemoScene extends MonoScript {
 
         ornament_Material.annisotropy = 1;
         ornament_Material.displacement = 0.2f;
-
-        // brick_Material.displacement = 0;
     }
 
     @Override
