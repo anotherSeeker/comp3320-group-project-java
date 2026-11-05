@@ -16,7 +16,7 @@ uniform sampler2D RoughnessMap;
 uniform sampler2D AmbientOcclusionMap;
 uniform sampler2D NormalMap;
 uniform sampler2D MetallicMap;
-uniform sampler2D ShadowMap;
+uniform sampler2DShadow ShadowMap;
 
 uniform vec3 LightDirection;
 uniform vec3 ViewPosition;
@@ -71,6 +71,10 @@ float schlickFresnel(float u){
     float m = clamp(1-u, 0, 1);
     float m2 = m * m;
     return m2 * m2 * m;
+}
+
+float random(vec2 p){
+    return fract(sin(dot(p,vec2(127.1,311.7))) * 43758.5453);
 }
 
 // brdf
@@ -180,16 +184,23 @@ float calculatePCF(vec4 projected,float bias){
     float shadow = 0.0f;
     vec2 texelSize = 1.0 / textureSize(ShadowMap,0);
 
-    int kernelSize = 5;
+    int kernelSize = 7;
     int kernelWidth = kernelSize / 2;
 
     int blurRadius = 2;
 
-    for(int y = -kernelWidth; y < kernelWidth; y++) {
-        for(int x = -kernelWidth; x < kernelWidth; x++) {
-            float closestDepth = texture(ShadowMap,projected.xy + vec2(x,y) * blurRadius * texelSize).r;
+    vec2 noiseUV = floor(gl_FragCoord.xy / 4.0);
 
-            shadow += step(projected.z - bias, closestDepth);
+    for(int y = -kernelWidth; y <= kernelWidth; y++) {
+        for(int x = -kernelWidth; x <= kernelWidth; x++) {
+            vec2 offset = vec2(
+                random(noiseUV.xy + vec2(x,y)),
+                random(noiseUV.xy + vec2(x,y) + vec2(17.13,91.71))
+            ) - 0.5;
+
+            vec2 uv = projected.xy + offset * blurRadius * texelSize;
+
+            shadow += texture(ShadowMap,vec3(uv,projected.z - bias));
         }
     }
 
