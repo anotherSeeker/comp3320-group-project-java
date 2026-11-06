@@ -13,7 +13,7 @@ uniform sampler2D NormalMap;
 
 layout(location = 0) out vec4 color;
 
-void main() 
+void draw4Quads()
 {
     if (outTexCoord.x < 1)
     {
@@ -48,4 +48,40 @@ void main()
     // {
     //     color = vec4(0.5,1,1,1);
     // }
+}
+
+void texCompare()
+{
+    vec4 a = texture(Albedo, outTexCoord/2);
+    vec4 b = texture(AmbientOcclusionMap, outTexCoord/2);
+    vec4 c = texture(RoughnessMap, outTexCoord/2);
+    vec4 d = texture(NormalMap, outTexCoord/2);
+
+    color = vec4(0,0,0,1);
+
+    if ((a.x == b.x) && (a.x == c.x) && (a.x == d.x))
+    {
+        color.x = 0.25;
+    }
+    if ((a.y == b.y) && (a.y == c.y) && (a.y == d.y))
+    {
+        color.y = 0.25;
+    }
+    if ((a.z == b.z) && (a.z == c.z) && (a.z == d.z))
+    {
+        color.z = 0.25;
+    }
+    if ((a.w == b.w) && (a.w == c.w) && (a.w == d.w))
+    {
+        color.x += 0.25;
+        color.y += 0.25;
+        color.z += 0.25;
+    }
+}
+
+void main() 
+{
+    draw4Quads();
+
+    //texCompare();
 }

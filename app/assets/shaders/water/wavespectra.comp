@@ -186,31 +186,31 @@ void main()
 
     float kx = (rawPos.x - (N/2.0)) * deltaK;
     float kz = (rawPos.y - (N/2.0)) * deltaK;
-    float kxmin = -kx;
-    float kzmin = -kz;
+    // float kxmin = -kx;
+    // float kzmin = -kz;
 
     vec2 noise_xi = vec2(imageLoad(gaussianData, rawPos).xy);
 
     float magnitude_k = waveVectorMagnitude_k(kx,kz);
     float omega = dispersionRelation_omega(kx, kz, magnitude_k);
-    float omegaMin = dispersionRelation_omega(kxmin, kzmin, magnitude_k);
+    // float omegaMin = dispersionRelation_omega(kxmin, kzmin, magnitude_k);
 
     float dOmegadk = omegaDerivative(magnitude_k, omega);
-    float dOmegadkMin = omegaDerivative(magnitude_k, omegaMin);
+    // float dOmegadkMin = omegaDerivative(magnitude_k, omegaMin);
 
     //peak frequency of the wave spectrum
     float omegaPeak = omega_p_J();
 
     float theta = windWaveDirection_Theta(kx, kz);
-    float thetaMin = windWaveDirection_Theta(kxmin, kzmin);
+    //float thetaMin = windWaveDirection_Theta(kxmin, kzmin);
 
     float S = doJONSWAP(omega, omegaPeak);
     float D = doDirectionalSpread(omega, omegaPeak, theta);
     float tma = tmaCorrection(omega);
 
-    float SMin = doJONSWAP(omegaMin, omegaPeak);
-    float DMin = doDirectionalSpread(omegaMin, omegaPeak, thetaMin);
-    float tmaMin = tmaCorrection(omegaMin);
+    // float SMin = doJONSWAP(omegaMin, omegaPeak);
+    // float DMin = doDirectionalSpread(omegaMin, omegaPeak, thetaMin);
+    // float tmaMin = tmaCorrection(omegaMin);
 
     //we missed a 2 in here
     float h0 = (1.0/(sqrt(2.0))) * sqrt(2 * S * D * tma * abs(dOmegadk) / magnitude_k * deltaK * deltaK);
@@ -218,16 +218,16 @@ void main()
     float h0_complex = h0 * noise_xi.y;
 
     //we also need h0(-k) for the fourier transform(?)
-    float h0M = (1.0/(sqrt(2.0))) * sqrt(2 * SMin * DMin * tmaMin * abs(dOmegadkMin) / magnitude_k * deltaK * deltaK);
-    float h0M_real    = h0M * noise_xi.x;
-    float h0M_complex = -h0M * noise_xi.y;
+    // float h0M = (1.0/(sqrt(2.0))) * sqrt(2 * SMin * DMin * tmaMin * abs(dOmegadkMin) / magnitude_k * deltaK * deltaK);
+    // float h0M_real    = h0M * noise_xi.x;
+    // float h0M_complex = -h0M * noise_xi.y;
 
     imageStore( waveVecTex, rawPos, vec4(kx,kz,omega,1/waveVectorMagnitude_k(kx,kz)) );
 
     //testing using a seperate conj compute
-    //imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,0,1) );
+    imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,0,1) );
     //storing h0(k) and h0(-k) -- Maybe this is wrong??
-    imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,h0M_real,h0M_complex) );
+    //imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,h0M_real,h0M_complex) );
 }
 
 //old map range was bad and also we don't need this if I'm just not stupid

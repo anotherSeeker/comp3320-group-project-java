@@ -41,7 +41,7 @@ public class WaterFFT
     public static int texSizePower = 8; //textureSize = 2^texSizePower;
     public static int textureSize = 256; //gotta be a power of 2
     //to dispatch the correct number of work group based on their local size.
-    public static int localGroupSize = 8;
+    public static final int localGroupSize = 8;
 
     //Patches are 1km by 1km in physical size
     public static float patchLength = 1000;
@@ -568,7 +568,7 @@ public class WaterFFT
         glBindTexture(GL_TEXTURE_2D, ifftBufferTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, textureSize, textureSize, 0, GL_RG , GL_FLOAT, (FloatBuffer) null);
 
         ifftBufferIndexID = AssetManager.get().AddTexture("ifftBuffer",ifftBufferTexID);
     }
@@ -592,6 +592,7 @@ public class WaterFFT
         glBindImageTexture( 2, bufferTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
 
         glUniform1i(glGetUniformLocation(ifftProgramID, "size"), textureSize);
+        GLErrors.printIfError("beep");
     }
 
     private static void doIFFT(int inputTexID, int bufferTexID, int pingpong, boolean outputToInput)
@@ -612,7 +613,8 @@ public class WaterFFT
 
             glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
             //DO WE NEED TO WAIT?? I ASSUME SO??
-            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            //glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
 
         //do vertical step
@@ -625,7 +627,8 @@ public class WaterFFT
 
             glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
             //DO WE NEED TO WAIT?? I ASSUME SO??
-            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            //glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
 
         //if we're treating the input as output, we need to make sure the final buffer is in the input text and vice versa.

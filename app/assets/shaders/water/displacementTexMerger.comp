@@ -1,0 +1,36 @@
+#version 430 core
+#define PI 3.14159265359
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(rgba32f, binding = 0) uniform image2D Displacement;
+layout(rgba32f, binding = 1) uniform image2D Derivative;
+layout(rgba32f, binding = 2) uniform image2D Turbulence;
+
+layout(rg32f, binding = 3) uniform image2D dxdzTex;
+layout(rg32f, binding = 4) uniform image2D dydxzTex;
+layout(rg32f, binding = 5) uniform image2D dyxdyzTex;
+layout(rg32f, binding = 6) uniform image2D dxxdzzTex;
+
+uniform float lambda;
+uniform float deltaTime;
+
+void main()
+{
+    ivec2 id = ivec2(gl_GlobalInvocationID.xy);
+
+    vec2 DxDz = imageLoad(dxdzTex, id).xy;
+	vec2 DyDxz = imageLoad(dydxzTex, id).xy;
+	vec2 DyxDyz = imageLoad(dyxdyzTex, id).xy;
+	vec2 DxxDzz = imageLoad(dxxdzzTex, id).xy;
+
+    vec3 disp = vec3(Lambda * DxDz.x, DyDxz.x, Lambda * DxDz.y);
+	vec4 deriv = vec4(DyxDyz, DxxDzz*lambda);
+
+    float jacobian = (1 + Lambda * DxxDzz.x) * (1 + Lambda * DxxDzz.y) - Lambda * Lambda * DyDxz.y * DyDxz.y;
+    float turb = imageLoad(Turbulence, id).x  + DeltaTime * 0.5 / max(jacobian, 0.5);
+
+    imageStore(Displacement, id, vec4(disp, 1));
+    imageStore(Displacement, id, deriv);
+    imageStore(Displacement, id, vec4(turb, 0, 0, 1));
+}
