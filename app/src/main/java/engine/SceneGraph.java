@@ -153,6 +153,7 @@ public class SceneGraph {
             glActiveTexture(GL_TEXTURE0 + 10);
             glBindTexture(GL_TEXTURE_2D, shadowMap.shadowTexture);
             material.shader.setInt("ShadowMap", 10);
+            material.shader.setInt("ShadowMapComparison", 10);
 
             material.bindAsUniform();
 

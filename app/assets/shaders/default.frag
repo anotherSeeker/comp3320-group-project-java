@@ -16,7 +16,8 @@ uniform sampler2D RoughnessMap;
 uniform sampler2D AmbientOcclusionMap;
 uniform sampler2D NormalMap;
 uniform sampler2D MetallicMap;
-uniform sampler2DShadow ShadowMap;
+uniform sampler2D ShadowMap;
+uniform sampler2DShadow ShadowMapComparison;
 
 uniform vec3 LightDirection;
 uniform vec3 ViewPosition;
@@ -180,14 +181,17 @@ vec3 generateAmbientLight(Material material,vec3 norm){
 
 // shadows
 
-float calculatePCF(vec4 projected,float bias){
+float calculatePCF(vec4 projected,float bias,float penumbra){
     float shadow = 0.0f;
     vec2 texelSize = 1.0 / textureSize(ShadowMap,0);
 
     int kernelSize = 7;
     int kernelWidth = kernelSize / 2;
 
-    int blurRadius = 5;
+    float orthoWidth = 60;
+    float orthoHeight = 60;
+
+    vec2 blurRadius = vec2(penumbra / orthoWidth,penumbra / orthoHeight);
 
     vec2 noiseUV = floor(gl_FragCoord.xy / 4.0);
 
@@ -198,13 +202,52 @@ float calculatePCF(vec4 projected,float bias){
                 random(noiseUV.xy + vec2(x,y) + vec2(17.13,91.71))
             ) - 0.5;
 
-            vec2 uv = projected.xy + offset * blurRadius * texelSize;
+            vec2 uv = projected.xy + offset * blurRadius;
 
-            shadow += texture(ShadowMap,vec3(uv,projected.z - bias));
+            shadow += texture(ShadowMapComparison,vec3(uv,projected.z - bias));
         }
     }
 
     return shadow / (kernelSize * kernelSize);
+}
+
+float PCSS(vec4 projected,float bias){
+    vec2 texelSize = 1.0 / textureSize(ShadowMap,0);
+
+    float near = 0.1;
+    float far = 100.0;
+
+    float penumbra = 0.0f;
+
+    int kernelSize = 5;
+    int kernelWidth = kernelSize / 2;
+
+    float orthoWidth = 60;
+    float orthoHeight = 60;
+
+    float reciever = near + projected.z * (far - near);
+    float converted_bias =  bias* (far - near);
+
+    float lightAngle = radians(3);
+
+    float blocker = 0.0;
+    float blocker_count = 0.0;
+    for(int y = -kernelWidth; y <= kernelWidth; y++) {
+        for(int x = -kernelWidth; x <= kernelWidth; x++) {
+            vec2 uv = projected.xy + vec2(x,y) * texelSize;
+
+            float block = near + texture(ShadowMap,uv).r * (far - near);
+
+            if(block >= reciever - converted_bias) continue;
+
+            blocker += block;
+            blocker_count += 1.0;
+        }
+    }
+
+    if(blocker_count == 0.0) return 0.0;
+
+    return (reciever - (blocker / blocker_count)) * tan(lightAngle);
 }
 
 float generateShadow(vec3 norm){
@@ -227,7 +270,9 @@ float generateShadow(vec3 norm){
 
     float bias = max(0.025 * (1.0 - nDotL),0.005 );
 
-    return calculatePCF(projected,bias);    
+    float penumbra = PCSS(projected,bias);
+
+    return calculatePCF(projected,bias,penumbra);    
 }
 
 void main() {
