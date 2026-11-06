@@ -10,6 +10,7 @@ import engine.*;
 import engine.components.Material;
 import engine.components.MaterialEntry;
 import engine.components.Transform;
+import engine.rendering.Mesh;
 
 public class DemoScene extends MonoScript {
 
@@ -49,10 +50,13 @@ public class DemoScene extends MonoScript {
     );
     //@formatter:on
 
+    Integer plate = Assets.LoadMesh(Mesh.Quad(), "PLATE");
+
     Entity A;
     Entity B;
     Entity C;
     Entity D;
+    Entity floor;
 
     @Override
     protected void Start() {
@@ -71,6 +75,11 @@ public class DemoScene extends MonoScript {
         D = Scene.createObject(uvSmoothID, ornament_Material);
         D.get(Transform.class).setPosition(new Vector3f(-5.0f, 0, -5.0f).add(offset));
 
+        floor = Scene.createObject(plate, concrete_Material);
+        floor.get(Transform.class).setPosition(new Vector3f(0.0f, -1f, 0.0f));
+        floor.get(Transform.class).setOrientationEuler(new Vector3f((float) -Math.PI / 2.0f, 0.0f, 0.0f));
+        floor.get(Transform.class).setScale(20.0f);
+
         Assets.LoadIntoScene(Path.of("assets/DamagedHelmet.glb"), Scene, new Vector3f(0, 0, 0));
 
         ornament_Material.metallic = 1;
@@ -86,6 +95,8 @@ public class DemoScene extends MonoScript {
 
         ornament_Material.annisotropy = 1;
         ornament_Material.displacement = 0.2f;
+
+        concrete_Material.displacement = 0;
     }
 
     @Override

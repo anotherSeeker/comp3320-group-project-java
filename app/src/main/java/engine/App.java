@@ -114,15 +114,22 @@ public class App {
             }
 
             glEnable(GL_DEPTH_TEST);
+            scene.generateShadows();
+
             pipeline.bind();
 
             glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
             scene.draw();
 
             if (particlesEnabled) {
                 scene.drawParticles();
             }
+            
+            // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
             pipeline.Time += (float) deltaTime;
 

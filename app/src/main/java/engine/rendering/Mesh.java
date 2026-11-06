@@ -132,14 +132,16 @@ public class Mesh {
     }
 
     public static Mesh Quad() {
+        //@formatter:off
         ArrayList<Vertex> vertices = new ArrayList<>(
-                List.of(
-                        new Vertex(new Vector3f(-1.0f, -1.0f, 0), new Vector2f(0, 0)),
-                        new Vertex(new Vector3f(-1.0f, 1.0f, 0), new Vector2f(0, 1)),
-                        new Vertex(new Vector3f(1.0f, 1.0f, 0), new Vector2f(1, 1)),
-                        new Vertex(new Vector3f(1.0f, -1.0f, 0), new Vector2f(1, 0))
-                )
+            List.of(
+                new Vertex(new Vector3f(-1.0f, -1.0f, 0.0f), new Vector3f(0.0f, 0.0f, 1.0f), new Vector2f(0, 0), new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(0.0f, 1.0f, 0.0f)),
+                new Vertex(new Vector3f(-1.0f, 1.0f, 0.0f),  new Vector3f(0.0f, 0.0f, 1.0f), new Vector2f(0, 1), new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(0.0f, 1.0f, 0.0f)),
+                new Vertex(new Vector3f(1.0f, 1.0f, 0.0f),   new Vector3f(0.0f, 0.0f, 1.0f), new Vector2f(1, 1), new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(0.0f, 1.0f, 0.0f)),
+                new Vertex(new Vector3f(1.0f, -1.0f, 0.0f),  new Vector3f(0.0f, 0.0f, 1.0f), new Vector2f(1, 0), new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(0.0f, 1.0f, 0.0f))
+            )
         );
+        //@formatter:on
         ArrayList<Integer> indices = new ArrayList<>(List.of(0, 1, 2, 0, 2, 3));
 
         return new Mesh(vertices, indices);

@@ -5,10 +5,15 @@ import static org.lwjgl.opengl.GL11.GL_LESS;
 import static org.lwjgl.opengl.GL11.GL_BLEND;
 import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
 import static org.lwjgl.opengl.GL11.glBlendFunc;
-import static org.lwjgl.opengl.GL11.glDepthFunc;
-import static org.lwjgl.opengl.GL11.glDepthMask;
 import static org.lwjgl.opengl.GL11.glDisable;
 import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11.glBindTexture;
+import static org.lwjgl.opengl.GL11.glDepthFunc;
+import static org.lwjgl.opengl.GL11.glDepthMask;
+import static org.lwjgl.opengl.GL11.glViewport;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
 
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
@@ -23,6 +28,7 @@ import engine.rendering.CubeTexture;
 import engine.rendering.Mesh;
 import engine.rendering.Shader;
 import engine.particles.*;
+import engine.rendering.ShadowMap;
 
 public class SceneGraph {
     static {
@@ -39,6 +45,8 @@ public class SceneGraph {
 
     private Matrix4f viewMatrix;
     private Matrix4f viewportMatrix;
+    
+    private ShadowMap shadowMap = new ShadowMap(2048, 2048);
 
     private CubeTexture skyboxTexture = null;
     private Shader skyboxShader;
@@ -50,6 +58,8 @@ public class SceneGraph {
 
     public int fov = 60;
     public float aspectRatio;
+    public int screenWidth;
+    public int screenHeight;
 
     Dominion ECS = Dominion.create();
 
@@ -63,6 +73,11 @@ public class SceneGraph {
 
     public void updateAspectRatio(int width, int height) {
         aspectRatio = (float) width / height;
+
+        shadowMap.onResize(width, height);
+
+        screenWidth = width;
+        screenHeight = height;
     }
 
     public Matrix4f computeViewportMatrix() {
@@ -92,6 +107,23 @@ public class SceneGraph {
         Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
 
         return projection.mul(view);
+    }
+
+    public void generateShadows() {
+        var drawables = ECS.findEntitiesWith(GameObject.class, Transform.class);
+
+        shadowMap.genShadowsFromDirection(lightDirection);
+        for (var iter = drawables.iterator(); iter.hasNext() != false;) {
+            var object = iter.next();
+            GameObject gameObject = object.comp1();
+            Transform transform = object.comp2();
+
+            ShadowMap.shadowPass.setMatrix4("Model", transform.model);
+            gameObject.mesh.draw();
+        }
+
+        shadowMap.end();
+        glViewport(0, 0, screenWidth, screenHeight);
     }
 
     public void draw() {
@@ -129,9 +161,16 @@ public class SceneGraph {
             material.shader.setVector3("ViewPosition", cameraTransform.position);
             material.shader.setVector3("DiffuseColour", lightColour);
 
+            material.shader.setMatrix4("LightMatrix", shadowMap.lightMatrix);
+
             material.shader.setInt("IrradianceMap", 1);
             material.shader.setInt("PrefilterMap", 2);
             material.shader.setInt("brdfIntMap", 3);
+
+            glActiveTexture(GL_TEXTURE0 + 10);
+            glBindTexture(GL_TEXTURE_2D, shadowMap.shadowTexture);
+            material.shader.setInt("ShadowMap", 10);
+            material.shader.setInt("ShadowMapComparison", 10);
 
             material.bindAsUniform();
 
