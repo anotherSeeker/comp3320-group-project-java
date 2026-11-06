@@ -57,6 +57,7 @@ public class AnimImporter {
         PointerBuffer aiMeshes = aiScene.mMeshes();
         Material defaultMaterial = new Material();
         List<Bone> boneList = new ArrayList<>();
+        int meshid = -1;
         for (int i = 0; i < numMeshes; i++) {
             AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
             Mesh mesh = processMesh(aiMesh, boneList);
@@ -67,7 +68,7 @@ public class AnimImporter {
             } else {
                 material = defaultMaterial;
             }
-            Assets.LoadMesh(mesh,modelPath);
+            meshid= Assets.LoadMesh(mesh,modelPath);
         }
 
         // if (!defaultMaterial.getMeshList().isEmpty()) {
@@ -84,7 +85,7 @@ public class AnimImporter {
 
         aiReleaseImport(aiScene);
 
-        return new Model(materialList, animations);
+        return new Model(meshid, materialList, animations);
 
     }
 

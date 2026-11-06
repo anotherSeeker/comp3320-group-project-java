@@ -17,6 +17,7 @@ import scripts.Animation.AnimationData;
 import engine.rendering.CubeTexture;
 import engine.rendering.Mesh;
 import engine.rendering.Shader;
+import scripts.Animation.Model;
 
 public class SceneGraph {
     static {
@@ -130,6 +131,16 @@ public class SceneGraph {
         Mesh mesh = assetManager.getMesh(meshID);
 
         GameObject gameObject = new GameObject(mesh, material);
+        Transform transform = new Transform(new Matrix4f());
+
+        return ECS.createEntity(gameObject, transform);
+    }
+
+    public Entity createAnimatedObject(Material material, Integer modelID) {
+        Model model = assetManager.getModel(modelID);
+        Mesh mesh = assetManager.getMesh(model.getMeshId());
+
+        GameObject gameObject = new GameObject(mesh, material, model);
         Transform transform = new Transform(new Matrix4f());
 
         return ECS.createEntity(gameObject, transform);

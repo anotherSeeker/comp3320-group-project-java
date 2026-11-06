@@ -12,9 +12,14 @@ public class Model {
     private List<Animation> animationList;
     private List<Transform> entitiesList;
     private List<Material> materialList = new ArrayList<>();
+    private int meshId;
 
     public Material getMaterial(Integer assetID) {
         return materialList.get(assetID);
+    }
+
+    public int getMeshId() {
+        return meshId;
     }
 
     public void LoadMaterial(Material material){
@@ -22,10 +27,11 @@ public class Model {
         materialList.add(material);
     }
 
-    public Model(List<Material> materialList, List<Animation> animationList) {
+    public Model(int meshId, List<Material> materialList, List<Animation> animationList) {
         entitiesList = new ArrayList<>();
         this.materialList = materialList;
         this.animationList = animationList;
+        this.meshId = meshId;
     }
 
     public List<Animation> getAnimationList() {

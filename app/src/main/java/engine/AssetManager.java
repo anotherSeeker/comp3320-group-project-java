@@ -483,6 +483,9 @@ public class AssetManager {
         return meshIndex.get(assetID);
     }
 
+    public Model getModel(Integer assetID) {
+        return modelIndex.get(assetID);
+    }
 
     public Texture getTexture(Integer assetID) {
         return textureIndex.get(assetID);

@@ -1,5 +1,4 @@
 package scripts;
-
 import java.nio.file.Path;
 
 import org.joml.Vector3f;
@@ -17,7 +16,8 @@ public class Feya extends MonoScript {
             Path.of("assets/shaders/default.frag")
     );
 
-    Integer characterMesh = Assets.LoadMesh(Path.of("assets/meshes/feya combined.glb"));
+    Integer characterModel = Assets.LoadModel(Path.of("assets/meshes/feya combined.glb"));
+    //Integer characterMesh = Assets.LoadMesh(Path.of("assets/meshes/feya combined.glb"));
 
     //@formatter:off
     Material material = Assets.createMaterial(new MaterialEntry()
@@ -30,11 +30,16 @@ public class Feya extends MonoScript {
     //@formatter:on
 
     Entity character;
+    
 
     @Override
     protected void Start() {
 
-        character = Scene.createObject(characterMesh, material);
+        //character = Scene.createObject(characterMesh, material);
+        //character.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
+
+        int meshid = Assets.getModel(characterModel).getMeshId();
+        character = Scene.createObject(meshid, material);
         character.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
     }
 

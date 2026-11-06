@@ -1,11 +1,8 @@
 package engine.rendering;
 
 import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.joml.Matrix4f;
-import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryUtil;
 
@@ -15,13 +12,6 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
-import static org.lwjgl.opengl.GL30 .*;
-
-import static org.lwjgl.system.MemoryUtil.*;
-
-import engine.rendering.Mesh;
-
-
 
 public class MeshAnim {
     private Mesh mesh;
