@@ -1,5 +1,8 @@
 package scripts;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
+
 
 import org.joml.Vector3f;
 
@@ -31,6 +34,7 @@ public class Feya extends MonoScript {
 
     Entity character;
     
+    
 
     @Override
     protected void Start() {
@@ -38,7 +42,12 @@ public class Feya extends MonoScript {
         //character = Scene.createObject(characterMesh, material);
         //character.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
 
-        int meshid = Assets.getModel(characterModel).getMeshId();
+        Integer meshid = Assets.getModel(characterModel).getMeshId();
+        {try (FileWriter myWriter = new FileWriter("filename.txt")) {
+      myWriter.write(meshid.toString());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }}
         character = Scene.createObject(meshid, material);
         character.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
     }

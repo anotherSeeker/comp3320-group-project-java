@@ -11,6 +11,8 @@ import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryStack;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.IntBuffer;
 import java.nio.file.Path;
 import java.util.*;
