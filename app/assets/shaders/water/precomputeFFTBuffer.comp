@@ -1,7 +1,7 @@
 #version 430 core
 #define PI 3.14159265359
 
-layout(local_size_x = 1, local_size_y = 8, local_size_z = 1) in;
+layout(local_size_x = 1, local_size_y = 2, local_size_z = 1) in;
 
 layout(rgba32f, binding = 0) uniform image2D butterflyTex;
 
@@ -64,12 +64,14 @@ void PrecomputeTwiddleFactorsAndInputIndices()
 			data.z = reverseBits(id.y);
 			data.w = reverseBits(id.y+1);
 			imageStore(butterflyTex, id, data);
+			//imageStore(butterflyTex, ivec2(id.x, id.y+N/2), vec4(-data.x, -data.y, data.z, data.w));
 		}
 		else
 		{	
 			data.z = reverseBits(id.y-1);
 			data.w = reverseBits(id.y);
 			imageStore(butterflyTex, id, data);
+			//imageStore(butterflyTex, ivec2(id.x, id.y+N/2), vec4(-data.x, -data.y, data.z, data.w));
 		}
 	}
 	else
@@ -79,12 +81,14 @@ void PrecomputeTwiddleFactorsAndInputIndices()
 			data.z = id.y;
 			data.w = id.y + span;
 			imageStore(butterflyTex, id, data);
+			//imageStore(butterflyTex, ivec2(id.x, id.y+N/2), vec4(-data.x, -data.y, data.z, data.w));
 		}
 		else
 		{
 			data.z = id.y-span;
 			data.w = id.y;
 			imageStore(butterflyTex, id, data);
+			//imageStore(butterflyTex, ivec2(id.x, id.y+N/2), vec4(-data.x, -data.y, data.z, data.w));
 		}
 	}
 }

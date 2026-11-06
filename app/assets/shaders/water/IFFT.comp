@@ -6,8 +6,8 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 //"butterfly texture"
 layout(rgba32f, binding = 0) uniform image2D ButterflyTex;
 
-layout(rgba32f, binding = 1) uniform image2D buffer0;
-layout(rgba32f, binding = 2) uniform image2D buffer1;
+layout(rg32f, binding = 1) uniform image2D buffer0;
+layout(rg32f, binding = 2) uniform image2D buffer1;
 
 uniform int H_or_V;
 uniform int size;
@@ -25,47 +25,68 @@ vec2 cExp(vec2 a)
     return vec2(cos(a.y), sin(a.y)) * exp(a.x);
 }
 
-vec2 horizStep()
+void horizStep()
 {
     ivec2 invocID = ivec2( gl_GlobalInvocationID.xy );
-    vec4 butterfly = imageLoad(ButterflyTex, invocID)//PrecomputedData[vec2(Step, id.x)];
+    vec4 butterfly = imageLoad(ButterflyTex, ivec2(stage, invocID.x));
+	
+	vec2 twiddleFactors = vec2(butterfly.xy);
+	ivec2 inputIndices = ivec2(butterfly.zw);
 
-	ivec2 inputsIndices = (ivec2)butterfly.zw;
-
-    //imageLoad(buffer0, position);
-
-	if (pingpong)
+	if (pingpong == 1)
 	{
-		vec2 out1 = vec2(imageLoad(buffer0, vec2(inputsIndices.x, id.y)) + cMult(vec2(butterfly.x, -butterfly.y)), imageLoad(buffer0, vec2(inputsIndices.y, id.y)) );
+		vec2 out1 = vec2(	imageLoad(buffer0, ivec2(inputIndices.x, invocID.y)).xy 
+							+ 
+							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), 
+									vec2(imageLoad(buffer0, ivec2(inputIndices.y, invocID.y)).xy) 
+								) 
+						);
+
+
 		imageStore(buffer1, invocID, vec4(out1.x, out1.y, 0, 0));
 	}
 	else
 	{
-		vec2 out0 = vec2(imageLoad(buffer1, vec2(inputsIndices.x, id.y)) + cMult(vec2(butterfly.x, -butterfly.y)), imageLoad(buffer1, vec2(inputsIndices.y, id.y)) );
+		vec2 out0 = vec2(	imageLoad(buffer1, ivec2(inputIndices.x, invocID.y)).xy 
+							+ 
+							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), 
+									vec2(imageLoad(buffer1, ivec2(inputIndices.y, invocID.y)).xy) 
+								) 
+						);
+		
 		imageStore(buffer0, invocID, vec4(out0.x, out0.y, 0, 0));
 	}
 }
 
-vec2 vertStep()
+void vertStep()
 {
 	ivec2 invocID = ivec2( gl_GlobalInvocationID.xy );
-    vec4 butterfly = imageLoad(ButterflyTex, invocID)//PrecomputedData[vec2(Step, id.x)];
+    vec4 butterfly = imageLoad(ButterflyTex, ivec2(stage, invocID.x));
 
-	ivec2 inputsIndices = (ivec2)butterfly.zw;
+	vec2 twiddleFactors = vec2(butterfly.xy);
+	ivec2 inputIndices = ivec2(butterfly.zw);
 
 
-	if (pingpong)
+	if (pingpong == 1)
 	{
-		//Buffer1[id.xy] = Buffer0[uint2(id.x, inputsIndices.x)] + ComplexMult(float2(data.r, -data.g), Buffer0[uint2(id.x, inputsIndices.y)]);
-
-		vec2 out1 = vec2(imageLoad(buffer0, vec2(id.x, inputsIndices.x)).xy + cMult( vec2(butterfly.x, -butterfly.y), imageLoad(buffer0, vec2(id.x, inputsIndices.y)).xy ) );
+		vec2 out1 = vec2(	imageLoad(buffer0, ivec2(invocID.x, inputIndices.x)).xy 
+							+ 
+							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), 
+									imageLoad(buffer0, ivec2(invocID.x, inputIndices.y)).xy 
+							) 
+						);
+		
 		imageStore(buffer1, invocID, vec4(out1.x, out1.y, 0, 0));
 	}
 	else
 	{
-		//Buffer0[id.xy] = Buffer1[uint2(id.x, inputsIndices.x)] + ComplexMult(float2(data.r, -data.g), Buffer1[uint2(id.x, inputsIndices.y)]);
+		vec2 out0 = vec2(	imageLoad(buffer1, ivec2(invocID.x, inputIndices.x)).xy 
+							+ 
+							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), 
+									imageLoad(buffer1, ivec2(invocID.x, inputIndices.y)).xy 
+							) 
+						);
 
-		vec2 out0 = vec2(imageLoad(buffer1, vec2(id.x, inputsIndices.x)).xy + cMult( vec2(butterfly.x, -butterfly.y), imageLoad(buffer1, vec2(id.x, inputsIndices.y)).xy ) );
 		imageStore(buffer0, invocID, vec4(out0.x, out0.y, 0, 0));
 	}
 }

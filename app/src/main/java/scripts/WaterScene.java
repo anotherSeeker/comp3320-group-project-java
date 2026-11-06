@@ -125,7 +125,7 @@ public class WaterScene extends MonoScript {
         if (waterUpdateErr == 0)
         {
             WaterFFT.fourierComponentCompute();            
-            //WaterFFT.computeFinalWaveParameters();
+            WaterFFT.computeFinalWaveParameters();
             waterUpdateErr = GLErrors.printIfError("waterUpdate WScene");
             return waterUpdateErr != 0;
         }

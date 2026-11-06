@@ -507,19 +507,24 @@ public class WaterFFT
     {
         //use our program and bind our textures
         useButterflyShader();
-        GLErrors.printIfError("useButterflyShader dispatchButterflyPrecomputeShader");
+        if (GLErrors.printIfError("useButterflyShader dispatchButterflyPrecomputeShader") != 0)
+        {
+            System.out.println(glGetProgramInfoLog(butterflyProgramID,1024));
+            System.out.println(glGetShaderInfoLog(butterflyComputeID,1024));
+        }
 
         //dispatch - x = stages size is log2(N) and y = the varying coord size up to N/2 as for n <= N/2 point n+N/2 = -n for our 1D ffts, so we do iffts horizontally and then we do iffts vertically
-        glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
+        glDispatchCompute(texSizePower, textureSize/2/*/localGroupSize*/, 1);
 
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
         System.out.println("end precompute butterfly texture");
-        GLErrors.printIfError("end dispatchButterflyPrecomputeShader");
-
-        // System.out.println(glGetProgramInfoLog(butterflyProgramID,1024));
-        // System.out.println(glGetShaderInfoLog(butterflyComputeID,1024));
+        if (GLErrors.printIfError("end dispatchButterflyPrecomputeShader") != 0)
+        {
+            System.out.println(glGetProgramInfoLog(butterflyProgramID,1024));
+            System.out.println(glGetShaderInfoLog(butterflyComputeID,1024));
+        }
     }
 
     public static void precomputeButterflyTexture()
@@ -593,7 +598,7 @@ public class WaterFFT
     {
         ifft_use(inputTexID, bufferTexID, ifftProgramID); 
 
-        int stepLocation = glGetUniformLocation(ifftProgramID, "step");
+        int stageLocation = glGetUniformLocation(ifftProgramID, "stage");
         int ppongLocation = glGetUniformLocation(ifftProgramID, "pingpong");
         int horizOrVertLocation = glGetUniformLocation(ifftProgramID, "H_or_V");
 
@@ -602,10 +607,10 @@ public class WaterFFT
         for (int i = 0; i < texSizePower; i++)
         {
             pingpong = (pingpong+1) % 2;
-            glUniform1i(stepLocation, i);
+            glUniform1i(stageLocation, i);
             glUniform1i(ppongLocation, pingpong);
 
-            glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
+            glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
             //DO WE NEED TO WAIT?? I ASSUME SO??
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
@@ -615,10 +620,10 @@ public class WaterFFT
         for (int i = 0; i < texSizePower; i++)
         {
             pingpong = (pingpong+1) % 2;
-            glUniform1i(stepLocation, i);
+            glUniform1i(stageLocation, i);
             glUniform1i(ppongLocation, pingpong);
 
-            glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
+            glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
             //DO WE NEED TO WAIT?? I ASSUME SO??
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
@@ -642,18 +647,18 @@ public class WaterFFT
 
         doIFFT(dxdzTexID, ifftBufferTexID, 0, true);
         if (GLErrors.printIfError("doIFFT dxdz: ") != 0)
-                System.out.println(glGetProgramInfoLog(fComponentProgramID,1024));
+                System.out.println(glGetProgramInfoLog(ifftProgramID,1024));
 
         doIFFT(dydxzTexID, ifftBufferTexID, 0, true);
         if (GLErrors.printIfError("doIFFT dydxz: ") != 0)
-                System.out.println(glGetProgramInfoLog(fComponentProgramID,1024));
+                System.out.println(glGetProgramInfoLog(ifftProgramID,1024));
 
         doIFFT(dyxdyzTexID, ifftBufferTexID, 0, true);
         if (GLErrors.printIfError("doIFFT dyxdyz: ") != 0)
-                System.out.println(glGetProgramInfoLog(fComponentProgramID,1024));
+                System.out.println(glGetProgramInfoLog(ifftProgramID,1024));
             
         doIFFT(dxxdzzTexID, ifftBufferTexID, 0, true);
         if (GLErrors.printIfError("doIFFT dxxdzz: ") != 0)
-                System.out.println(glGetProgramInfoLog(fComponentProgramID,1024));
+                System.out.println(glGetProgramInfoLog(ifftProgramID,1024));
     }
 }
