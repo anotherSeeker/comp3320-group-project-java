@@ -15,6 +15,7 @@ public class Material {
     public float sheen = 0;
     public float annisotropy = 0.5f;
     public float specularStrength = 0.5f;
+    public float displacement = 0.1f;
 
     public Vector3f sheenColour = new Vector3f(1, 1, 1);
 
@@ -24,6 +25,7 @@ public class Material {
     public Texture ambientOcclusionMap;
     public Texture normalMap;
     public Texture metallicMap;
+    public Texture displacementMap;
 
     public void bindAsUniform() {
         this.shader.setTexture("Albedo", this.albedoMap, 4);
@@ -31,6 +33,7 @@ public class Material {
         this.shader.setTexture("AmbientOcclusionMap", this.ambientOcclusionMap, 6);
         this.shader.setTexture("NormalMap", this.normalMap, 7);
         this.shader.setTexture("MetallicMap", this.metallicMap, 8);
+        this.shader.setTexture("DisplacementMap", this.displacementMap, 9);
 
         this.shader.setFloat("Roughness", this.roughness);
         this.shader.setFloat("AmbientOcclusion", this.ambientOcclusion);
@@ -40,6 +43,7 @@ public class Material {
         this.shader.setFloat("Sheen", this.sheen);
         this.shader.setFloat("Annisotropy", this.annisotropy);
         this.shader.setFloat("SpecularStrength", this.specularStrength);
+        this.shader.setFloat("Displacement", this.displacement);
 
         this.shader.setVector3("SheenColour", this.sheenColour);
     }

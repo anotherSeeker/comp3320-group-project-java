@@ -6,8 +6,8 @@ public class Game {
 
         if (app.init(800, 600, "sunken castle")) {
             app.registerScript(new scripts.DemoScene());
-            app.registerScript(new scripts.Feya());
             app.registerScript(new scripts.Camera());
+            app.registerScript(new scripts.PostProcess());
             app.run();
         }
 

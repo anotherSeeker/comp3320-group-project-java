@@ -16,6 +16,8 @@ uniform sampler2D RoughnessMap;
 uniform sampler2D AmbientOcclusionMap;
 uniform sampler2D NormalMap;
 uniform sampler2D MetallicMap;
+uniform sampler2D ShadowMap;
+uniform sampler2DShadow ShadowMapComparison;
 
 uniform vec3 LightDirection;
 uniform vec3 ViewPosition;
@@ -31,6 +33,8 @@ uniform float SpecularStrength = 0.5;
 
 uniform vec3 SheenColour = vec3(1,1,1);
 uniform vec3 DiffuseColour = vec3(1,1,1);
+
+uniform mat4 LightMatrix;
 
 struct Material {
     float roughness;
@@ -54,6 +58,7 @@ Material getMaterial(){
 
     return material;
 }
+// utility
 
 float GTR2Aniso(float ndotH, float hdotX, float hdotY, float ax, float ay){
     return 1 / (PI * ax*ay * pow( pow(hdotX/ax,2) + pow(hdotY/ay,2) + ndotH*ndotH,2 ));
@@ -68,6 +73,12 @@ float schlickFresnel(float u){
     float m2 = m * m;
     return m2 * m2 * m;
 }
+
+float random(vec2 p){
+    return fract(sin(dot(p,vec2(127.1,311.7))) * 43758.5453);
+}
+
+// brdf
 
 vec3 burleyDiffuse(Material material,float nDotL,float nDotV,float lDotH){
     float fresnelLight = schlickFresnel(nDotL);
@@ -142,6 +153,8 @@ vec3 brdf(Material material,vec3 norm){
     return lighting * nDotL;
 }
 
+// image based lighting
+
 vec3 generateAmbientLight(Material material,vec3 norm){
 
     vec3 viewDirection = normalize(ViewPosition - position);
@@ -166,6 +179,102 @@ vec3 generateAmbientLight(Material material,vec3 norm){
     return (diffuse * material.ambientOcclusion + specular) ;
 }
 
+// shadows
+
+float calculatePCF(vec4 projected,float bias,float penumbra){
+    float shadow = 0.0f;
+    vec2 texelSize = 1.0 / textureSize(ShadowMap,0);
+
+    int kernelSize = 7;
+    int kernelWidth = kernelSize / 2;
+
+    float orthoWidth = 60;
+    float orthoHeight = 60;
+
+    vec2 blurRadius = vec2(penumbra / orthoWidth,penumbra / orthoHeight);
+
+    vec2 noiseUV = floor(gl_FragCoord.xy / 4.0);
+
+    for(int y = -kernelWidth; y <= kernelWidth; y++) {
+        for(int x = -kernelWidth; x <= kernelWidth; x++) {
+            vec2 offset = vec2(
+                random(noiseUV.xy + vec2(x,y)),
+                random(noiseUV.xy + vec2(x,y) + vec2(17.13,91.71))
+            ) - 0.5;
+
+            vec2 uv = projected.xy + offset * blurRadius;
+
+            shadow += texture(ShadowMapComparison,vec3(uv,projected.z - bias));
+        }
+    }
+
+    return shadow / (kernelSize * kernelSize);
+}
+
+float PCSS(vec4 projected,float bias){
+    vec2 texelSize = 1.0 / textureSize(ShadowMap,0);
+
+    float near = 0.1;
+    float far = 100.0;
+
+    float penumbra = 0.0f;
+
+    int kernelSize = 5;
+    int kernelWidth = kernelSize / 2;
+
+    float orthoWidth = 60;
+    float orthoHeight = 60;
+
+    float reciever = near + projected.z * (far - near);
+    float converted_bias =  bias* (far - near);
+
+    float lightAngle = radians(3);
+
+    float blocker = 0.0;
+    float blocker_count = 0.0;
+    for(int y = -kernelWidth; y <= kernelWidth; y++) {
+        for(int x = -kernelWidth; x <= kernelWidth; x++) {
+            vec2 uv = projected.xy + vec2(x,y) * texelSize;
+
+            float block = near + texture(ShadowMap,uv).r * (far - near);
+
+            if(block >= reciever - converted_bias) continue;
+
+            blocker += block;
+            blocker_count += 1.0;
+        }
+    }
+
+    if(blocker_count == 0.0) return 0.0;
+
+    return (reciever - (blocker / blocker_count)) * tan(lightAngle);
+}
+
+float generateShadow(vec3 norm){
+    float nDotL = dot(norm,LightDirection);
+
+    vec4 lightSpacePosition = LightMatrix * vec4(position,1.0);
+
+    vec4 projected = lightSpacePosition / lightSpacePosition.w;
+    projected = projected * 0.5 + 0.5;
+
+    if(projected.z > 1.0  
+    || projected.z < 0   
+    || projected.x < 0   
+    || projected.x > 1.0 
+    || projected.y < 0   
+    || projected.y > 1.0
+    ){
+        return 1.0f;
+    }
+
+    float bias = max(0.025 * (1.0 - nDotL),0.005 );
+
+    float penumbra = PCSS(projected,bias);
+
+    return calculatePCF(projected,bias,penumbra);    
+}
+
 void main() {
 
     Material material = getMaterial();
@@ -175,7 +284,7 @@ void main() {
 
     vec3 ambientLight = generateAmbientLight(material,norm);
 
-    vec3 colour = brdf(material,norm) + ambientLight;
+    vec3 colour = brdf(material,norm) * generateShadow(norm) + ambientLight * mix(0.35,1.0,generateShadow(norm));
 
-    fragColour = vec4(colour ,1.0);
+    fragColour = vec4(colour, 1.0);
 }

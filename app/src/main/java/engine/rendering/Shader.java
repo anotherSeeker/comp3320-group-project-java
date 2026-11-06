@@ -2,6 +2,8 @@ package engine.rendering;
 
 import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL40.GL_TESS_CONTROL_SHADER;
+import static org.lwjgl.opengl.GL40.GL_TESS_EVALUATION_SHADER;
 import static org.lwjgl.opengl.GL43.*;
 import static org.lwjgl.opengl.GL42.GL_ALL_BARRIER_BITS;
 import static org.lwjgl.opengl.GL42.glMemoryBarrier;
@@ -41,6 +43,12 @@ public class Shader {
         glAttachShader(ID, fragmentShader);
         glLinkProgram(ID);
 
+        if (glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE) {
+            System.out.println("PROGRAM");
+            System.err.println(glGetProgramInfoLog(ID));
+            return false;
+        }
+
         return true;
     }
 
@@ -57,6 +65,65 @@ public class Shader {
 
         ID = glCreateProgram();
         glAttachShader(ID, computeShader);
+        glLinkProgram(ID);
+
+        if (glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE) {
+            System.out.println("PROGRAM");
+            System.err.println(glGetProgramInfoLog(ID));
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean withTesselation(
+            String vertexSource, String fragmentSource, String tessControlSource, String tessEvalSource
+    ) {
+        int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertexShader, vertexSource);
+        glCompileShader(vertexShader);
+
+        if (glGetShaderi(vertexShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            System.out.println("VERTEX");
+            System.err.println(glGetShaderInfoLog(vertexShader, 1024));
+            return false;
+        }
+
+        int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragmentShader, fragmentSource);
+        glCompileShader(fragmentShader);
+
+        if (glGetShaderi(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            System.out.println("FRAGMENT");
+            System.err.println(glGetShaderInfoLog(fragmentShader, 1024));
+            return false;
+        }
+
+        int tessControlShader = glCreateShader(GL_TESS_CONTROL_SHADER);
+        glShaderSource(tessControlShader, tessControlSource);
+        glCompileShader(tessControlShader);
+
+        if (glGetShaderi(tessControlShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            System.out.println("TESSELATION CONTROL");
+            System.err.println(glGetShaderInfoLog(tessControlShader, 1024));
+            return false;
+        }
+
+        int tessEvalShader = glCreateShader(GL_TESS_EVALUATION_SHADER);
+        glShaderSource(tessEvalShader, tessEvalSource);
+        glCompileShader(tessEvalShader);
+
+        if (glGetShaderi(tessEvalShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            System.out.println("TESSELATION EVALUATION");
+            System.err.println(glGetShaderInfoLog(tessEvalShader, 1024));
+            return false;
+        }
+
+        ID = glCreateProgram();
+        glAttachShader(ID, vertexShader);
+        glAttachShader(ID, fragmentShader);
+        glAttachShader(ID, tessControlShader);
+        glAttachShader(ID, tessEvalShader);
         glLinkProgram(ID);
 
         if (glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE) {

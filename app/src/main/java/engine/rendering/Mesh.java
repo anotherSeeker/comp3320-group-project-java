@@ -15,6 +15,7 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL40.*;
 
 import static org.lwjgl.system.MemoryUtil.*;
 
@@ -340,14 +341,16 @@ public class Mesh {
     }
 
     public static Mesh Quad() {
+        //@formatter:off
         ArrayList<Vertex> vertices = new ArrayList<>(
-                List.of(
-                        new Vertex(new Vector3f(-1.0f, -1.0f, 0), new Vector2f(0, 0)),
-                        new Vertex(new Vector3f(-1.0f, 1.0f, 0), new Vector2f(0, 1)),
-                        new Vertex(new Vector3f(1.0f, 1.0f, 0), new Vector2f(1, 1)),
-                        new Vertex(new Vector3f(1.0f, -1.0f, 0), new Vector2f(1, 0))
-                )
+            List.of(
+                new Vertex(new Vector3f(-1.0f, -1.0f, 0.0f), new Vector3f(0.0f, 0.0f, 1.0f), new Vector2f(0, 0), new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(0.0f, 1.0f, 0.0f)),
+                new Vertex(new Vector3f(-1.0f, 1.0f, 0.0f),  new Vector3f(0.0f, 0.0f, 1.0f), new Vector2f(0, 1), new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(0.0f, 1.0f, 0.0f)),
+                new Vertex(new Vector3f(1.0f, 1.0f, 0.0f),   new Vector3f(0.0f, 0.0f, 1.0f), new Vector2f(1, 1), new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(0.0f, 1.0f, 0.0f)),
+                new Vertex(new Vector3f(1.0f, -1.0f, 0.0f),  new Vector3f(0.0f, 0.0f, 1.0f), new Vector2f(1, 0), new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(0.0f, 1.0f, 0.0f))
+            )
         );
+        //@formatter:on
         ArrayList<Integer> indices = new ArrayList<>(List.of(0, 1, 2, 0, 2, 3));
 
         return new Mesh(vertices, indices);
@@ -360,6 +363,12 @@ public class Mesh {
     public void draw() {
         bind();
         glDrawElements(GL_TRIANGLES, indiceCount, GL_UNSIGNED_INT, 0);
+    }
+
+    public void drawPatches() {
+        bind();
+        glPatchParameteri(GL_PATCH_VERTICES, 3);
+        glDrawElements(GL_PATCHES, indiceCount, GL_UNSIGNED_INT, 0);
     }
 
     public void delete() {

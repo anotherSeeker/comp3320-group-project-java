@@ -72,12 +72,6 @@ public class App {
                 height
         );
 
-        pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessA));
-        pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
-        pipeline.attach(assetManager.getShader(assetManager.blurPostProcess));
-        pipeline.attach(assetManager.getShader(assetManager.bloomPostProcessB));
-        // pipeline.attach(assetManager.getShader(assetManager.vignettePostProcess));
-
         glfwSetFramebufferSizeCallback(window, (_, new_width, new_height) -> {
             glViewport(0, 0, new_width, new_height);
             pipeline.onResize(new_width, new_height);
@@ -93,6 +87,7 @@ public class App {
         script.Assets = assetManager;
         script.Scene = scene;
         script.Input = input;
+        script.PostProcess = pipeline;
         scripts.add(script);
     }
 
@@ -117,11 +112,20 @@ public class App {
             }
 
             glEnable(GL_DEPTH_TEST);
+            scene.generateShadows();
+
             pipeline.bind();
 
             glClearColor(0.39f, 0.58f, 0.93f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
             scene.draw();
+
+            // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+            pipeline.Time += (float) deltaTime;
 
             pipeline.process();
             pipeline.render();
