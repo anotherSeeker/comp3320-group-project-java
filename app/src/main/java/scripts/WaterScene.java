@@ -47,6 +47,9 @@ public class WaterScene extends MonoScript {
     
         //compute jonswap params
         WaterFFT.computeWaveSpectrum();
+        //drawMapQuads(WaterFFT.h0IndexID, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.h0IndexID);
+        //aaaaaaaaa
+        WaterFFT.conjSpectra();
 
         GLErrors.printIfError("waveSpec WScene");
 
@@ -70,7 +73,6 @@ public class WaterScene extends MonoScript {
         //render our maps to screen
         drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
 
-
         GLErrors.printIfError("drawMapQuads WScene");
 
         Scene.SetSkyboxTexture(skyboxTexture);
@@ -81,6 +83,7 @@ public class WaterScene extends MonoScript {
     {
         waterUpdate();
 
+        //updateMapQuad(WaterFFT.waveVecIndexID, WaterFFT.dydxzIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
         doWaterMapsPreview();
     }
 
@@ -96,13 +99,22 @@ public class WaterScene extends MonoScript {
             lastState = previewState;
             switch (previewState)
             {
-                case 0 -> updateMapQuad(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
+                // case 0 -> updateMapQuad(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
                 // case 1 -> updateMapQuad(WaterFFT.dydxzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dydxzIndexID);
                 // case 2 -> updateMapQuad(WaterFFT.dydxzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dydxzIndexID);
                 // case 3 -> updateMapQuad(WaterFFT.dydxzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dydxzIndexID);
+
+                case 0 -> updateMapQuad(WaterFFT.h0IndexID, WaterFFT.dydxzIndexID, WaterFFT.waveVecIndexID, WaterFFT.butterflyIndexID);
                 case 1 -> updateMapQuad(WaterFFT.dxdzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dyxdyzIndexID, WaterFFT.dxxdzzIndexID);
                 case 2 -> updateMapQuad(WaterFFT.dxdzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dyxdyzIndexID, WaterFFT.butterflyIndexID);
-                case 3 -> updateMapQuad(WaterFFT.dxxdzzIndexID, WaterFFT.dxdzIndexID, WaterFFT.dydxzIndexID, WaterFFT.butterflyIndexID);
+                case 3 -> updateMapQuad(WaterFFT.dxdzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dxxdzzIndexID, WaterFFT.butterflyIndexID);
+
+                // case 0 -> updateMapQuad(WaterFFT.h0IndexID, WaterFFT.dydxzIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
+                // case 1 -> updateMapQuad(WaterFFT.h0IndexID, WaterFFT.dydxzIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
+                // case 2 -> updateMapQuad(WaterFFT.h0IndexID, WaterFFT.dydxzIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
+                // case 3 -> updateMapQuad(WaterFFT.h0IndexID, WaterFFT.dydxzIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
+
+                default -> {}
             }
         }
     }

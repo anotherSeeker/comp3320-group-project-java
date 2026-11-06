@@ -17,7 +17,7 @@ uniform float windSpeed_U;
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 layout(rg32f, binding = 0) uniform readonly image2D gaussianData;
 layout(rgba32f, binding = 1) uniform image2D waveVecTex;
-layout(rg32f, binding = 2) uniform image2D h0Tex;
+layout(rgba32f, binding = 2) uniform image2D h0Tex;
 
 //donelan-banner spreading function
 float doDirectionalSpread(float omega, float omegaPeak, float theta)
@@ -220,10 +220,13 @@ void main()
     //we also need h0(-k) for the fourier transform(?)
     float h0M = (1.0/(sqrt(2.0))) * sqrt(2 * SMin * DMin * tmaMin * abs(dOmegadkMin) / magnitude_k * deltaK * deltaK);
     float h0M_real    = h0M * noise_xi.x;
-    float h0M_complex = h0M * noise_xi.y;
+    float h0M_complex = -h0M * noise_xi.y;
 
     imageStore( waveVecTex, rawPos, vec4(kx,kz,omega,1/waveVectorMagnitude_k(kx,kz)) );
-    //storing h0(k) and h0(-k)
+
+    //testing using a seperate conj compute
+    //imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,0,1) );
+    //storing h0(k) and h0(-k) -- Maybe this is wrong??
     imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,h0M_real,h0M_complex) );
 }
 
