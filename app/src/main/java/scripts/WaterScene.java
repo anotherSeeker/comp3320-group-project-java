@@ -89,14 +89,9 @@ public class WaterScene extends MonoScript {
 
     private void doWaterMapsPreview()
     {
-        //moved to a callback
-        // if (Input.IsKeyRelease(GLFW_KEY_SPACE))
-        // {
-        //     previewState = (previewState + 1) % 4;
-        // }
-        if (lastState != previewState)
-        {
-            lastState = previewState;
+        //if (lastState != previewState)
+        //{
+            //lastState = previewState;
             switch (previewState)
             {
                 // case 0 -> updateMapQuad(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
@@ -116,7 +111,7 @@ public class WaterScene extends MonoScript {
 
                 default -> {}
             }
-        }
+        //}
     }
 
     private void _previewCallback(long window, int key, int scancode, int action, int mods)

@@ -499,7 +499,7 @@ public class WaterFFT
         //outputs
         glActiveTexture(GL_TEXTURE0);
 	    glBindTexture(GL_TEXTURE_2D, butterflyTexID);
-        glBindImageTexture( 0, butterflyTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+        glBindImageTexture( 0, butterflyTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
     }
 
 
@@ -510,7 +510,7 @@ public class WaterFFT
         GLErrors.printIfError("useButterflyShader dispatchButterflyPrecomputeShader");
 
         //dispatch - x = stages size is log2(N) and y = the varying coord size up to N/2 as for n <= N/2 point n+N/2 = -n for our 1D ffts, so we do iffts horizontally and then we do iffts vertically
-        glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
+        glDispatchCompute(texSizePower, textureSize/2/*/localGroupSize*/, 1);
 
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
