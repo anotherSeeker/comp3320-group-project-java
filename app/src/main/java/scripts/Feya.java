@@ -20,15 +20,15 @@ public class Feya extends MonoScript {
     );
 
     Integer characterModel = Assets.LoadModel(Path.of("assets/meshes/feya combined.glb"));
-    //Integer characterMesh = Assets.LoadMesh(Path.of("assets/meshes/feya combined.glb"));
+    Integer characterMesh = Assets.LoadMesh(Path.of("assets/meshes/feya combined.glb"));
 
     //@formatter:off
     Material material = Assets.createMaterial(new MaterialEntry()
         .add("SHADER", shaderID)
-        .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")))
-        .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")))
-        .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_AmbientOcclusion.jpg")))
-        .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg")))
+        .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Color.jpg")))
+        .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Roughness.jpg")))
+        .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_NormalGL.jpg")))
+        .add("METAL",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Metalness.jpg")))
     );
     //@formatter:on
 
@@ -43,13 +43,9 @@ public class Feya extends MonoScript {
         //character.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
 
         Integer meshid = Assets.getModel(characterModel).getMeshId();
-        {try (FileWriter myWriter = new FileWriter("filename.txt")) {
-      myWriter.write(meshid.toString());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }}
         character = Scene.createObject(meshid, material);
         character.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
+        //Assets.LoadIntoScene(Path.of("assets/meshes/feya combined.glb"), Scene, new Vector3f(0, 0, 5));
     }
 
     @Override

@@ -8,6 +8,8 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryUtil;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -299,6 +301,64 @@ public class Mesh {
         glEnableVertexAttribArray(4);
 
         indiceCount = indexBuffer.remaining();
+    }
+
+    public Mesh(FloatBuffer vertexBuffer, IntBuffer indexBuffer, int[] boneIndices, float[] weights) {
+         FloatBuffer weightsBuffer = MemoryUtil.memCallocFloat(weights.length);
+        weightsBuffer.put(weights);
+
+        IntBuffer boneIndicesBuffer = MemoryUtil.memCallocInt(boneIndices.length);
+        boneIndicesBuffer.put(boneIndices);
+
+        weightsBuffer.flip();
+        boneIndicesBuffer.flip();
+
+        VAO = glGenVertexArrays();
+        VBO = glGenBuffers();
+        EBO = glGenBuffers();
+
+        glBindVertexArray(VAO);
+
+        int stride = 14 * Float.BYTES;
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, weightsBuffer, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, boneIndicesBuffer, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, stride, 0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, stride, 3 * Float.BYTES);
+        glVertexAttribPointer(2, 2, GL_FLOAT, false, stride, 6 * Float.BYTES);
+        glVertexAttribPointer(3, 3, GL_FLOAT, false, stride, 8 * Float.BYTES);
+        glVertexAttribPointer(4, 3, GL_FLOAT, false, stride, 11 * Float.BYTES);
+        glVertexAttribPointer(5, 4, GL_FLOAT, false, stride, 14 * Float.BYTES);
+        glVertexAttribPointer(6, 4, GL_FLOAT, false, stride, 18 * Float.BYTES);
+
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
+        glEnableVertexAttribArray(4);
+        glEnableVertexAttribArray(5);
+        glEnableVertexAttribArray(6);
+
+        indiceCount = indexBuffer.remaining();
+
+        memFree(weightsBuffer);
+        memFree(boneIndicesBuffer);
+
+        {try (FileWriter myWriter = new FileWriter("filename.txt")) {
+      myWriter.write("are you here?");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }}
     }
 
     public static Mesh Cube() {
