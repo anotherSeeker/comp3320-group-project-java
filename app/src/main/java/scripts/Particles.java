@@ -55,7 +55,7 @@ public class Particles extends MonoScript {
         P1.get(BubbleParticleEmitter.class).setScaleRndRange(P1_scale_Min, P1_scale_Max);
         P1.get(BubbleParticleEmitter.class).setGrow();
 
-        P1.get(BubbleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(2f, 0, 0));
+        P1.get(BubbleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(5.0f, 0, -10.0f));
 
 
         Vector3f P2_particleVelocity = new Vector3f((float) (rand.nextFloat() + 2), 0.1f, (float) (rand.nextFloat() + 2));
@@ -75,7 +75,7 @@ public class Particles extends MonoScript {
         P2.get(BubbleParticleEmitter.class).setVelocityRndRange(P2_velocity_Min, P2_velocity_Max);
         P2.get(BubbleParticleEmitter.class).setScaleRndRange(P2_scale_Min, P2_scale_Max);
 
-        P2.get(BubbleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(-2f, 0, 0));
+        P2.get(BubbleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(5.0f, 0, -5.0f));
 
         
         Scene.setBubbleParticleEmitters(new BubbleParticleEmitter[] {P1.get(BubbleParticleEmitter.class), P2.get(BubbleParticleEmitter.class)});
