@@ -9,6 +9,8 @@ import org.joml.Vector4f;
 
 import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE2;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.ARBComputeShader.*;
 import static org.lwjgl.opengl.GL42.*;
@@ -38,13 +40,13 @@ public class WaterFFT
 
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
-    public static int texSizePower = 8; //textureSize = 2^texSizePower;
-    public static int textureSize = 256; //gotta be a power of 2
+    public static int texSizePower = 10; //textureSize = 2^texSizePower;
+    public static int textureSize = 1024; //gotta be a power of 2
     //to dispatch the correct number of work group based on their local size.
     public static final int localGroupSize = 8;
 
-    //Patches are 1km by 1km in physical size
-    public static float patchLength = 1000;
+    //physical size of patch
+    public static int patchLength = 1024;
 
     //the wavenumbers, kx, ky, and angular frequency / dispersion relation omega
     public static ArrayList<Vector3f> waveVectorList;
@@ -82,12 +84,16 @@ public class WaterFFT
     public static int derivativeTexID;
     public static int derivativeIndexID;
 
+    public static int turbulenceTexID;
+    public static int turbulenceIndexID;
+
     //compute shader details
     public static boolean spectraShaderCreated = false;
     public static boolean fComponentShaderCreated = false;
     public static boolean butterflyShaderCreated = false;
     public static boolean ifftShaderCreated = false;
     public static boolean recombineShaderCreated = false;
+    public static boolean texMergeShaderCreated = false;
 
     public static int wavespectraComputeID;
     public static int wavespectraProgramID;
@@ -99,7 +105,7 @@ public class WaterFFT
 
     public static int fComponentComputeID;
     public static int fComponentProgramID;
-    public static Path fComponentComputePath = Path.of("assets/shaders/water/fourierComponents.comp");//Path.of("assets/shaders/water/waveTimeVariant.comp");
+    public static Path fComponentComputePath = Path.of("assets/shaders/water/fourierComponents.comp");
 
     public static int butterflyComputeID;
     public static int butterflyProgramID;
@@ -108,6 +114,13 @@ public class WaterFFT
     public static int  ifftComputeID;
     public static int  ifftProgramID;
     public static Path ifftComputePath = Path.of("assets/shaders/water/IFFT.comp");
+
+    public static int  texmergeComputeID;
+    public static int  texmergeProgramID;
+    public static Path texmergeComputePath = Path.of("assets/shaders/water/displacementTexMerger.comp");
+
+    public static Path waveVertexPath = Path.of("assets/shaders/water/water.vert");
+    public static Path waveFragPath = Path.of("assets/shaders/water/water.frag");
 
     //bytebuffers for creating our textures
     public static ByteBuffer noiseBytes;
@@ -177,11 +190,10 @@ public class WaterFFT
 
         //dispatches and waits for completion
         dispatchWaveSpectra();
-
         GLErrors.printIfError("dispatch waveSpec");
 
-        System.out.println("end compute spectra");
 
+        System.out.println("end compute spectra");
         GLErrors.printIfError("end cWaveSpec");
     }
 
@@ -218,9 +230,13 @@ public class WaterFFT
     {        
         //use our program and bind our textures
         useSpectraShader();
+        GLErrors.printIfError("useSpectra");
+        System.out.println(glGetShaderInfoLog(wavespectraComputeID,1024));
+        System.out.println(glGetProgramInfoLog(wavespectraProgramID,1024));
         //send it
         //System.out.println("dispatch");
         glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
+        GLErrors.printIfError("gldispatch wave spec");
 
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -290,6 +306,7 @@ public class WaterFFT
     public static void useSpectraShader()
     {
         glUseProgram( wavespectraProgramID );
+        GLErrors.printIfError("use");
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, noiseTexId);
@@ -303,14 +320,17 @@ public class WaterFFT
 	    glBindTexture(GL_TEXTURE_2D, h0TexId);
         //need 4 values for h0(k) and h0(-k)
         glBindImageTexture( 2, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+        GLErrors.printIfError("pre");
         
         //size of our textures and physical size of the patch of water
-        glUniform1f(glGetUniformLocation(wavespectraProgramID, "patchLength"), patchLength);
+        glUniform1i(glGetUniformLocation(wavespectraProgramID, "patchLength"), patchLength);
         glUniform1i(glGetUniformLocation(wavespectraProgramID, "textureSize"), textureSize);
+        GLErrors.printIfError("int");
         //distance to shore from the direction of wind
         glUniform1f(glGetUniformLocation(wavespectraProgramID, "fetch_F"), fetch);
         glUniform1f(glGetUniformLocation(wavespectraProgramID, "windSpeed_U"), windSpeed);
         glUniform1f(glGetUniformLocation(wavespectraProgramID, "depth_H"), depth);
+        GLErrors.printIfError("f");
 
         //System.out.println("bind");
     }
@@ -421,6 +441,7 @@ public class WaterFFT
         glBindImageTexture( 5, dxxdzzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
 
         glUniform1f(glGetUniformLocation(fComponentProgramID, "time"), time);
+        glUniform1i(glGetUniformLocation(fComponentProgramID, "patchLength"), patchLength);
     }
 
     public static void dispatchFComponentShader()
@@ -514,7 +535,7 @@ public class WaterFFT
         }
 
         //dispatch - x = stages size is log2(N) and y = the varying coord size up to N/2 as for n <= N/2 point n+N/2 = -n for our 1D ffts, so we do iffts horizontally and then we do iffts vertically
-        glDispatchCompute(texSizePower, textureSize/2/*/localGroupSize*/, 1);
+        glDispatchCompute(texSizePower, textureSize/2/localGroupSize, 1);
 
         //wait for completion
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -601,10 +622,10 @@ public class WaterFFT
 
         int stageLocation = glGetUniformLocation(ifftProgramID, "stage");
         int ppongLocation = glGetUniformLocation(ifftProgramID, "pingpong");
-        int horizOrVertLocation = glGetUniformLocation(ifftProgramID, "H_or_V");
+        int HorizVertPermuteLocation = glGetUniformLocation(ifftProgramID, "H_or_V");
 
         //do horizontal step
-        glUniform1i(horizOrVertLocation, 0);
+        glUniform1i(HorizVertPermuteLocation, 0);
         for (int i = 0; i < texSizePower; i++)
         {
             pingpong = (pingpong+1) % 2;
@@ -612,13 +633,13 @@ public class WaterFFT
             glUniform1i(ppongLocation, pingpong);
 
             glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
-            //DO WE NEED TO WAIT?? I ASSUME SO??
+            
             glMemoryBarrier(GL_ALL_BARRIER_BITS);
             //glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
 
         //do vertical step
-        glUniform1i(horizOrVertLocation, 1);
+        glUniform1i(HorizVertPermuteLocation, 1);
         for (int i = 0; i < texSizePower; i++)
         {
             pingpong = (pingpong+1) % 2;
@@ -626,7 +647,7 @@ public class WaterFFT
             glUniform1i(ppongLocation, pingpong);
 
             glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
-            //DO WE NEED TO WAIT?? I ASSUME SO??
+           
             glMemoryBarrier(GL_ALL_BARRIER_BITS);
             //glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
@@ -642,26 +663,162 @@ public class WaterFFT
             //copy input to buffer texture
             glCopyImageSubData(inputTexID, GL_TEXTURE_2D, 0, 0, 0, 0, bufferTexID, GL_TEXTURE_2D, 0, 0, 0, 0, textureSize, textureSize, 1);
         }
+
+        //I have literally no idea what the "permutation and inversion step is" nothing I've read has talked about it but all the code I'm referencing does it
+            //hacky method to do this so I don't have to make a whole new shader rn also we're always treating buffer0 as our output
+        if (outputToInput)
+        {
+            //0 = horiz 1 = vert anything else = permute
+            glUniform1i(HorizVertPermuteLocation, 2);
+            glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        }
     }
 
-    public static void computeFinalWaveParameters()
+    public static void computeWaveFFT()
     {
         setupIFFT();
 
         doIFFT(dxdzTexID, ifftBufferTexID, 0, true);
-        if (GLErrors.printIfError("doIFFT dxdz: ") != 0)
-                System.out.println(glGetProgramInfoLog(ifftProgramID,1024));
+        GLErrors.printIfError("doIFFT dxdz: ");
+        GLErrors.shaderlogIfError(ifftComputeID);
+        GLErrors.programlogIfError(ifftProgramID);
 
         doIFFT(dydxzTexID, ifftBufferTexID, 0, true);
-        if (GLErrors.printIfError("doIFFT dydxz: ") != 0)
-                System.out.println(glGetProgramInfoLog(ifftProgramID,1024));
+        GLErrors.printIfError("doIFFT dydxz: ");
+        GLErrors.shaderlogIfError(ifftComputeID);
+        GLErrors.programlogIfError(ifftProgramID);
 
         doIFFT(dyxdyzTexID, ifftBufferTexID, 0, true);
-        if (GLErrors.printIfError("doIFFT dyxdyz: ") != 0)
-                System.out.println(glGetProgramInfoLog(ifftProgramID,1024));
+        GLErrors.printIfError("doIFFT dyxdyz: ");
+        GLErrors.shaderlogIfError(ifftComputeID);
+        GLErrors.programlogIfError(ifftProgramID);
             
         doIFFT(dxxdzzTexID, ifftBufferTexID, 0, true);
-        if (GLErrors.printIfError("doIFFT dxxdzz: ") != 0)
-                System.out.println(glGetProgramInfoLog(ifftProgramID,1024));
+        GLErrors.printIfError("doIFFT dxxdzz: ");
+        GLErrors.shaderlogIfError(ifftComputeID);
+        GLErrors.programlogIfError(ifftProgramID);
+    }
+
+    public static void setupTexMerge()
+    {
+        if (!texMergeShaderCreated)
+        {
+            String source = AssetManager.get().ReadCompute(texmergeComputePath);
+            
+            texmergeComputeID = glCreateShader(GL_COMPUTE_SHADER);
+            glShaderSource(texmergeComputeID, source);
+            glCompileShader(texmergeComputeID);
+            GLErrors.printIfError("texmerge compile: ");
+
+            texmergeProgramID = glCreateProgram();
+            glAttachShader(texmergeProgramID, texmergeComputeID);
+            glLinkProgram(texmergeProgramID);
+            GLErrors.printIfError("texmerge link: ");
+            
+            genWaveShaderTex();
+
+            GLErrors.programlogIfError(texmergeProgramID);
+            GLErrors.shaderlogIfError(texmergeComputeID);
+
+            texMergeShaderCreated = true;
+            GLErrors.printIfError("end setupWaveShaderMaps");
+            System.out.println("end setupWaveShaderMaps");
+        }
+    }
+
+    private static void genWaveShaderTex()
+    {
+        displacementTexID = glGenTextures();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, displacementTexID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, texSizePower, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
+        glBindImageTexture( 0, displacementTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+
+        derivativeTexID = glGenTextures();
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, derivativeTexID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, texSizePower, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
+        glBindImageTexture( 1, derivativeTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+
+        turbulenceTexID = glGenTextures();
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, turbulenceTexID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, texSizePower, textureSize, 0, GL_RED, GL_FLOAT, (FloatBuffer) null);
+        glBindImageTexture( 2, turbulenceTexID, 0, false, 0, GL_READ_WRITE, GL_R32F );
+
+        displacementIndexID = AssetManager.get().AddTexture("displacementTexID",displacementTexID);
+        derivativeIndexID = AssetManager.get().AddTexture("derivativeTexID",derivativeTexID);
+        turbulenceIndexID = AssetManager.get().AddTexture("turbulenceTexID",turbulenceTexID);
+
+        GLErrors.printIfError("merge gen");
+    }
+
+    private static void useTexMerge(double deltatime)
+    {
+        glUseProgram( texmergeProgramID );
+        GLErrors.printIfError("e");
+
+        glActiveTexture(GL_TEXTURE0);
+	    glBindTexture(GL_TEXTURE_2D, displacementTexID);
+        glBindImageTexture( 0, displacementTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+        GLErrors.printIfError("d");
+
+        glActiveTexture(GL_TEXTURE0+1);
+	    glBindTexture(GL_TEXTURE_2D, derivativeTexID);
+        glBindImageTexture( 1, derivativeTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+        GLErrors.printIfError("k");
+
+        glActiveTexture(GL_TEXTURE0+2);
+	    glBindTexture(GL_TEXTURE_2D, turbulenceTexID);
+        glBindImageTexture( 2, turbulenceTexID, 0, false, 0, GL_READ_WRITE, GL_R32F );
+        GLErrors.printIfError("11");
+
+        glActiveTexture(GL_TEXTURE0+3);
+	    glBindTexture(GL_TEXTURE_2D, dxdzTexID);
+        glBindImageTexture( 3, dxdzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+        GLErrors.printIfError("ab");
+
+        glActiveTexture(GL_TEXTURE0+4);
+	    glBindTexture(GL_TEXTURE_2D, dydxzTexID);
+        glBindImageTexture( 4, dydxzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+        GLErrors.printIfError("11ba");
+
+        glActiveTexture(GL_TEXTURE0+5);
+	    glBindTexture(GL_TEXTURE_2D, dyxdyzTexID);
+        glBindImageTexture( 5, dyxdyzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+        GLErrors.printIfError("23232");
+
+        glActiveTexture(GL_TEXTURE0+6);
+	    glBindTexture(GL_TEXTURE_2D, dxxdzzTexID);
+        glBindImageTexture( 6, dxxdzzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+        GLErrors.printIfError("11111");
+
+        glUniform1f(glGetUniformLocation(texmergeProgramID, "lambda"), 1.0f);
+        glUniform1f(glGetUniformLocation(texmergeProgramID, "deltaTime"), (float) deltatime);
+        GLErrors.printIfError("uniforms merge");
+    }
+
+    public static void mergeWaveTextures(double deltatime)
+    {
+        useTexMerge(deltatime);
+        GLErrors.printIfError("useTexMerge");
+        GLErrors.programlogIfError(texmergeProgramID);
+        GLErrors.shaderlogIfError(texmergeComputeID);
+
+        glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
+        GLErrors.printIfError("disp merge");
+
+        //wait for completion
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        GLErrors.printIfError("post merge");
+        GLErrors.programlogIfError(texmergeProgramID);
+        GLErrors.shaderlogIfError(texmergeComputeID);
     }
 }

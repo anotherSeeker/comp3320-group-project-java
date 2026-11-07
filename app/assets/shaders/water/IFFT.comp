@@ -20,50 +20,67 @@ vec2 cMult(vec2 a, vec2 b)
     return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
 }
 
+vec2 cAdd(vec2 a, vec2 b)
+{
+    return vec2(a.x + b.x, a.y + b.y);
+}
+
 vec2 cExp(vec2 a)
 {
     return vec2(cos(a.y), sin(a.y)) * exp(a.x);
 }
 
+void Permute()
+{
+	ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+	vec2 value = vec2(0,0);
+
+	value = imageLoad(buffer0, texelCoord).xy; 
+
+	//inverts if x + y is odd
+	value = vec2( (value) * (1.0 - 2.0 * mod(float((texelCoord.x + texelCoord.y)), 2)));
+
+	imageStore(buffer0, texelCoord, vec4(value, 0, 1) );
+}
+
 void horizStep()
 {
-    ivec2 invocID = ivec2( gl_GlobalInvocationID.xy );
-    vec4 butterfly = imageLoad(ButterflyTex, ivec2(stage, invocID.x));
+    ivec2 texelCoord = ivec2( gl_GlobalInvocationID.xy );
+    vec4 butterfly = imageLoad(ButterflyTex, ivec2(stage, texelCoord.x));
 	
-	vec2 twiddleFactors = vec2(butterfly.xy);
-	ivec2 inputIndices = ivec2(butterfly.zw);
+	vec2 twiddleFactors = vec2(butterfly.rg);
+	ivec2 inputIndices = ivec2(butterfly.ba);
 
 	if (pingpong == 1)
 	{
-		vec2 out1 = vec2(	imageLoad(buffer0, ivec2(inputIndices.x, invocID.y)).xy 
+		vec2 out1 = vec2(	imageLoad(buffer0, ivec2(inputIndices.x, texelCoord.y)).xy 
 							+ 
-							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), 
-									vec2(imageLoad(buffer0, ivec2(inputIndices.y, invocID.y)).xy) 
+							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), //vec2(twiddleFactors.x, -twiddleFactors.y),
+									vec2(imageLoad(buffer0, ivec2(inputIndices.y, texelCoord.y)).xy) 
 								) 
 						);
 
-
-		imageStore(buffer1, invocID, vec4(out1.x, out1.y, 0, 1));
-		//imageStore(buffer1, invocID, vec4(1, 1, 0, 0));
+		imageStore(buffer1, texelCoord, vec4(out1.x, out1.y, 0, 1));
+		//imageStore(buffer1, texelCoord, vec4(1, 1, 0, 0));
 	}
 	else
 	{
-		vec2 out0 = vec2(	imageLoad(buffer1, ivec2(inputIndices.x, invocID.y)).xy 
+		vec2 out0 = vec2(	imageLoad(buffer1, ivec2(inputIndices.x, texelCoord.y)).xy 
 							+ 
-							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), 
-									vec2(imageLoad(buffer1, ivec2(inputIndices.y, invocID.y)).xy) 
+							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), //vec2(twiddleFactors.x, -twiddleFactors.y),
+									vec2(imageLoad(buffer1, ivec2(inputIndices.y, texelCoord.y)).xy) 
 								) 
 						);
 		
-		imageStore(buffer0, invocID, vec4(out0.x, out0.y, 0, 1));
-		//imageStore(buffer0, invocID, vec4(1, 1, 0, 0));
+		imageStore(buffer0, texelCoord, vec4(out0.x, out0.y, 0, 1));
+		//imageStore(buffer0, texelCoord, vec4(1, 1, 0, 0));
 	}
 }
 
 void vertStep()
 {
-	ivec2 invocID = ivec2( gl_GlobalInvocationID.xy );
-    vec4 butterfly = imageLoad(ButterflyTex, ivec2(stage, invocID.y));
+	ivec2 texelCoord = ivec2( gl_GlobalInvocationID.xy );
+    vec4 butterfly = imageLoad(ButterflyTex, ivec2(stage, texelCoord.y));
 
 	vec2 twiddleFactors = vec2(butterfly.xy);
 	ivec2 inputIndices = ivec2(butterfly.zw);
@@ -71,95 +88,95 @@ void vertStep()
 
 	if (pingpong == 1)
 	{
-		vec2 out1 = vec2(	imageLoad(buffer0, ivec2(invocID.x, inputIndices.x)).xy 
+		vec2 out1 = vec2(	imageLoad(buffer0, ivec2(texelCoord.x, inputIndices.x)).xy 
 							+ 
-							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), 
-									imageLoad(buffer0, ivec2(invocID.x, inputIndices.y)).xy 
+							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), //vec2(twiddleFactors.x, -twiddleFactors.y),
+									imageLoad(buffer0, ivec2(texelCoord.x, inputIndices.y)).xy 
 							) 
-						);
+						);			
 		
-		imageStore(buffer1, invocID, vec4(out1.x, out1.y, 0, 1));
-		//imageStore(buffer1, invocID, vec4(1, 1, 0, 0));
+		imageStore(buffer1, texelCoord, vec4(out1.x, out1.y, 0, 1));
+		//imageStore(buffer1, texelCoord, vec4(1, 1, 0, 0));
 	}
 	else
 	{
-		vec2 out0 = vec2(	imageLoad(buffer1, ivec2(invocID.x, inputIndices.x)).xy 
+		vec2 out0 = vec2(	imageLoad(buffer1, ivec2(texelCoord.x, inputIndices.x)).xy 
 							+ 
-							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), 
-									imageLoad(buffer1, ivec2(invocID.x, inputIndices.y)).xy) 
+							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), //vec2(twiddleFactors.x, -twiddleFactors.y),
+									imageLoad(buffer1, ivec2(texelCoord.x, inputIndices.y)).xy) 
 						);
 
-		imageStore(buffer0, invocID, vec4(out0.x, out0.y, 0, 1));
-		//imageStore(buffer0, invocID, vec4(1, 1, 0, 0));
+		imageStore(buffer0, texelCoord, vec4(out0.x, out0.y, 0, 1));
+		//imageStore(buffer0, texelCoord, vec4(1, 1, 0, 0));
 	}
 }
 
 // void horizStepAlt()
 // {
-//     ivec2 invocID = ivec2( gl_GlobalInvocationID.xy );
-//     vec4 butterfly = imageLoad(ButterflyTex, ivec2(stage, invocID.x));
+//     ivec2 texelCoord = ivec2( gl_GlobalInvocationID.xy );
+//     vec4 butterfly = imageLoad(ButterflyTex, ivec2(stage, texelCoord.x));
 	
 // 	vec2 twiddleFactors = vec2(butterfly.xy);
 // 	ivec2 inputIndices = ivec2(butterfly.zw);
 
 // 	if (pingpong == 1)
 // 	{
-// 		vec2 p = imageLoad(buffer0, ivec2(inputIndices.x, invocID.y)).rg;
-// 		vec2 q = imageLoad(buffer0, ivec2(inputIndices.y, invocID.y)).rg;
+// 		vec2 p = imageLoad(buffer0, ivec2(inputIndices.x, texelCoord.y)).rg;
+// 		vec2 q = imageLoad(buffer0, ivec2(inputIndices.y, texelCoord.y)).rg;
 // 		//vec2 w_ = twiddleFactors;
 
 // 		vec2 out1 = cMult(twiddleFactors, q);
 // 		out1.x += p.x;
 // 		out1.y += p.y;
 
-// 		imageStore(buffer1, invocID, vec4(out1.x, out1.y, 0, 1));
+// 		imageStore(buffer1, texelCoord, vec4(out1.x, out1.y, 0, 1));
 // 	}
 // 	else
 // 	{
-// 		vec2 p = imageLoad(buffer1, ivec2(inputIndices.x, invocID.y)).rg;
-// 		vec2 q = imageLoad(buffer1, ivec2(inputIndices.y, invocID.y)).rg;
+// 		vec2 p = imageLoad(buffer1, ivec2(inputIndices.x, texelCoord.y)).rg;
+// 		vec2 q = imageLoad(buffer1, ivec2(inputIndices.y, texelCoord.y)).rg;
 // 		//vec2 w_ = twiddleFactors;
 
 // 		vec2 out0 = cMult(twiddleFactors, q);
 // 		out0.x += p.x;
 // 		out0.y += p.y;
 		
-// 		imageStore(buffer0, invocID, vec4(out0.x, out0.y, 0, 1));
+// 		imageStore(buffer0, texelCoord, vec4(out0.x, out0.y, 0, 1));
 // 	}
 // }
 
 // // YOU DIDN"T FINISH THIS ONE IT NEEDS FIXING THE INDEXES ARE WRONG
 // void vertStepAlt()
 // {
-//     ivec2 invocID = ivec2( gl_GlobalInvocationID.xy );
-//     vec4 butterfly = imageLoad(ButterflyTex, ivec2(stage, invocID.y));
+//     ivec2 texelCoord = ivec2( gl_GlobalInvocationID.xy );
+//     vec4 butterfly = imageLoad(ButterflyTex, ivec2(stage, texelCoord.y));
 	
 // 	vec2 twiddleFactors = vec2(butterfly.xy);
 // 	ivec2 inputIndices = ivec2(butterfly.zw);
 
 // 	if (pingpong == 1)
 // 	{
-// 		vec2 p = imageLoad(buffer0, ivec2(inputIndices.x, invocID.y)).rg;
-// 		vec2 q = imageLoad(buffer0, ivec2(inputIndices.y, invocID.y)).rg;
+// 		vec2 p = imageLoad(buffer0, ivec2(inputIndices.x, texelCoord.y)).rg;
+// 		vec2 q = imageLoad(buffer0, ivec2(inputIndices.y, texelCoord.y)).rg;
 // 		//vec2 w_ = twiddleFactors;
 
 // 		vec2 out1 = cMult(twiddleFactors, q);
 // 		out1.x += p.x;
 // 		out1.y += p.y;
 
-// 		imageStore(buffer1, invocID, vec4(out1.x, out1.y, 0, 1));
+// 		imageStore(buffer1, texelCoord, vec4(out1.x, out1.y, 0, 1));
 // 	}
 // 	else
 // 	{
-// 		vec2 p = imageLoad(buffer1, ivec2(inputIndices.x, invocID.y)).rg;
-// 		vec2 q = imageLoad(buffer1, ivec2(inputIndices.y, invocID.y)).rg;
+// 		vec2 p = imageLoad(buffer1, ivec2(inputIndices.x, texelCoord.y)).rg;
+// 		vec2 q = imageLoad(buffer1, ivec2(inputIndices.y, texelCoord.y)).rg;
 // 		//vec2 w_ = twiddleFactors;
 
 // 		vec2 out0 = cMult(twiddleFactors, q);
 // 		out0.x += p.x;
 // 		out0.y += p.y;
 		
-// 		imageStore(buffer0, invocID, vec4(out0.x, out0.y, 0, 1));
+// 		imageStore(buffer0, texelCoord, vec4(out0.x, out0.y, 0, 1));
 // 	}
 // }
 
@@ -168,7 +185,10 @@ void main()
     if (H_or_V == 0)
 		horizStep();
 		//horizStepAlt();
-	else
+	else if (H_or_V == 1)
 		vertStep();
 		//vertStepAlt();
+	else
+		Permute();
+
 }

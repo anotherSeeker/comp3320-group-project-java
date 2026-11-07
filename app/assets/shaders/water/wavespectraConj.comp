@@ -8,10 +8,11 @@ layout(rgba32f, binding = 0) uniform image2D h0Tex;
 
 void main()
 {
-    ivec2 rawPos = ivec2( gl_GlobalInvocationID.xy );
+    ivec2 id = ivec2( gl_GlobalInvocationID.xy );
     
-    vec4 base = imageLoad(h0Tex, rawPos);
-    vec4 minus = imageLoad(h0Tex, ivec2( mod(textureSize - rawPos.x, textureSize), mod(textureSize - rawPos.y, textureSize) ) );
+    //H0K[uint2((Size - id.x) % Size, (Size - id.y) % Size)];
+    vec2 base = imageLoad(h0Tex, id).xy;
+    vec2 minus = imageLoad(h0Tex, ivec2( mod(textureSize - id.x, textureSize), mod(textureSize - id.y, textureSize) ) ).xy;
 
-    imageStore( h0Tex, rawPos, vec4(base.x,base.y,minus.x,-minus.y) ); //H0K[uint2((Size - id.x) % Size, (Size - id.y) % Size)];
+    imageStore( h0Tex, id, vec4(base.x,base.y,minus.x,-minus.y) ); 
 }

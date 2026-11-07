@@ -6,9 +6,9 @@
 #define surfaceTensionCoefficient_sigma 0.074
 #define gamma 3.3 //gamma: the "peak enhancement factor", from the JONSWAP spectrum, do not ask me I am not an oceanographer
 
-#define doCapillaryWaves true
+//#define doCapillaryWaves true
 
-uniform float patchLength;
+uniform int patchLength;
 uniform int textureSize;
 uniform float fetch_F;
 uniform float depth_H;
@@ -62,7 +62,7 @@ float dispersionRelation_omega(float kx, float kz, float magnitude)
         return aFreq;
     #endif
 
-    aFreq = sqrt(gravity_g * magnitude * tanh(magnitude * depth_H));
+    aFreq = sqrt(gravity_g * magnitude * tanh(min(magnitude * depth_H, 20)));
     return aFreq;
 }
 
@@ -77,7 +77,7 @@ float omegaDerivative(float magnitude, float omega)
 
     float th = tanh(min(magnitude * depth_H, 20));
 	float ch = cosh(magnitude * depth_H);
-	return gravity_g * (depth_H * magnitude / (ch * ch) + th) / omega / 2;
+	return gravity_g * (depth_H * magnitude / ch / ch + th) / omega / 2;
 }
 
 //angle of the wave as compared to the wind direction
@@ -166,51 +166,57 @@ void main()
     int texSize = textureSize;
     float texSizef = float(texSize);
 
-    //ok we were doing it wrong I'm pretty sure after re reading our sources pretty confident we should be calculating kx, kz like this instead
-        //always working with powers of two for image sizing
-        //float halfSize = (texSizef-1)/2;
-        //float scale = 0.25;
-        //mapping to series of radial direction vectors, rotation of the map shouldn't matter at all
-
-    //pretty sure this is the correct wave vectors now?
-
     //number of points in x dir and y dir cause square tex
     float N = texSize;
-    //physical size of the patch, we should be passing this in instead
+    //physical size of the patch
     float L = patchLength;
+    float deltaK = (2 * PI) / L;
 
-    float deltaK = 2 * PI / L;
+    // float n = (rawPos.x - (N/2.0) );
+    // float m = (rawPos.y - (N/2.0) );
 
-    float n = (rawPos.x - (N/2.0) );
-    float m = (rawPos.y - (N/2.0) );
-
-    float kx = (rawPos.x - (N/2.0)) * deltaK;
-    float kz = (rawPos.y - (N/2.0)) * deltaK;
+    // float kx = n * deltaK;
+    // float kz = m * deltaK;
     // float kxmin = -kx;
     // float kzmin = -kz;
 
+    //our n and m values at all points, calculates the effective "coordinate" of a point and wavevector k
+    vec2 remap = vec2(rawPos.x - (N/2.0), rawPos.y - (N/2.0));
+
+    vec2 coords = vec2((remap.x/N) * L, (remap.y/N) * L);
+    vec2 k = vec2(remap.x * deltaK, remap.y * deltaK);
+
+    float kx = k.x;
+    float kz = k.y;
+    float kxmin = -kx;
+    float kzmin = -kz;
+
     vec2 noise_xi = vec2(imageLoad(gaussianData, rawPos).xy);
 
-    float magnitude_k = waveVectorMagnitude_k(kx,kz);
+    float magnitude_k = length(vec2(kx,kz));//waveVectorMagnitude_k(kx,kz);
+    if (magnitude_k < 0.00001) {
+		magnitude_k = 0.00001;
+	}
+
     float omega = dispersionRelation_omega(kx, kz, magnitude_k);
-    // float omegaMin = dispersionRelation_omega(kxmin, kzmin, magnitude_k);
+    float omegaMin = dispersionRelation_omega(kxmin, kzmin, magnitude_k);
 
     float dOmegadk = omegaDerivative(magnitude_k, omega);
-    // float dOmegadkMin = omegaDerivative(magnitude_k, omegaMin);
+    float dOmegadkMin = omegaDerivative(magnitude_k, omegaMin);
 
     //peak frequency of the wave spectrum
     float omegaPeak = omega_p_J();
 
     float theta = windWaveDirection_Theta(kx, kz);
-    //float thetaMin = windWaveDirection_Theta(kxmin, kzmin);
+    float thetaMin = windWaveDirection_Theta(kxmin, kzmin);
 
     float S = doJONSWAP(omega, omegaPeak);
     float D = doDirectionalSpread(omega, omegaPeak, theta);
     float tma = tmaCorrection(omega);
 
-    // float SMin = doJONSWAP(omegaMin, omegaPeak);
-    // float DMin = doDirectionalSpread(omegaMin, omegaPeak, thetaMin);
-    // float tmaMin = tmaCorrection(omegaMin);
+    float SMin = doJONSWAP(omegaMin, omegaPeak);
+    float DMin = doDirectionalSpread(omegaMin, omegaPeak, thetaMin);
+    float tmaMin = tmaCorrection(omegaMin);
 
     //we missed a 2 in here
     float h0 = (1.0/(sqrt(2.0))) * sqrt(2 * S * D * tma * abs(dOmegadk) / magnitude_k * deltaK * deltaK);
@@ -218,22 +224,15 @@ void main()
     float h0_complex = h0 * noise_xi.y;
 
     //we also need h0(-k) for the fourier transform(?)
-    // float h0M = (1.0/(sqrt(2.0))) * sqrt(2 * SMin * DMin * tmaMin * abs(dOmegadkMin) / magnitude_k * deltaK * deltaK);
-    // float h0M_real    = h0M * noise_xi.x;
-    // float h0M_complex = -h0M * noise_xi.y;
+    float h0M = (1.0/(sqrt(2.0))) * sqrt(2 * SMin * DMin * tmaMin * abs(dOmegadkMin) / magnitude_k * deltaK * deltaK);
 
-    imageStore( waveVecTex, rawPos, vec4(kx,kz,omega,1/waveVectorMagnitude_k(kx,kz)) );
+    float h0M_real    = h0M * noise_xi.x;
+    float h0M_complex = -h0M * noise_xi.y;
 
-    //testing using a seperate conj compute
-    imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,0,1) );
+    imageStore( waveVecTex, rawPos, vec4(kx,kz,omega,1/magnitude_k) );
+
+    //a seperate conj compute should be saving us some time over evaluating the spectrum twice at each point
+    //imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,0,1) );
     //storing h0(k) and h0(-k) -- Maybe this is wrong??
-    //imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,h0M_real,h0M_complex) );
+    imageStore( h0Tex, rawPos, vec4(h0_real,h0_complex,h0M_real,h0M_complex) );
 }
-
-//old map range was bad and also we don't need this if I'm just not stupid
-// float halfSize = (texSize-1.0)/2.0;
-// float kx = mapRange(rawPos.x, 0, texSize-1, -halfSize, halfSize);
-// float kz = mapRange(rawPos.y, 0, texSize-1, -halfSize, halfSize);
-// float mapRange(int x, int in_min, int in_max, int out_min, int out_max) {
-//   return int(float(x - in_min) * float(out_max - out_min) / float(in_max - in_min) + out_min);
-// }

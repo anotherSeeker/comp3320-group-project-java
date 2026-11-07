@@ -11,6 +11,7 @@ layout(rg32f, binding = 4) uniform writeonly image2D dyxdyzTex;
 layout(rg32f, binding = 5) uniform writeonly image2D dxxdzzTex;
 
 uniform float time;
+uniform int patchLength;
 
 //implementation is basically just Jump Trajectory's https://github.com/gasgiant/FFT-Ocean/blob/main/Assets/ComputeShaders/TimeDependentSpectrum.compute
 

@@ -48,7 +48,8 @@ public class WaterScene extends MonoScript {
     
         //compute jonswap params
         WaterFFT.computeWaveSpectrum();
-        WaterFFT.conjSpectra();
+        //just calculating it
+        //WaterFFT.conjSpectra();
 
         GLErrors.printIfError("waveSpec WScene");
 
@@ -67,9 +68,12 @@ public class WaterScene extends MonoScript {
         WaterFFT.fourierComponentCompute(); 
         GLErrors.printIfError("fourierComponentCompute WScene start");
 
+        WaterFFT.setupTexMerge();
+        GLErrors.printIfError("setupTexMerge WScene");
+
         //render our maps to screen
         //drawMapQuads(WaterFFT.dydxzIndexID, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
-        drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
+        drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dydxzIndexID);
 
         setDrawCallbacks();
 
@@ -81,10 +85,23 @@ public class WaterScene extends MonoScript {
     @Override
     protected void Update(double deltaTime) 
     {
-        waterUpdate();
+        waterUpdate(deltaTime);
 
-        //updateMapQuad(WaterFFT.waveVecIndexID, WaterFFT.dydxzIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
         doWaterMapsPreview();
+    }
+
+    private boolean waterUpdate(double deltaTime)
+    {
+        if (waterUpdateErr == 0)
+        {
+            WaterFFT.fourierComponentCompute();            
+            WaterFFT.computeWaveFFT();
+            //WaterFFT.mergeWaveTextures(deltaTime);
+
+            waterUpdateErr = GLErrors.printIfError("waterUpdate WScene");
+            return waterUpdateErr != 0;
+        }
+        return false;
     }
 
     private void doWaterMapsPreview()
@@ -92,12 +109,12 @@ public class WaterScene extends MonoScript {
         if (lastState != previewState || !pauseQuadUpdates)
         {
             pauseQuadUpdates = false;
-            lastState = previewState;
+            lastState = previewState; 
             switch (previewState)
             {
                 case 0 -> updateMapQuad(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
                 case 1 -> updateMapQuad(WaterFFT.dxdzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dyxdyzIndexID, WaterFFT.dxxdzzIndexID);
-                case 2 -> updateMapQuad(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
+                case 2 -> updateMapQuad(WaterFFT.displacementIndexID, WaterFFT.derivativeIndexID, WaterFFT.turbulenceIndexID, WaterFFT.dydxzIndexID);
                 case 3 -> updateMapQuad(WaterFFT.dxdzIndexID, WaterFFT.dydxzIndexID, WaterFFT.dyxdyzIndexID, WaterFFT.dxxdzzIndexID);
 
                 default -> {}
@@ -119,19 +136,6 @@ public class WaterScene extends MonoScript {
         GLFWKeyCallback previewCallback = GLFWKeyCallback.create(this::_previewCallback);
         previewCallback.set(Input.getWindow());
     }
-
-    private boolean waterUpdate()
-    {
-        if (waterUpdateErr == 0)
-        {
-            WaterFFT.fourierComponentCompute();            
-            //WaterFFT.computeFinalWaveParameters();
-            waterUpdateErr = GLErrors.printIfError("waterUpdate WScene");
-            return waterUpdateErr != 0;
-        }
-        return false;
-    }
-
 
     private void drawScreenQuad(int texIndexID)
     {
