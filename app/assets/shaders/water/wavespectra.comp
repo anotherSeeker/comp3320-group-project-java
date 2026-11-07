@@ -183,7 +183,7 @@ void main()
     //our n and m values at all points, calculates the effective "coordinate" of a point and wavevector k
     vec2 remap = vec2(rawPos.x - (N/2.0), rawPos.y - (N/2.0));
 
-    vec2 coords = vec2((remap.x/N) * L, (remap.y/N) * L);
+    //vec2 coords = vec2((remap.x/N) * L, (remap.y/N) * L);
     vec2 k = vec2(remap.x * deltaK, remap.y * deltaK);
 
     float kx = k.x;

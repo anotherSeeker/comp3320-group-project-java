@@ -40,13 +40,16 @@ public class WaterFFT
 
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
-    public static int texSizePower = 10; //textureSize = 2^texSizePower;
-    public static int textureSize = 1024; //gotta be a power of 2
+    public static int texSizePower = 8; //textureSize = 2^texSizePower;
+    public static int textureSize = 256; //gotta be a power of 2
     //to dispatch the correct number of work group based on their local size.
     public static final int localGroupSize = 8;
 
     //physical size of patch
     public static int patchLength = 1024;
+
+    //scales our displacement textures when we merge together
+    public static float displacementScale_lambda = -7.5f;
 
     //the wavenumbers, kx, ky, and angular frequency / dispersion relation omega
     public static ArrayList<Vector3f> waveVectorList;
@@ -669,9 +672,9 @@ public class WaterFFT
         if (outputToInput)
         {
             //0 = horiz 1 = vert anything else = permute
-            glUniform1i(HorizVertPermuteLocation, 2);
-            glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
-            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            //glUniform1i(HorizVertPermuteLocation, 2);
+            //glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
+            //glMemoryBarrier(GL_ALL_BARRIER_BITS);
         }
     }
 
@@ -734,7 +737,7 @@ public class WaterFFT
         glBindTexture(GL_TEXTURE_2D, displacementTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, texSizePower, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
         glBindImageTexture( 0, displacementTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
 
         derivativeTexID = glGenTextures();
@@ -742,7 +745,7 @@ public class WaterFFT
         glBindTexture(GL_TEXTURE_2D, derivativeTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, texSizePower, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
         glBindImageTexture( 1, derivativeTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
 
         turbulenceTexID = glGenTextures();
@@ -750,7 +753,7 @@ public class WaterFFT
         glBindTexture(GL_TEXTURE_2D, turbulenceTexID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, texSizePower, textureSize, 0, GL_RED, GL_FLOAT, (FloatBuffer) null);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, textureSize, textureSize, 0, GL_RED, GL_FLOAT, (FloatBuffer) null);
         glBindImageTexture( 2, turbulenceTexID, 0, false, 0, GL_READ_WRITE, GL_R32F );
 
         displacementIndexID = AssetManager.get().AddTexture("displacementTexID",displacementTexID);
@@ -800,7 +803,7 @@ public class WaterFFT
         glBindImageTexture( 6, dxxdzzTexID, 0, false, 0, GL_READ_WRITE, GL_RG32F );
         GLErrors.printIfError("11111");
 
-        glUniform1f(glGetUniformLocation(texmergeProgramID, "lambda"), 1.0f);
+        glUniform1f(glGetUniformLocation(texmergeProgramID, "lambda"), displacementScale_lambda);
         glUniform1f(glGetUniformLocation(texmergeProgramID, "deltaTime"), (float) deltatime);
         GLErrors.printIfError("uniforms merge");
     }

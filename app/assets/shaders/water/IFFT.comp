@@ -39,6 +39,8 @@ void Permute()
 
 	//inverts if x + y is odd
 	value = vec2( (value) * (1.0 - 2.0 * mod(float((texelCoord.x + texelCoord.y)), 2)));
+	//scaling fft
+	//value = value / float(size * size);
 
 	imageStore(buffer0, texelCoord, vec4(value, 0, 1) );
 }
@@ -59,6 +61,8 @@ void horizStep()
 									vec2(imageLoad(buffer0, ivec2(inputIndices.y, texelCoord.y)).xy) 
 								) 
 						);
+		//scaling the IFFT output
+		//out1 = out1 * 1/size;
 
 		imageStore(buffer1, texelCoord, vec4(out1.x, out1.y, 0, 1));
 		//imageStore(buffer1, texelCoord, vec4(1, 1, 0, 0));
@@ -71,6 +75,8 @@ void horizStep()
 									vec2(imageLoad(buffer1, ivec2(inputIndices.y, texelCoord.y)).xy) 
 								) 
 						);
+		//scaling the IFFT output
+		//out0 = out0 * 1/size;
 		
 		imageStore(buffer0, texelCoord, vec4(out0.x, out0.y, 0, 1));
 		//imageStore(buffer0, texelCoord, vec4(1, 1, 0, 0));
@@ -93,7 +99,10 @@ void vertStep()
 							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), //vec2(twiddleFactors.x, -twiddleFactors.y),
 									imageLoad(buffer0, ivec2(texelCoord.x, inputIndices.y)).xy 
 							) 
-						);			
+						);
+
+		//scaling the IFFT output
+		//out1 = out1 * 1/size;							
 		
 		imageStore(buffer1, texelCoord, vec4(out1.x, out1.y, 0, 1));
 		//imageStore(buffer1, texelCoord, vec4(1, 1, 0, 0));
@@ -105,6 +114,9 @@ void vertStep()
 							cMult(	vec2(twiddleFactors.x, -twiddleFactors.y), //vec2(twiddleFactors.x, -twiddleFactors.y),
 									imageLoad(buffer1, ivec2(texelCoord.x, inputIndices.y)).xy) 
 						);
+
+		//scaling the IFFT output
+		//out0 = out0 * 1/size;				
 
 		imageStore(buffer0, texelCoord, vec4(out0.x, out0.y, 0, 1));
 		//imageStore(buffer0, texelCoord, vec4(1, 1, 0, 0));

@@ -18,19 +18,20 @@ uniform float deltaTime;
 void main()
 {
     ivec2 id = ivec2(gl_GlobalInvocationID.xy);
+    float scaledLambda = lambda;
 
     vec2 DxDz = imageLoad(dxdzTex, id).xy;
 	vec2 DyDxz = imageLoad(dydxzTex, id).xy;
 	vec2 DyxDyz = imageLoad(dyxdyzTex, id).xy;
 	vec2 DxxDzz = imageLoad(dxxdzzTex, id).xy;
 
-    vec3 disp = vec3(lambda * DxDz.x, DyDxz.x, lambda * DxDz.y);
-	vec4 deriv = vec4(DyxDyz, DxxDzz*lambda);
+    vec3 disp = vec3(scaledLambda * DxDz.x, DyDxz.x, scaledLambda * DxDz.y);
+	vec4 deriv = vec4(DyxDyz, DxxDzz*scaledLambda);
 
-    float jacobian = (1 + lambda * DxxDzz.x) * (1 + lambda * DxxDzz.y) - lambda * lambda * DyDxz.y * DyDxz.y;
+    float jacobian = (1 + scaledLambda * DxxDzz.x) * (1 + scaledLambda * DxxDzz.y) - scaledLambda * scaledLambda * DyDxz.y * DyDxz.y;
     float turb = imageLoad(Turbulence, id).x  + deltaTime * 0.5 / max(jacobian, 0.5);
 
     imageStore(Displacement, id, vec4(disp, 1));
     imageStore(Derivative, id, deriv);
-    imageStore(Turbulence, id, vec4(turb, 0, 0, 1));
+    imageStore(Turbulence, id, vec4(min(jacobian, turb), 0, 0, 1));
 }

@@ -57,6 +57,6 @@ void main()
 	imageStore(dxdzTex, rawPos, vec4(Dx_Dz.x, Dx_Dz.y, 0, 1));
 	imageStore(dydxzTex, rawPos, vec4(Dy_Dxz.x, Dy_Dxz.y, 0, 1));
 	imageStore(dyxdyzTex, rawPos, vec4(Dyx_Dyz.x, Dyx_Dyz.y, 0, 1));
-	imageStore(dxxdzzTex, rawPos, vec4(Dyx_Dyz.x, Dyx_Dyz.y, 0, 1));
+	imageStore(dxxdzzTex, rawPos, vec4(Dxx_Dzz.x, Dxx_Dzz.y, 0, 1));
 }
 

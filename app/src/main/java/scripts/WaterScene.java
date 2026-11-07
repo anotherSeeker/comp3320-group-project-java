@@ -48,8 +48,8 @@ public class WaterScene extends MonoScript {
     
         //compute jonswap params
         WaterFFT.computeWaveSpectrum();
-        //just calculating it
-        //WaterFFT.conjSpectra();
+
+        WaterFFT.conjSpectra();
 
         GLErrors.printIfError("waveSpec WScene");
 
@@ -86,6 +86,7 @@ public class WaterScene extends MonoScript {
     protected void Update(double deltaTime) 
     {
         waterUpdate(deltaTime);
+        GLErrors.printIfError("waterUpdate");
 
         doWaterMapsPreview();
     }
