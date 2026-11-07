@@ -16,7 +16,7 @@ import engine.rendering.*;
 import engine.components.*;
 import engine.particles.*;
 
-public class ParticlesDemoScene extends MonoScript {
+public class Particles extends MonoScript {
     Integer particleShaderID = Assets.LoadShader(
             Path.of("assets/shaders/particles/particleShader.vert"),
             Path.of("assets/shaders/particles/particleShader.frag")
