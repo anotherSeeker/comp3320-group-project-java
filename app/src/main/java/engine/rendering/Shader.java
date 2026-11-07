@@ -146,6 +146,17 @@ public class Shader {
         stack.pop();
     }
 
+     public void setUniform(String uniformName, Matrix4f[] matrices) {
+        MemoryStack stack = MemoryStack.stackPush();
+            int length = matrices != null ? matrices.length : 0;
+            FloatBuffer floatBuffer = stack.mallocFloat(16 * length);
+            for (int i = 0; i < length; i++) {
+                matrices[i].get(16 * i, floatBuffer);
+            }
+            glUniformMatrix4fv(glGetUniformLocation(ID, uniformName), false, floatBuffer);
+        stack.pop();
+    }
+
     public void setInt(String uniformName, int value) {
         glUniform1i(glGetUniformLocation(ID, uniformName), value);
     }

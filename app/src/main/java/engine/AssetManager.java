@@ -6,6 +6,8 @@ import engine.rendering.CubeTexture;
 import engine.rendering.Mesh;
 import engine.rendering.Shader;
 import engine.rendering.Texture;
+import scripts.Animation.AnimImporter;
+import scripts.Animation.Model;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.GL_R8;
@@ -23,6 +25,7 @@ import org.lwjgl.assimp.*;
 import static org.lwjgl.assimp.Assimp.*;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -37,8 +40,10 @@ import java.util.stream.Collectors;
 public class AssetManager {
     private Map<Integer, Shader> shaderIndex = new HashMap<>();
     private Map<Integer, Mesh> meshIndex = new HashMap<>();
+    private Map<Integer, Model> modelIndex = new HashMap<>();
     private Map<Integer, Texture> textureIndex = new HashMap<>();
     private Map<Integer, CubeTexture> cubeTextureIndex = new HashMap<>();
+
 
     public Integer defaultTexture = "DEFAULT".hashCode();
     public Integer whiteTexture = "WHITE".hashCode();
@@ -303,6 +308,18 @@ public class AssetManager {
         return ID;
     }
 
+    public Integer LoadModel(Path filePath) {
+        Integer ID = filePath.toAbsolutePath().hashCode();
+
+        if (modelIndex.containsKey(ID))
+            return ID;
+
+        Model model = AnimImporter.loadModel(filePath.toString(), textureIndex, true);
+        modelIndex.put(ID, model);
+
+        return ID;
+    }
+
     public Integer LoadMesh(Path filePath) {
         Integer ID = filePath.toAbsolutePath().hashCode();
 
@@ -435,6 +452,11 @@ public class AssetManager {
         return ID;
     }
 
+
+
+
+
+    
     public Integer LoadTexture(Path filePath) {
         Integer ID = filePath.toAbsolutePath().hashCode();
 
@@ -551,9 +573,14 @@ public class AssetManager {
         return meshIndex.get(assetID);
     }
 
+    public Model getModel(Integer assetID) {
+        return modelIndex.get(assetID);
+    }
+
     public Texture getTexture(Integer assetID) {
         return textureIndex.get(assetID);
     }
+
 
     public CubeTexture getCubeTexture(Integer assetID) {
         return cubeTextureIndex.get(assetID);

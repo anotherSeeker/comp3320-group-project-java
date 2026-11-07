@@ -24,10 +24,12 @@ import dev.dominion.ecs.api.Entity;
 import engine.components.GameObject;
 import engine.components.Material;
 import engine.components.Transform;
+import scripts.Animation.AnimationData;
 import engine.rendering.CubeTexture;
 import engine.rendering.Mesh;
 import engine.rendering.Shader;
 import engine.particles.*;
+import scripts.Animation.Model;
 import engine.rendering.ShadowMap;
 
 public class SceneGraph {
@@ -175,6 +177,15 @@ public class SceneGraph {
             material.bindAsUniform();
 
             gameObject.mesh.bind();
+
+            AnimationData animationData = transform.getAnimationData();
+            if (animationData == null) {
+                material.shader.setUniform("bonesMatrices", AnimationData.DEFAULT_BONES_MATRICES);
+            } else {
+                material.shader.setUniform("bonesMatrices", animationData.getCurrentFrame().boneMatrices());
+            }   
+            
+            gameObject.mesh.draw();
             gameObject.mesh.drawPatches();
         }
     }
@@ -184,6 +195,16 @@ public class SceneGraph {
         Mesh mesh = assetManager.getMesh(meshID);
 
         GameObject gameObject = new GameObject(mesh, material);
+        Transform transform = new Transform(new Matrix4f());
+
+        return ECS.createEntity(gameObject, transform);
+    }
+
+    public Entity createAnimatedObject(Material material, Integer modelID) {
+        Model model = assetManager.getModel(modelID);
+        Mesh mesh = assetManager.getMesh(model.getMeshId());
+
+        GameObject gameObject = new GameObject(mesh, material, model);
         Transform transform = new Transform(new Matrix4f());
 
         return ECS.createEntity(gameObject, transform);
