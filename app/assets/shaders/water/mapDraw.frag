@@ -31,23 +31,31 @@ void draw4Quads()
     }
 
     //proving to myself that we are actually doing something with the fourier components, and we are
-    if (color.r == 0 && color.g == 0 && color.b == 0)
-    {
-        if (color.a == 0)
-            color = vec4(1,0.25,1,1);
-        else
-            color = vec4(0.5,0.5,0.5,1);
-    }
-
-    // if (color.r == color.b)
+    // if (color.r == 0 && color.g == 0 && color.b == 0)
     // {
-    //     color = vec4(1,0.5,1,1);
+    //     if (color.a == 0)
+    //         color = vec4(1,0.25,1,1);
+    //     else
+    //         color = vec4(0.5,0.5,0.5,1);
     // }
 
-    // if (-color.g == color.a)
+    //our displacement/derivative have none of their values == 0 but infuriatingly I haven't been able to make them visible no matter what i multiply by???
+    //we might just need to try using them and pray it just works
+    // if (color.r == 0)
     // {
-    //     color = vec4(0.5,1,1,1);
+    //     color.r = 1;
     // }
+
+    // if (color.g == 0)
+    // {
+    //     color.g = 1;
+    // }
+
+    // if (color.b == 0.0)
+    // {
+    //     color.b = 1;
+    // }
+
 }
 
 void texCompare()

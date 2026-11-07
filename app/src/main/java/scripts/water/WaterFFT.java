@@ -672,9 +672,9 @@ public class WaterFFT
         if (outputToInput)
         {
             //0 = horiz 1 = vert anything else = permute
-            //glUniform1i(HorizVertPermuteLocation, 2);
-            //glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
-            //glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glUniform1i(HorizVertPermuteLocation, 2);
+            glDispatchCompute(textureSize/localGroupSize, textureSize/localGroupSize, 1);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
         }
     }
 
