@@ -37,6 +37,8 @@ public class Particles extends MonoScript {
     protected void Start() {
         Random rand = new Random();
 
+        boolean startEnabled = true;
+
         Vector3f P1_particleVelocity = new Vector3f(0.0f, 0.1f, 0.0f);
         long P1_ttl = 50000;
         int P1_maxParticles = 20;
@@ -50,7 +52,6 @@ public class Particles extends MonoScript {
 
         P1 = Scene.createParticleEmitter(SceneGraph.EmitterType.BUBBLE, particleID, bubbleMaterial, P1_scale, P1_scale_Max, P1_maxParticles, P1_creationPeriodMillis, P1_particleVelocity, P1_ttl, P1_blendFunction);
 
-        P1.get(BubbleParticleEmitter.class).setActive();
         P1.get(BubbleParticleEmitter.class).setVelocityRndRange(P1_velocity_Min, P1_velocity_Max);
         P1.get(BubbleParticleEmitter.class).setScaleRndRange(P1_scale_Min, P1_scale_Max);
         P1.get(BubbleParticleEmitter.class).setGrow();
@@ -71,13 +72,17 @@ public class Particles extends MonoScript {
 
         P2 = Scene.createParticleEmitter(SceneGraph.EmitterType.BUBBLE, particleID, bubbleMaterial, P2_scale, P2_scale_Max, P2_maxParticles, P2_creationPeriodMillis, P2_particleVelocity, P2_ttl, P2_blendFunction);
 
-        P2.get(BubbleParticleEmitter.class).setActive();
         P2.get(BubbleParticleEmitter.class).setVelocityRndRange(P2_velocity_Min, P2_velocity_Max);
         P2.get(BubbleParticleEmitter.class).setScaleRndRange(P2_scale_Min, P2_scale_Max);
 
         P2.get(BubbleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(5.0f, 0, -5.0f));
 
         
+        if (startEnabled) {
+            P1.get(BubbleParticleEmitter.class).setActive();
+            P2.get(BubbleParticleEmitter.class).setActive();
+        }
+
         Scene.setBubbleParticleEmitters(new BubbleParticleEmitter[] {P1.get(BubbleParticleEmitter.class), P2.get(BubbleParticleEmitter.class)});
     }
 
