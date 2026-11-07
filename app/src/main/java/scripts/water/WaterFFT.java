@@ -266,7 +266,7 @@ public class WaterFFT
         GLErrors.printIfError("hmmmmm");
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, h0TexId);
-        glBindImageTexture( 0, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RG32F );
+        glBindImageTexture( 0, h0TexId, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
 
         GLErrors.printIfError("asdasdasd");
         glUniform1i(glGetUniformLocation(spectraconjProgramID, "textureSize"), textureSize);

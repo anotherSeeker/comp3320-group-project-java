@@ -119,7 +119,8 @@ float exponent_r_J(float omegaPeak, float omega, float sigma)
 //peak angular frequency
 float omega_p_J()
 {
-    return (22 * ( pow(gravity_g,2) / (windSpeed_U * fetch_F) ) );
+    //so awesome that my primary source has just written a bunch of random parameters for jonswap wrong
+    return (22.0 * pow( pow(gravity_g,2) / (windSpeed_U * fetch_F), 0.33 ) );
 }
 
 //S(omega) wave spectrum calculation
@@ -136,7 +137,7 @@ float doJONSWAP(float omega, float omegaPeak)
     //the actual equation bits
     float a = (alpha*gravity_g*gravity_g)/pow(omega, 5);
 
-    float b = (-5/4) * pow((omegaPeak/omega), 4);
+    float b = (-5.0/4.0) * pow((omegaPeak/omega), 4);
     float c = exp(b);
 
     float S_jonswap = a*c*pow(gamma, r);
