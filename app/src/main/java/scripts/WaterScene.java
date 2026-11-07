@@ -73,7 +73,7 @@ public class WaterScene extends MonoScript {
 
         //render our maps to screen
         //drawMapQuads(WaterFFT.dydxzIndexID, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
-        drawMapQuads(WaterFFT.noiseIndexId, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dydxzIndexID);
+        drawMapQuads(WaterFFT.butterflyIndexID, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dydxzIndexID);
 
         setDrawCallbacks();
 
@@ -96,7 +96,7 @@ public class WaterScene extends MonoScript {
         {
             WaterFFT.fourierComponentCompute();            
             WaterFFT.computeWaveFFT();
-            //WaterFFT.mergeWaveTextures(deltaTime);
+            WaterFFT.mergeWaveTextures(deltaTime);
 
             waterUpdateErr = GLErrors.printIfError("waterUpdate WScene");
             return waterUpdateErr != 0;

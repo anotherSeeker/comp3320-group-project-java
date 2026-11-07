@@ -7,29 +7,9 @@ layout(rgba32f, binding = 0) uniform image2D butterflyTex;
 
 uniform int texSize;
 
-//generating our "butterfly texture" for the fft based primarily on GPGPU FFT paper
-
-//bit reversal based on the size of the input number
-uint reverseBits(uint n)
+uint reverseBits(uint n, uint bitCount)
 {
-    uint rev = 0;
-	//we use this to restrict the size of our swap or a 1 would become 2^32 where we want a 1 to become 2^7 for a texture size of 2^8
-	uint size = texSize;
-
-    while (size > 0)
-    {
-		//change our "working index", by shifting left
-        rev = rev << 1; 
-
-		//bitwise and so if the first bit of n == 1 then we xor with one to make our first bit of the output 1 as we've just shifted left so there has to be a zero
-        if ((n & 1) == 1)
-            rev = rev ^ 1;
-
-        n = n >> 1;
-		size = size >> 1;
-    }
-
-    return rev;
+   return bitfieldReverse(n) >> (32u - bitCount);
 }
 
 vec2 cExp(vec2 a)
@@ -37,80 +17,41 @@ vec2 cExp(vec2 a)
     return vec2(cos(a.y), sin(a.y)) * exp(a.x);
 }
 
-// void PrecomputeTwiddleFactorsAndInputIndices()
-// {
-// 	//for W^k_n
-// 	ivec2 id = ivec2(gl_GlobalInvocationID.xy);
-
-// 	int stage = id.x;
-// 	int N = texSize;
-
-// 	//n = y * N / 2^(x+1) % N
-// 	float _n = float(id.y*(float(N)/pow(2,stage+1)));
-// 	float n = mod(_n, N);
-// 	//e^(i*2PI*n/N) == cos(2PI*n/N) + i*sin*(2PI*k/N)
-// 	vec2 twiddle = vec2(cos(2*PI*n/float(N)), sin(2*PI*n/float(N)));
-
-// 	int span = int(pow(2, id.x));
-// 	int wing = 0;
-// 	if (mod(float(id.y), pow(2,id.x+1)) < pow(2, id.x))
-// 		wing = 1;
-
-// 	vec4 data = vec4(twiddle.x, twiddle.y, 0, 0);
-// 	if (stage == 0)
-// 	{
-// 		if (wing == 1)
-// 		{
-// 			data.z = reverseBits(id.y);
-// 			data.w = reverseBits(id.y+1);
-// 			imageStore(butterflyTex, id, data);
-// 			//imageStore(butterflyTex, ivec2(id.x, id.y+N/2), vec4(-data.x, -data.y, data.z, data.w));
-// 		}
-// 		else
-// 		{	
-// 			data.z = reverseBits(id.y-1);
-// 			data.w = reverseBits(id.y);
-// 			imageStore(butterflyTex, id, data);
-// 			//imageStore(butterflyTex, ivec2(id.x, id.y+N/2), vec4(-data.x, -data.y, data.z, data.w));
-// 		}
-// 	}
-// 	else
-// 	{
-// 		if (wing == 1)
-// 		{
-// 			data.z = id.y;
-// 			data.w = id.y + span;
-// 			imageStore(butterflyTex, id, data);
-// 			//imageStore(butterflyTex, ivec2(id.x, id.y+N/2), vec4(-data.x, -data.y, data.z, data.w));
-// 		}
-// 		else
-// 		{
-// 			data.z = id.y-span;
-// 			data.w = id.y;
-// 			imageStore(butterflyTex, id, data);
-// 			//imageStore(butterflyTex, ivec2(id.x, id.y+N/2), vec4(-data.x, -data.y, data.z, data.w));
-// 		}
-// 	}
-// }
-
 void PrecomputeTwiddleFactorsAndInputIndices()
 {
-	ivec2 id = ivec2(gl_GlobalInvocationID.xy);
-	uint stage = gl_GlobalInvocationID.x;
-	uint coord = gl_GlobalInvocationID.y;
+    ivec2 id = ivec2(gl_GlobalInvocationID.xy);
+    uint stage = gl_GlobalInvocationID.x;
+    uint outIndex = gl_GlobalInvocationID.y;
+    uint N = uint(texSize);
 
-	uint N = uint(texSize);
-	float mult = 2*PI/N;
-	uint b = N >> (stage + 1);
+    uint span = 1u << stage;
+    uint blockSize = span << 1u;
+    uint j = outIndex % span;
+    uint groupStart = (outIndex / blockSize) * blockSize;
+    uint input0 = groupStart + j;
+    uint input1 = input0 + span;
 
-	//integer division and rounding???? I think???? I haven no idea why
-	uint i = (2*b*(coord/b) + (coord % b)) % N;
-	float value = -mult * ((coord/b) * b);
+    // DIT starts from bit-reversed input, only for the first stage.
+    if (stage == 0u)
+    {
+        uint bitCount = uint(round(log2(float(N))));
+        input0 = reverseBits(input0, bitCount);
+        input1 = reverseBits(input1, bitCount);
+    }
 
-	vec2 twiddle = vec2(cos(value), sin(value));
+    // Store exp(-i*theta); IFFT.comp conjugates this to exp(+i*theta).
+    float angle = 2.0 * PI * float(j) / float(blockSize);
+    vec2 twiddle = vec2(cos(angle), -sin(angle));
 
-	imageStore(butterflyTex, id, vec4(twiddle.x, twiddle.y, i, i+b));
-	imageStore(butterflyTex, ivec2(stage, coord+N/2), vec4(-twiddle.x, -twiddle.y, i, i+b) );
+    // The upper output of a DIT butterfly uses -W.
+    if ((outIndex % blockSize) >= span)
+        twiddle = -twiddle;
+
+    imageStore(
+        butterflyTex,
+        id,
+        vec4(twiddle, float(input0), float(input1))
+    );
 }
 
 void main()
