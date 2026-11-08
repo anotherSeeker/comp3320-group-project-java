@@ -59,19 +59,20 @@ public class AnimImporter {
         PointerBuffer aiMeshes = aiScene.mMeshes();
         Material defaultMaterial = new Material();
         List<Bone> boneList = new ArrayList<>();
-        int meshid = -1;
-        for (int i = 0; i < numMeshes; i++) {
-            AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
-            Mesh mesh = processMesh(aiMesh, boneList);
-            int materialIdx = aiMesh.mMaterialIndex();
-            Material material;
-            if (materialIdx >= 0 && materialIdx < materialList.size()) {
-                material = materialList.get(materialIdx);
-            } else {
-                material = defaultMaterial;
-            }
-            meshid= Assets.LoadMesh(mesh,modelPath);
-        }
+        
+        //for (int i = 0; i < numMeshes; i++) {
+            AIMesh aiMesh = AIMesh.create(aiMeshes.get(0));
+            int meshid = processMesh(aiMesh, boneList, modelPath);
+            //int meshid = Assets.LoadMesh(Path.of(modelPath));
+            // int materialIdx = aiMesh.mMaterialIndex();
+            // Material material;
+            // if (materialIdx >= 0 && materialIdx < materialList.size()) {
+            //     material = materialList.get(materialIdx);
+            // } else {
+            //     material = defaultMaterial;
+            // }
+            //meshid= Assets.LoadMesh(mesh,modelPath);
+        //}
 
         // if (!defaultMaterial.getMeshList().isEmpty()) {
         //     materialList.add(defaultMaterial);
@@ -300,22 +301,24 @@ public class AnimImporter {
         return data;
     }
 
-    private static Mesh processMesh(AIMesh aiMesh, List<Bone> boneList) {
-        float[] vertices = processVertices(aiMesh);
-        float[] normals = processNormals(aiMesh);
-        float[] textCoords = processTextCoords(aiMesh);
-        int[] indices = processIndices(aiMesh);
+    private static Integer processMesh(AIMesh aiMesh, List<Bone> boneList, String modelPath) {
+        // float[] vertices = processVertices(aiMesh);
+        // float[] normals = processNormals(aiMesh);
+        // float[] textCoords = processTextCoords(aiMesh);
+        // int[] indices = processIndices(aiMesh);
         AnimMeshData animMeshData = processBones(aiMesh, boneList);
+        int meshid = Assets.LoadMesh(Path.of(modelPath), animMeshData.boneIds, animMeshData.weights);
+        //int meshid = Assets.LoadMesh(Path.of(modelPath));
 
         // Texture coordinates may not have been populated. We need at least the empty slots
-        if (textCoords.length == 0) {
-            int numElements = (vertices.length / 3) * 2;
-            textCoords = new float[numElements];
-        }
-        float[] tangents = processTangents(aiMesh, normals);
-        float[] bitangents = processBitangents(aiMesh, normals);
+        // if (textCoords.length == 0) {
+        //     int numElements = (vertices.length / 3) * 2;
+        //     textCoords = new float[numElements];
+        // }
+        // float[] tangents = processTangents(aiMesh, normals);
+        // float[] bitangents = processBitangents(aiMesh, normals);
 
-       return new Mesh(vertices, textCoords, normals, tangents, bitangents, indices, animMeshData.boneIds, animMeshData.weights);
+       return meshid;
     }
     private static int[] processIndices(AIMesh aiMesh) {
         List<Integer> indices = new ArrayList<>();

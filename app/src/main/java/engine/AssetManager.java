@@ -7,6 +7,7 @@ import engine.rendering.Mesh;
 import engine.rendering.Shader;
 import engine.rendering.Texture;
 import scripts.Animation.AnimImporter;
+import scripts.Animation.AnimImporter.AnimMeshData;
 import scripts.Animation.Model;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -70,6 +71,7 @@ public class AssetManager {
     public Integer fogProcess = "FOG".hashCode();
 
     public Integer defaultShader = "DEFAULT".hashCode();
+    public Integer animationShader = "ANIMATION".hashCode();
 
     private AssetManager() {
 
@@ -179,6 +181,12 @@ public class AssetManager {
                 shadowPassShader,
                 Path.of("assets/shaders/internal/shadows/shadow.vert"),
                 Path.of("assets/shaders/internal/shadows/shadow.frag")
+        );
+
+        this.loadInternalShader(
+                animationShader,
+                Path.of("assets/shaders/anim.vert"),
+                Path.of("assets/shaders/default.frag")
         );
 
         this.loadInternalShaderWithTess(
@@ -318,6 +326,129 @@ public class AssetManager {
         modelIndex.put(ID, model);
 
         return ID;
+    }
+
+    public Integer LoadMesh(Path filePath, int[] boneIndices, float[] weights) {
+        Integer ID = filePath.toAbsolutePath().hashCode();
+
+        if (meshIndex.containsKey(ID))
+            return ID;
+
+        AIScene scene = aiImportFile(
+                filePath.toString(),
+                aiProcess_Triangulate |
+                        aiProcess_GenSmoothNormals |
+                        aiProcess_JoinIdenticalVertices |
+                        aiProcess_CalcTangentSpace
+        );
+
+        if (scene == null || scene.mRootNode() == null) {
+            throw new RuntimeException("could not load model " + aiGetErrorString());
+        }
+
+        PointerBuffer meshbuffer = scene.mMeshes();
+        AIMesh assimpMesh = AIMesh.create(meshbuffer.get(0));
+
+        Mesh mesh = createMesh(assimpMesh, boneIndices, weights);
+
+        aiReleaseImport(scene);
+
+        meshIndex.put(ID, mesh);
+
+        return ID;
+    }
+
+    public Mesh createMesh(AIMesh assimpMesh, int[] boneIndices, float[] weights) {
+        int vertexCount = assimpMesh.mNumVertices();
+        int indexCount = assimpMesh.mNumFaces() * 3;
+
+        AIVector3D.Buffer positions = assimpMesh.mVertices();
+        AIVector3D.Buffer normals = assimpMesh.mNormals();
+        AIVector3D.Buffer uvs = assimpMesh.mTextureCoords(0);
+        AIVector3D.Buffer tangents = assimpMesh.mTangents();
+        AIVector3D.Buffer bitangents = assimpMesh.mBitangents();
+
+        int vertexSize = 14;
+
+        FloatBuffer vertices = memAllocFloat(vertexCount * vertexSize);
+        IntBuffer indices = memAllocInt(indexCount);
+
+        for (int i = 0; i < vertexCount; i++) {
+            AIVector3D position = positions.get(i);
+
+            vertices.put(position.x());
+            vertices.put(position.y());
+            vertices.put(position.z());
+
+            if (normals != null) {
+                AIVector3D normal = normals.get(i);
+                vertices.put(normal.x());
+                vertices.put(normal.y());
+                vertices.put(normal.z());
+            } else {
+                vertices.put(0);
+                vertices.put(0);
+                vertices.put(0);
+            }
+
+            if (uvs != null) {
+                AIVector3D uv = uvs.get(i);
+                vertices.put(uv.x());
+                vertices.put(uv.y());
+            } else {
+                vertices.put(0);
+                vertices.put(0);
+            }
+
+            if (tangents != null) {
+                AIVector3D tangent = tangents.get(i);
+                vertices.put(tangent.x());
+                vertices.put(tangent.y());
+                vertices.put(tangent.z());
+            } else {
+                vertices.put(0);
+                vertices.put(0);
+                vertices.put(0);
+            }
+
+            if (bitangents != null) {
+                AIVector3D bitangent = bitangents.get(i);
+                vertices.put(bitangent.x());
+                vertices.put(bitangent.y());
+                vertices.put(bitangent.z());
+            } else {
+                vertices.put(0);
+                vertices.put(0);
+                vertices.put(0);
+            }
+        }
+
+        AIFace.Buffer faces = assimpMesh.mFaces();
+
+        for (int i = 0; i < assimpMesh.mNumFaces(); i++) {
+            AIFace face = faces.get(i);
+
+            if (face.mNumIndices() != 3) {
+                throw new RuntimeException("Mesh wasn't triangulated");
+            }
+
+            IntBuffer faceIndices = face.mIndices();
+            indices.put(faceIndices.get(0));
+            indices.put(faceIndices.get(1));
+            indices.put(faceIndices.get(2));
+        }
+
+        vertices.flip();
+        indices.flip();
+
+        //Mesh mesh = new Mesh(vertices, indices, boneIndices, weights);
+        Mesh mesh = new Mesh(vertices, indices);
+
+
+        memFree(vertices);
+        memFree(indices);
+
+        return mesh;
     }
 
     public Integer LoadMesh(Path filePath) {
