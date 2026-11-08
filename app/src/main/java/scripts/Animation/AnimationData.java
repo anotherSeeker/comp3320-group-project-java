@@ -8,9 +8,10 @@ import org.joml.Matrix4f;
 public class AnimationData {
 
     public static final Matrix4f[] DEFAULT_BONES_MATRICES = new Matrix4f[AnimImporter.MAX_BONES];
+    private double leftoverTime = 0.0;
 
     static {
-        Matrix4f zeroMatrix = new Matrix4f().zero();
+        Matrix4f zeroMatrix = new Matrix4f().identity();
         Arrays.fill(DEFAULT_BONES_MATRICES, zeroMatrix);
     }
 
@@ -41,6 +42,12 @@ public class AnimationData {
         } else {
             currentFrameIdx = nextFrame;
         }
+    }
+
+    public void IterateNFrames(double n) {
+        n=n+leftoverTime;
+        currentFrameIdx = (currentFrameIdx + (int) n) % (currentAnimation.frames().size() - 1);
+        leftoverTime = n - (int) n;
     }
 
     public void setCurrentAnimation(Model.Animation currentAnimation) {

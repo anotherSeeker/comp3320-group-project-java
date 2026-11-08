@@ -55,14 +55,19 @@ void main() {
         initBitangent = vec4(aBitangent, 0.0);
     }
 
-    gl_Position = CameraMatrix * (Model * vec4(aPos,1));
+    vec4 worldPosition = Model * initPos;
 
-    position = ((Model * vec4(aPos,1))).xyz;
+    gl_Position = CameraMatrix * worldPosition;
+
+    position = worldPosition.xyz;
     UV = aUV;
-    normal = normalize((mat3(transpose(inverse(Model))) * aNormal));
-    tangent = normalize((mat3(Model) * aTangent));
-    bitangent = normalize((mat3(Model) * aBitangent));
 
-    TBN = mat3(tangent,bitangent,normal);
+    mat3 normalMatrix = mat3(transpose(inverse(Model)));
+
+    normal = normalize(normalMatrix * initNormal.xyz);
+    tangent = normalize(mat3(Model) * initTangent.xyz);
+    bitangent = normalize(mat3(Model) * initBitangent.xyz);
+
+    TBN = mat3(tangent, bitangent, normal);
 
 }

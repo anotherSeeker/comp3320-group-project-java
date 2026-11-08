@@ -12,8 +12,11 @@ import engine.*;
 import engine.components.Material;
 import engine.components.MaterialEntry;
 import engine.components.Transform;
+import scripts.Animation.AnimationData;
 
 public class Feya extends MonoScript {
+    private AnimationData animationData;
+
     Integer shaderID = Assets.LoadShader(
             Path.of("assets/shaders/anim.vert"),
             Path.of("assets/shaders/anim.frag")
@@ -38,18 +41,14 @@ public class Feya extends MonoScript {
 
     @Override
     protected void Start() {
-
-        //character = Scene.createObject(characterMesh, material);
-        //character.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
-
-        Integer meshid = Assets.getModel(characterModel).getMeshId();
-        character = Scene.createObject(meshid, material);
+        animationData = new AnimationData(Assets.getModel(characterModel).getAnimationList().get(0));
+        character = Scene.createAnimatedObject(material, characterModel);
+        character.get(Transform.class).setAnimationData(animationData);
         character.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
-        //Assets.LoadIntoScene(Path.of("assets/meshes/feya combined.glb"), Scene, new Vector3f(0, 0, 5));
     }
 
     @Override
     protected void Update(double deltaTime) {
-
+        animationData.IterateNFrames(deltaTime*24);
     }
 }
