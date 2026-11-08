@@ -1,7 +1,4 @@
 #version 430 core
-
-//todo: actually make this
-
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aUV;
@@ -19,11 +16,19 @@ out vec3 bitangent;
 
 out mat3 TBN;
 
-void main() {
-    gl_Position = CameraMatrix * Model * vec4(aPos,1);
+uniform sampler2D RoughnessMap; //displacement
+uniform sampler2D NormalMap; //derivative
 
-    position = (Model * vec4(aPos,1)).xyz;
+void main() {
     UV = aUV;
+
+    vec4 derivative = texture(NormalMap,UV);
+    vec4 displacement = texture(RoughnessMap,UV);
+
+    vec4 pos = Model * vec4( (aPos),1 );
+    gl_Position = CameraMatrix * pos;
+    position = pos.xyz;
+
     normal = normalize(mat3(transpose(inverse(Model))) * aNormal);
     tangent = normalize(mat3(Model) * aTangent);
     bitangent = normalize(mat3(Model) * aBitangent);

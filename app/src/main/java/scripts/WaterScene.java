@@ -73,7 +73,9 @@ public class WaterScene extends MonoScript {
 
         //render our maps to screen
         //drawMapQuads(WaterFFT.dydxzIndexID, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
-        drawMapQuads(WaterFFT.butterflyIndexID, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dydxzIndexID);
+        //drawMapQuads(WaterFFT.butterflyIndexID, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dydxzIndexID);
+
+        makeWaterPlane(WaterFFT.displacementIndexID, WaterFFT.derivativeIndexID, WaterFFT.turbulenceIndexID);
 
         setDrawCallbacks();
 
@@ -88,7 +90,7 @@ public class WaterScene extends MonoScript {
         waterUpdate(deltaTime);
         GLErrors.printIfError("waterUpdate");
 
-        doWaterMapsPreview();
+        //doWaterMapsPreview();
     }
 
     private boolean waterUpdate(double deltaTime)
@@ -138,25 +140,6 @@ public class WaterScene extends MonoScript {
         previewCallback.set(Input.getWindow());
     }
 
-    private void drawScreenQuad(int texIndexID)
-    {
-        Integer quadShader = Assets.LoadShader(
-            Path.of("assets/shaders/water/noiseTest.vert"),
-            Path.of("assets/shaders/water/noiseTest.frag")
-        );
-
-        quadMat = Assets.createMaterial(new MaterialEntry()
-            .add("SHADER", quadShader)
-            .add("COLOUR",texIndexID)
-        );
-
-        Mesh quadMesh = Mesh.Quad();
-        quadID = AssetManager.get().LoadMesh(quadMesh, "noiseQuad");
-
-        NoisePlane = Scene.createObject(quadID, quadMat);
-        NoisePlane.get(Transform.class).setPosition(new Vector3f(0f, 0, 0));
-    }
-
     private void drawMapQuads(int ID1, int ID2, int ID3, int ID4)
     {
         quadShader = Assets.LoadShader(
@@ -192,11 +175,12 @@ public class WaterScene extends MonoScript {
         NoisePlane.get(GameObject.class).material = quadMat;
     }
 
-    private void makeWaterPlane()
+    private void makeWaterPlane(int displacementID, int derivativeID, int turbulenceID)
     {
         Integer waterShader = Assets.LoadShader(
             Path.of("assets/shaders/water/water.vert"),
-            Path.of("assets/shaders/water/water.frag")
+            Path.of("assets/shaders/default.frag")
+            //Path.of("assets/shaders/water/water.frag")
         );
 
         Integer waterMeshID = Assets.LoadMesh(Path.of("assets/meshes/WaterTestMesh_Bigger.obj"));
@@ -204,8 +188,9 @@ public class WaterScene extends MonoScript {
         Material waterMat = Assets.createMaterial(new MaterialEntry()
             .add("SHADER", waterShader)
             .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Color.jpg")))
-            .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_Roughness.jpg")))
-            .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Tiles/Tiles108_1K-JPG_NormalGL.jpg")))
+            .add("ROUGHNESS",displacementID)
+            .add("AMBIENT_OCCLUSION",turbulenceID)
+            .add("NORMAL",derivativeID)
         );
 
         WaterPlane = Scene.createObject(waterMeshID, waterMat);

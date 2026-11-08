@@ -1,8 +1,6 @@
 #version 430 core
 #define PI 3.14159265359
 
-//todo: actually make this
-
 in vec3 position;
 in vec3 normal;
 in vec2 UV;
@@ -17,24 +15,27 @@ uniform sampler2D Albedo;
 uniform sampler2D RoughnessMap;
 uniform sampler2D AmbientOcclusionMap;
 uniform sampler2D NormalMap;
+uniform sampler2D MetallicMap;
 
 uniform vec3 LightDirection;
 uniform vec3 ViewPosition;
 
 uniform float Roughness = 0.2;
 uniform float AmbientOcclusion = 0.5;
+uniform float Metallic = 0;
 
-const float subsurface = 0;
-const float sheen = 0;
-const float annisotropy = 0.5;
-const float specularStrength = 0.5;
+uniform float Subsurface = 0;
+uniform float Sheen = 0;
+uniform float Annisotropy = 0.5;
+uniform float SpecularStrength = 0.5;
 
-const vec3 sheenColour = vec3(1,1,1);
-const vec3 diffuseColour = vec3(1,1,1);
+uniform vec3 SheenColour = vec3(1,1,1);
+uniform vec3 DiffuseColour = vec3(1,1,1);
 
 struct Material {
     float roughness;
     float ambientOcclusion;
+    float metallic;
     vec3 albedo;
 };
 
@@ -45,9 +46,11 @@ uniform sampler2D brdfIntMap;
 Material getMaterial(){
     Material material;
 
-    material.roughness = texture(RoughnessMap,UV).r * Roughness;
+    material.roughness = max(texture(RoughnessMap,UV).r * Roughness,0.02);
     material.ambientOcclusion = texture(AmbientOcclusionMap,UV).r * AmbientOcclusion;
     material.albedo = pow(texture(Albedo,UV).rgb,vec3(2.2));
+
+    material.metallic = clamp(texture(MetallicMap,UV).r * Metallic,0,1);
 
     return material;
 }
@@ -79,9 +82,9 @@ vec3 burleyDiffuse(Material material,float nDotL,float nDotV,float lDotH){
 
     float ss = 1.25 * (fresnelSubSurface * (1 / (nDotL + nDotV) - 0.5) + 0.5);
 
-    vec3 fresnelSheen = schlickFresnel(lDotH) * sheen * pow(sheenColour,vec3(2.2));
+    vec3 fresnelSheen = schlickFresnel(lDotH) * Sheen * pow(SheenColour,vec3(2.2));
 
-    return mix(diffuse,ss,subsurface) + fresnelSheen;
+    return (mix(diffuse,ss,Subsurface) + fresnelSheen) * (1 - material.metallic);
 }
 
 vec3 disneySpecular(Material material,vec3 norm,vec3 halfway,vec3 viewDirection,vec3 lightDirection){
@@ -99,13 +102,16 @@ vec3 disneySpecular(Material material,vec3 norm,vec3 halfway,vec3 viewDirection,
     float xDotV = dot(tangent,viewDirection);
     float yDotV = dot(bitangent,viewDirection);
 
-    float aspect = sqrt(1 - annisotropy * 0.9);
+    float aspect = sqrt(1 - Annisotropy * 0.9);
     float ax = max(0.001,(material.roughness * material.roughness) / aspect);
     float ay = max(0.001,(material.roughness * material.roughness) * aspect);
 
     float distribution = GTR2Aniso(nDotH,xDotH,yDotH,ax,ay);
     float fresnelHalfWay = schlickFresnel(lDotH);
-    vec3 fresnelResponse = mix(specularStrength * vec3(0.8),vec3(1.0),fresnelHalfWay);
+
+    vec3 cSpec0 = mix(SpecularStrength * vec3(0.8),material.albedo,material.metallic);
+
+    vec3 fresnelResponse = mix(cSpec0,vec3(1.0),fresnelHalfWay);
 
     float geometricAttenuation = smithG_GGX_aniso(nDotL,xDotL,yDotL,ax,ay);
     geometricAttenuation *= smithG_GGX_aniso(nDotV,xDotV,yDotV,ax,ay);
@@ -128,7 +134,7 @@ vec3 brdf(Material material,vec3 norm){
 
     float lDotH = max(dot(lightDirection,halfway),0.0f);
 
-    vec3 diffuse = burleyDiffuse(material,nDotL,nDotV,lDotH) * diffuseColour / PI;
+    vec3 diffuse = burleyDiffuse(material,nDotL,nDotV,lDotH) * DiffuseColour / PI;
     vec3 specular = disneySpecular(material,norm,halfway,viewDirection,lightDirection);
 
     vec3 lighting = diffuse * material.albedo + specular;
@@ -142,19 +148,22 @@ vec3 generateAmbientLight(Material material,vec3 norm){
     float nDotV = max(dot(norm,viewDirection),0.0f);
 
     vec3 baseReflectivity = vec3(0.04);
-    vec3 kS = baseReflectivity + (max(vec3(1.0 - material.roughness),baseReflectivity) - baseReflectivity) * pow((1 - nDotV),5.0);
-    vec3 kD = 1.0 - kS;
+
+    vec3 F0 = mix(baseReflectivity,material.albedo,material.metallic);
+
+    vec3 kS = F0 + (max(vec3(1.0 - material.roughness),F0) - F0) * pow((1 - nDotV),5.0);
+    vec3 kD = (1.0 - kS) * (1.0 - material.metallic);
 
     vec3 diffuse = texture(IrradianceMap,norm).rgb * material.albedo * kD;
 
-    const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilterColour = textureLod(PrefilterMap,reflect(-viewDirection,norm),material.roughness * MAX_REFLECTION_LOD).rgb;
+    const float MAX_REFLECTION_LOD = 7.0;
+    vec3 prefilterColour = textureLod(PrefilterMap,reflect(-viewDirection,norm),material.roughness* MAX_REFLECTION_LOD).rgb;
 
     vec2 brdfIBL = texture(brdfIntMap,vec2(nDotV,material.roughness)).rg;
 
-    vec3 specular = prefilterColour * (baseReflectivity * brdfIBL.r + brdfIBL.g);
+    vec3 specular = prefilterColour * (kS * brdfIBL.r + brdfIBL.g);
 
-    return (diffuse + specular) * material.ambientOcclusion;
+    return (diffuse * material.ambientOcclusion + specular) ;
 }
 
 void main() {
@@ -167,8 +176,6 @@ void main() {
     vec3 ambientLight = generateAmbientLight(material,norm);
 
     vec3 colour = brdf(material,norm) + ambientLight;
-    colour = colour / (colour + vec3(1.0));
-    colour = pow(colour,vec3(1/2.2));
 
-    fragColour = vec4(colour,1.0);
+    fragColour = vec4(colour ,1.0);
 }

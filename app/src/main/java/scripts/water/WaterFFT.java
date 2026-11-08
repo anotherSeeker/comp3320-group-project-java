@@ -6,6 +6,7 @@ import java.util.*;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.lwjgl.BufferUtils;
 
 import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
@@ -34,9 +35,9 @@ import engine.GLErrors;
 public class WaterFFT 
 {
     //I picked depth wholly at random, windspeed was an loose example stated in the wikiwaves page on jonswap kind of as a throwaway line but that's good enough for me
-    public static float depth = 30.0f; //H or sometimes D: depth of the water, I believe technical constraints mean we can't have a different one for each point on the surface? we'd need to recalculate a new map for every part of the ocean which is kinda infeasible unless I'm horrifically mistaken
+    public static float depth = 15.0f; //H or sometimes D: depth of the water, I believe technical constraints mean we can't have a different one for each point on the surface? we'd need to recalculate a new map for every part of the ocean which is kinda infeasible unless I'm horrifically mistaken
     public static float windSpeed = 25.0f; //U: windspeed, I believe meters per second?
-    public static float fetch = 800000.0f; //F: distance to shore from the direction that the wind is blowing from
+    public static float fetch = 5000.0f; //F: distance to shore from the direction that the wind is blowing from
 
     //acerola/jump trajectory used 4 waves of different length to cascade and hide the tiling properties of sinewaves over large spaces. 
     //acerola used 1024*1024 textures but we're gonna start smaller and scale up if feasible
@@ -451,7 +452,7 @@ public class WaterFFT
     {
         //System.out.println("start dispatch FComponent");
         float currentTime = (float) glfwGetTime();
-
+        GLErrors.printIfError("hghgf dispatchFComponentShader");
         //use our program and bind our textures
         useFComponentShader(currentTime);
         GLErrors.printIfError("useFcomp dispatchFComp");
@@ -747,6 +748,12 @@ public class WaterFFT
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureSize, textureSize, 0, GL_RGBA , GL_FLOAT, (FloatBuffer) null);
         glBindImageTexture( 1, derivativeTexID, 0, false, 0, GL_READ_WRITE, GL_RGBA32F );
+
+        //stealing the black texture setup from stephen to make sure this isn't causing problems
+        // ByteBuffer blackData = BufferUtils.createByteBuffer(textureSize * textureSize);
+        // for (int i = 0; i < textureSize * textureSize; i++) {
+        //     blackData.put((byte) 0x00);
+        // }
 
         turbulenceTexID = glGenTextures();
         glActiveTexture(GL_TEXTURE2);
