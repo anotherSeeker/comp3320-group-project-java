@@ -1,14 +1,14 @@
 #version 430 core
 // water_background.frag - the colour of deep water all around (Tanz)
 // Dark looking down, the water colour looking sideways, lighter looking up
-// towards the surface - the same colour the engine's fog fades to - plus light
+// towards the surface - plus light
 // rays from the sun shining down through the water.
 
 in vec3 direction;
 
 out vec4 fragColour;
 
-uniform vec3 WaterColour = vec3(0.12, 0.40, 0.46);   // the fog colour (sent by WaterSurface)
+uniform vec3 WaterColour = vec3(0.12, 0.40, 0.46);   // colour of the water itself
 uniform vec3 ViewPosition;          // camera position (sent by the engine)
 uniform vec3 LightDirection;        // towards the sun (sent by the engine)
 uniform vec3 DiffuseColour;         // sun colour (sent by the engine)
@@ -16,6 +16,7 @@ uniform mat4 LightMatrix;           // the sun's view, for the shadow map (sent 
 uniform sampler2DShadow ShadowMapComparison;   // the shadow map (sent by the engine, unit 10)
 uniform float Time;                 // seconds (sent by WaterSurface)
 uniform float RayStrength = 1.0;    // light rays in the water (sent by UnderwaterLighting)
+uniform float SunBoost = 1.0;       // how strongly this shader uses the engine's sun (sent by UnderwaterLighting)
 
 
 // ---- TANZ: light rays (god rays) in the water
@@ -78,7 +79,7 @@ vec3 lightRays(vec3 from, vec3 to, float time, float strength) {
         vec3 towardsCamera = exp(-RAY_ABSORPTION * 0.35 * float(i) * stepLength);   // dimmer further away
         total += sunVisible(point) * streak * sunLeft * towardsCamera;
     }
-    return total * stepLength * RAY_DENSITY * strength * DiffuseColour;
+    return total * stepLength * RAY_DENSITY * strength * DiffuseColour * SunBoost;
 }
 
 void main() {

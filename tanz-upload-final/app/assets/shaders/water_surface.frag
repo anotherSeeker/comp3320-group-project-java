@@ -23,8 +23,9 @@ uniform vec3 DiffuseColour;         // sun colour (sent by the engine)
 uniform mat4 LightMatrix;           // the sun's view, for the shadow map (sent by the engine)
 uniform sampler2DShadow ShadowMapComparison;   // the shadow map (sent by the engine, unit 10)
 uniform float RayStrength = 1.0;    // light rays in the water (sent by UnderwaterLighting)
+uniform float SunBoost = 1.0;       // how strongly this shader uses the engine's sun (sent by UnderwaterLighting)
 uniform float Time;                 // seconds (sent by the WaterSurface script)
-uniform vec3 WaterColour = vec3(0.12, 0.40, 0.46);   // the fog colour (sent by WaterSurface)
+uniform vec3 WaterColour = vec3(0.12, 0.40, 0.46);   // colour of the water itself
 
 const float WATER_IOR = 1.333;      // how much water bends light
 const float SKY_BRIGHTNESS = 0.9;   // brightness of the window above (kept soft)
@@ -132,7 +133,7 @@ vec3 lightRays(vec3 from, vec3 to, float time, float strength) {
         vec3 towardsCamera = exp(-RAY_ABSORPTION * 0.35 * float(i) * stepLength);   // dimmer further away
         total += sunVisible(point) * streak * sunLeft * towardsCamera;
     }
-    return total * stepLength * RAY_DENSITY * strength * DiffuseColour;
+    return total * stepLength * RAY_DENSITY * strength * DiffuseColour * SunBoost;
 }
 
 // ---------------------------------------------------------------- main

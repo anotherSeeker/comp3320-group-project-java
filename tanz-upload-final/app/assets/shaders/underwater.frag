@@ -52,6 +52,7 @@ uniform mat4 LightMatrix;
 uniform float Time = 0.0;                    // seconds, sent by SunkenCastleScene
 uniform float CausticsStrength = 1.5;        // 0 = no caustics
 uniform float RayStrength = 1.0;             // light rays in the water (0 = none)
+uniform float SunBoost = 1.0;                // how strongly this shader uses the engine's sun (sent by UnderwaterLighting)
 const float CAUSTICS_SIZE = 0.45;            // bigger = smaller caustic cells
 const vec3 WATER_AMBIENT = vec3(0.35, 0.75, 0.85);   // blue-green light from the water around
 const float AMBIENT_TINT = 0.7;              // how much the ambient light turns blue-green
@@ -380,7 +381,7 @@ vec3 lightRays(vec3 from, vec3 to, float time, float strength) {
         vec3 towardsCamera = exp(-RAY_ABSORPTION * 0.35 * float(i) * stepLength);   // dimmer further away
         total += sunVisible(point) * streak * sunLeft * towardsCamera;
     }
-    return total * stepLength * RAY_DENSITY * strength * DiffuseColour;
+    return total * stepLength * RAY_DENSITY * strength * DiffuseColour * SunBoost;
 }
 
 // ---- TANZ: caustics
@@ -451,7 +452,7 @@ void main() {
     ambientLight = mix(ambientLight, waterAmbient, underwater);
 
     float shadow = generateShadow(norm);
-    vec3 colour = brdf(material,norm) * shadow * focus * sun + ambientLight * mix(0.35,1.0,shadow);
+    vec3 colour = brdf(material,norm) * shadow * focus * sun * SunBoost + ambientLight * mix(0.35,1.0,shadow);
 
     // TANZ: the water line - a thin bright line where the surface touches the
     // castle, and a darker wet band just above it
@@ -459,7 +460,7 @@ void main() {
     float wet = 1.0 - smoothstep(0.0, WET_BAND, aboveLine);
     colour *= mix(1.0, 0.7, wet * step(0.0, aboveLine));
     float line = 1.0 - smoothstep(0.0, 0.07, abs(aboveLine));
-    colour = mix(colour, WATER_LINE_COLOUR * length(DiffuseColour) * 0.25, line * 0.8);
+    colour = mix(colour, WATER_LINE_COLOUR * length(DiffuseColour) * SunBoost * 0.25, line * 0.8);
 
     // TANZ: the light travelling from this point to a camera under the water
     if (ViewPosition.y < WATER_LEVEL) {

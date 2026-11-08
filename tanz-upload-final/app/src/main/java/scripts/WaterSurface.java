@@ -70,16 +70,12 @@ public class WaterSurface extends MonoScript {
     protected void Update(double deltaTime) {
         time += (float) deltaTime;
 
-        // the engine does not send these to material shaders, so they are set
+        // the engine does not send the time to material shaders, so it is set
         // here (uniform values stay set until they are changed)
-        Vector3f waterColour = PostProcess.FogColour;
-
         surfaceShader.use();
         surfaceShader.setFloat("Time", time);
-        surfaceShader.setVector3("WaterColour", waterColour);
 
         backgroundShader.use();
         backgroundShader.setFloat("Time", time);
-        backgroundShader.setVector3("WaterColour", waterColour);
     }
 }

@@ -11,7 +11,7 @@ only**; no existing team file is changed.
 ### Step 1. Merge the branch
 
 1. On GitHub, open **Pull requests → New pull request**.
-2. Set **base: `main`** and **compare: this branch** (`tanz-lighting`).
+2. Set **base: `main`** and **compare: this branch** (`tanz-lighning-shader-water`).
 3. GitHub should show **"Able to merge"**. There can't be conflicts, because every file is new.
 4. Click **Create pull request**, then **Merge pull request**.
 5. On your PC, run `git pull` on `main`.
@@ -54,7 +54,7 @@ public class Game {
             app.registerScript(new scripts.FreeCamera());          // or scripts.Camera
             app.registerScript(new scripts.SunkenCastleScene());   // instead of scripts.DemoScene
             app.registerScript(new scripts.PostProcess());
-            app.registerScript(new scripts.UnderwaterLighting());  // must be AFTER PostProcess
+            app.registerScript(new scripts.UnderwaterLighting());
             app.registerScript(new scripts.WaterSurface());
             app.run();
         }
@@ -64,9 +64,9 @@ public class Game {
 }
 ```
 
-Why the order matters:
-- **The camera first:** `SunkenCastleScene` moves the camera to the castle after the camera script has set its start position.
-- **`UnderwaterLighting` after `PostProcess`:** `PostProcess` sets the light and fog every frame from its debug window, so `UnderwaterLighting` has to run after it for its values to be used.
+Why the order matters: **the camera comes first**, because `SunkenCastleScene` moves the camera to the castle after the camera script has set its start position.
+
+**Your `PostProcess` stays in control:** the light direction, light colour, fog, bloom, colour grading and exposure all come from your debug window. None of my scripts change them; my shaders just read the engine's light values.
 
 Optional changes:
 - **`DemoScene` and `Feya`:** leave them out, because the demo spheres and helmet would sit inside the castle. They can be added back.
@@ -78,11 +78,15 @@ Optional changes:
 .\gradlew.bat run
 ```
 
+Suggested underwater settings in your debug window (optional; my shaders work with any values):
+- **Fog tab:** enable fog, fog colour about RGB 31, 102, 117, fog density 0.005.
+- **Light:** light colour white, and a light direction like 0.6, 0.8, 0.4 for longer shadows.
+
 You should see:
 - Davies' castle under water, with soft shadows, caustics on the sand and walls, and light rays.
 - Looking up: the rippled water surface, with the sky visible straight overhead.
 - The tower tops above the water line, with a bright line where they leave the water.
-- A window called **"underwater lighting"**. Untick "underwater lighting on" to compare with the normal look.
+- A window called **"underwater effects"**. Untick "effects on" to compare without caustics and light rays.
 
 **Controls (`FreeCamera`):**
 - **Arrow keys:** turn and look up or down.
@@ -98,8 +102,8 @@ You should see:
 | `could not load model ...sunken_...obj` | The `.obj` files are missing | Check that `app/assets/meshes/sunken/` was merged (Step 2) |
 | Red text starting `VERTEX` or `FRAGMENT` mentioning `underwater`, `water_surface` or `water_background` | Shader compile error | Send the full text to Tanz |
 | `error C7011 ... vec4 to vec3` | `anim.vert` lines 62–64 (the animated character shader), not this branch. It happens on NVIDIA | Unrelated; it doesn't stop the game |
-| Light and fog sliders in the debug window do nothing | `UnderwaterLighting` overrides them while it's on | Untick "underwater lighting on" |
-| Everything looks foggy | `fog.glsl` uses `near = 0.1` in `getDepth()`, but the camera uses `0.01`, so the fog is about 3x too thick | Lower "water density", or change `fog.glsl` to `0.01` |
+| Everything looks foggy | `fog.glsl` uses `near = 0.1` in `getDepth()`, but the camera uses `0.01`, so the fog is about 3x too thick | Lower "fog density" in the debug window, or change `fog.glsl` to `0.01` |
+| The castle is too dark or too bright | My shaders scale the engine's sun (its colour can only go up to 1) | Change "sun brightness" in the "underwater effects" window |
 | The game is slow | Light rays (24 steps per pixel) | Lower the "light rays" slider, or set `RAY_STEPS` lower in the three water shaders |
 
 ---
@@ -111,7 +115,7 @@ You should see:
 | `SunkenCastleScene.java` | Loads Davies' castle, seabed, rocks/coral/seaweed and trees with the engine's PBR materials (temporary brick and concrete textures). The materials use `underwater.vert/.frag`. |
 | `assets/meshes/sunken/*.obj` | Davies' scene exported from Blender: Y-up and already in place. Each file is merged into one mesh, because `LoadMesh` only reads the first mesh in a file. |
 | `underwater.vert/.frag` | The team's `default.frag` (PBR + PCSS shadows) with underwater lighting added. Every addition is marked `TANZ`. |
-| `UnderwaterLighting.java` | Sets the engine's sun, fog, bloom and exposure for under water, and sends the time and slider values to the water shaders. Has its own window with sliders, a reset button and an on/off checkbox. |
+| `UnderwaterLighting.java` | Controls only my shader effects. Its "underwater effects" window has caustics, light rays and sun brightness sliders (sun brightness applies inside my shaders only), plus an on/off checkbox. It also sends the time to my shaders so the effects move. It doesn't change any engine or `PostProcess` setting. |
 | `WaterSurface.java` + `water_surface.vert/.frag` | The water surface at 14 m, seen from below. |
 | `water_background.vert/.frag` | Deep water all around the camera, so the sky picture doesn't show past the edges of the scene. Created by `WaterSurface`. |
 | `FreeCamera.java` | Optional 360° camera: arrow keys turn and look. It also fixes the mouse-look jump, by reading the mouse movement every frame. |
