@@ -17,6 +17,12 @@ import engine.components.*;
 import engine.particles.*;
 
 public class Particles extends MonoScript {
+    private final int toggleKey;
+    private boolean toggleHeld;
+
+    public Particles() { this(GLFW_KEY_P); }
+    public Particles(int toggleKey) { this.toggleKey = toggleKey; }
+
     Integer particleShaderID = Assets.LoadShader(
             Path.of("assets/shaders/particles/particleShader.vert"),
             Path.of("assets/shaders/particles/particleShader.frag")
@@ -88,7 +94,8 @@ public class Particles extends MonoScript {
 
     @Override
     protected void Update(double deltaTime) {
-        if (Input.IsKeyDown(GLFW_KEY_P) == true) {
+        boolean pressed = Input.IsKeyDown(toggleKey);
+        if (pressed && !toggleHeld) {
             App.toggleParticles();
             if (Scene.getGenericParticleEmitters() != null) {
                 for (GenericParticleEmitter PE : Scene.getGenericParticleEmitters()) {
@@ -101,6 +108,9 @@ public class Particles extends MonoScript {
                 }
             }
         }
+
+        toggleHeld = pressed;
+        if (deltaTime <= 0) return;
 
         if (Scene.getGenericParticleEmitters() != null) {
             for (GenericParticleEmitter PE : Scene.getGenericParticleEmitters()) {

@@ -53,6 +53,7 @@ public class SceneGraph {
 
     private CubeTexture skyboxTexture = null;
     private Shader skyboxShader;
+    private float fixedAnimationTime = Float.NaN;
     private Mesh skyboxMesh = Mesh.Cube();
 
     public Transform cameraTransform = new Transform(new Matrix4f());
@@ -60,6 +61,7 @@ public class SceneGraph {
     public Vector3f lightColour = new Vector3f(1, 1, 1);
 
     public int fov = 60;
+    public boolean coralAtmosphere;
     public float aspectRatio;
     public int screenWidth;
     public int screenHeight;
@@ -95,7 +97,7 @@ public class SceneGraph {
                         -cameraTransform.position.z
                 );
 
-        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
+        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.05f, 180.0f);
 
         return projection.mul(view);
     }
@@ -107,7 +109,7 @@ public class SceneGraph {
         Matrix4f view = new Matrix4f()
                 .rotate(conj);
 
-        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
+        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.05f, 180.0f);
 
         return projection.mul(view);
     }
@@ -142,6 +144,8 @@ public class SceneGraph {
 
             skyboxShader.setMatrix4("CameraMatrix", computeSkyboxMatrix());
             skyboxShader.setInt("Skybox", 0);
+            skyboxShader.setFloat("CoralAtmosphere",coralAtmosphere?1:0);
+            skyboxShader.setFloat("Time",animationTime());
 
             skyboxMesh.bind();
             skyboxMesh.draw();
@@ -162,6 +166,7 @@ public class SceneGraph {
             material.shader.setMatrix4("CameraMatrix", viewportMatrix);
             material.shader.setVector3("LightDirection", lightDirection);
             material.shader.setVector3("ViewPosition", cameraTransform.position);
+            material.shader.setFloat("Time",animationTime());
             material.shader.setVector3("DiffuseColour", lightColour);
 
             material.shader.setMatrix4("LightMatrix", shadowMap.lightMatrix);
@@ -173,7 +178,10 @@ public class SceneGraph {
             glActiveTexture(GL_TEXTURE0 + 10);
             glBindTexture(GL_TEXTURE_2D, shadowMap.shadowTexture);
             material.shader.setInt("ShadowMap", 10);
-            material.shader.setInt("ShadowMapComparison", 10);
+            org.lwjgl.opengl.GL33.glBindSampler(10, shadowMap.rawDepthSampler);
+            glActiveTexture(GL_TEXTURE0 + 11);
+            glBindTexture(GL_TEXTURE_2D, shadowMap.shadowTexture);
+            material.shader.setInt("ShadowMapComparison", 11);
 
             material.bindAsUniform();
 
@@ -184,12 +192,15 @@ public class SceneGraph {
                 material.shader.setUniform("bonesMatrices", AnimationData.DEFAULT_BONES_MATRICES);
             } else {
                 material.shader.setUniform("bonesMatrices", animationData.getCurrentFrame().boneMatrices());
-            }   
-            
-            gameObject.mesh.draw();
-            gameObject.mesh.drawPatches();
+            }
+            if (material.shader.hasTessellation()) gameObject.mesh.drawPatches();
+            else gameObject.mesh.draw();
         }
     }
+
+    public float animationTime() { return Float.isNaN(fixedAnimationTime) ? (float)org.lwjgl.glfw.GLFW.glfwGetTime() : fixedAnimationTime; }
+    public void setAnimationTime(float time) { fixedAnimationTime=time; }
+    public void cleanup() { skyboxMesh.delete(); shadowMap.close(); ECS.close(); }
 
     public Entity createObject(Integer meshID, Material material) {
 
@@ -230,7 +241,7 @@ public class SceneGraph {
     }
 
     public Matrix4f computeViewportMatrix (Matrix4f viewMatrix) {
-        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.01f, 100.0f);
+        Matrix4f projection = new Matrix4f().perspective((float) Math.toRadians(fov), aspectRatio, 0.05f, 180.0f);
         return projection.mul(viewMatrix);
     }
 

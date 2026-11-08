@@ -20,6 +20,11 @@ public abstract class MonoScript {
         Update(deltaTime);
     }
 
+    public void afterRender() { LateUpdate(); }
+    public void close() { Destroy(); }
+    protected void LateUpdate() { }
+    protected void Destroy() { }
+
     protected void Start() {
     }
 

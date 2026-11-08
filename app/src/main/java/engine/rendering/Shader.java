@@ -1,12 +1,12 @@
 package engine.rendering;
 
-import static org.lwjgl.opengl.GL11.GL_FALSE;
-import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL40.GL_TESS_CONTROL_SHADER;
-import static org.lwjgl.opengl.GL40.GL_TESS_EVALUATION_SHADER;
+import engine.GraphicsPlatform;
 import static org.lwjgl.opengl.GL43.*;
 import static org.lwjgl.opengl.GL42.GL_ALL_BARRIER_BITS;
 import static org.lwjgl.opengl.GL42.glMemoryBarrier;
+
+import static org.lwjgl.opengl.GL11.GL_FALSE;
+import static org.lwjgl.opengl.GL20.*;
 
 import java.nio.FloatBuffer;
 
@@ -16,16 +16,20 @@ import org.lwjgl.system.MemoryStack;
 
 public class Shader {
     private int ID;
+    private final java.util.Map<String,Integer> locations = new java.util.HashMap<>();
+    private int location(String name) { return locations.computeIfAbsent(name, n -> glGetUniformLocation(ID,n)); }
 
     public boolean init(String vertexSource, String fragmentSource) {
+        vertexSource = GraphicsPlatform.shaderSource(vertexSource);
+        fragmentSource = GraphicsPlatform.shaderSource(fragmentSource);
         int vertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader, vertexSource);
         glCompileShader(vertexShader);
 
         if (glGetShaderi(vertexShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.out.println("VERTEX");
-            System.err.println(glGetShaderInfoLog(vertexShader, 1024));
-            return false;
+            String error = glGetShaderInfoLog(vertexShader);
+            glDeleteShader(vertexShader);
+            throw new IllegalStateException("Vertex shader failed: " + error);
         }
 
         int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -33,106 +37,61 @@ public class Shader {
         glCompileShader(fragmentShader);
 
         if (glGetShaderi(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.out.println("FRAGMENT");
-            System.err.println(glGetShaderInfoLog(fragmentShader, 1024));
-            return false;
+            String error = glGetShaderInfoLog(fragmentShader);
+            glDeleteShader(vertexShader);
+            glDeleteShader(fragmentShader);
+            throw new IllegalStateException("Fragment shader failed: " + error);
         }
 
         ID = glCreateProgram();
         glAttachShader(ID, vertexShader);
         glAttachShader(ID, fragmentShader);
         glLinkProgram(ID);
-
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
         if (glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE) {
-            System.out.println("PROGRAM");
-            System.err.println(glGetProgramInfoLog(ID));
-            return false;
+            String error = glGetProgramInfoLog(ID);
+            glDeleteProgram(ID);
+            ID = 0;
+            throw new IllegalStateException("Shader program failed: " + error);
         }
 
         return true;
     }
 
-    public boolean initCompute(String computeSource) {
-        int computeShader = glCreateShader(GL_COMPUTE_SHADER);
-        glShaderSource(computeShader, computeSource);
-        glCompileShader(computeShader);
+    private boolean tessellated;
 
-        if (glGetShaderi(computeShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.out.println("COMPUTE");
-            System.err.println(glGetShaderInfoLog(computeShader, 1024));
-            return false;
-        }
-
-        ID = glCreateProgram();
-        glAttachShader(ID, computeShader);
-        glLinkProgram(ID);
-
-        if (glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE) {
-            System.out.println("PROGRAM");
-            System.err.println(glGetProgramInfoLog(ID));
-            return false;
-        }
-
-        return true;
-    }
+    public boolean hasTessellation() { return tessellated; }
 
     public boolean withTesselation(
             String vertexSource, String fragmentSource, String tessControlSource, String tessEvalSource
     ) {
-        int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, vertexSource);
-        glCompileShader(vertexShader);
-
-        if (glGetShaderi(vertexShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.out.println("VERTEX");
-            System.err.println(glGetShaderInfoLog(vertexShader, 1024));
-            return false;
-        }
-
-        int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, fragmentSource);
-        glCompileShader(fragmentShader);
-
-        if (glGetShaderi(fragmentShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.out.println("FRAGMENT");
-            System.err.println(glGetShaderInfoLog(fragmentShader, 1024));
-            return false;
-        }
-
-        int tessControlShader = glCreateShader(GL_TESS_CONTROL_SHADER);
-        glShaderSource(tessControlShader, tessControlSource);
-        glCompileShader(tessControlShader);
-
-        if (glGetShaderi(tessControlShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.out.println("TESSELATION CONTROL");
-            System.err.println(glGetShaderInfoLog(tessControlShader, 1024));
-            return false;
-        }
-
-        int tessEvalShader = glCreateShader(GL_TESS_EVALUATION_SHADER);
-        glShaderSource(tessEvalShader, tessEvalSource);
-        glCompileShader(tessEvalShader);
-
-        if (glGetShaderi(tessEvalShader, GL_COMPILE_STATUS) == GL_FALSE) {
-            System.out.println("TESSELATION EVALUATION");
-            System.err.println(glGetShaderInfoLog(tessEvalShader, 1024));
-            return false;
-        }
-
+        int[] types = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER,
+                GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER};
+        String[] sources = {vertexSource, fragmentSource, tessControlSource, tessEvalSource};
+        int[] stages = new int[types.length];
         ID = glCreateProgram();
-        glAttachShader(ID, vertexShader);
-        glAttachShader(ID, fragmentShader);
-        glAttachShader(ID, tessControlShader);
-        glAttachShader(ID, tessEvalShader);
-        glLinkProgram(ID);
-
-        if (glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE) {
-            System.out.println("PROGRAM");
-            System.err.println(glGetProgramInfoLog(ID));
-            return false;
+        try {
+            for (int i = 0; i < types.length; i++) {
+                stages[i] = glCreateShader(types[i]);
+                glShaderSource(stages[i], GraphicsPlatform.shaderSource(sources[i]));
+                glCompileShader(stages[i]);
+                if (glGetShaderi(stages[i], GL_COMPILE_STATUS) == GL_FALSE)
+                    throw new IllegalStateException("Tessellated program stage " + types[i] + ": " + glGetShaderInfoLog(stages[i]));
+                glAttachShader(ID, stages[i]);
+            }
+            glLinkProgram(ID);
+            if (glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE)
+                throw new IllegalStateException("Tessellated program: " + glGetProgramInfoLog(ID));
+            tessellated = true;
+            return true;
+        } catch (RuntimeException error) {
+            glDeleteProgram(ID);
+            ID = 0;
+            throw error;
+        } finally {
+            for (int stage : stages) if (stage != 0) glDeleteShader(stage);
         }
-
-        return true;
     }
 
     public void setMatrix4(String uniformName, Matrix4f matrix) {
@@ -141,7 +100,7 @@ public class Shader {
 
         matrix.get(floatBuffer);
 
-        glUniformMatrix4fv(glGetUniformLocation(ID, uniformName), false, floatBuffer);
+        glUniformMatrix4fv(location(uniformName), false, floatBuffer);
 
         stack.pop();
     }
@@ -158,20 +117,20 @@ public class Shader {
     }
 
     public void setInt(String uniformName, int value) {
-        glUniform1i(glGetUniformLocation(ID, uniformName), value);
+        glUniform1i(location(uniformName), value);
     }
 
     public void setFloat(String uniformName, float value) {
-        glUniform1f(glGetUniformLocation(ID, uniformName), value);
+        glUniform1f(location(uniformName), value);
     }
 
     public void setVector3(String uniformName, Vector3f vector) {
-        glUniform3f(glGetUniformLocation(ID, uniformName), vector.x, vector.y, vector.z);
+        glUniform3f(location(uniformName), vector.x, vector.y, vector.z);
     }
 
     public void setTexture(String uniformName, Texture texture, int textureSlot) {
         texture.use(textureSlot);
-        glUniform1i(glGetUniformLocation(ID, uniformName), textureSlot);
+        glUniform1i(location(uniformName), textureSlot);
     }
 
     public void use() {
@@ -182,9 +141,33 @@ public class Shader {
         glDeleteProgram(ID);
     }
 
+
+    public boolean initCompute(String computeSource) {
+        if (!org.lwjgl.opengl.GL.getCapabilities().OpenGL43)
+            throw new IllegalStateException("Compute postprocessing needs OpenGL 4.3");
+        int computeShader = glCreateShader(GL_COMPUTE_SHADER);
+        glShaderSource(computeShader, computeSource);
+        glCompileShader(computeShader);
+        if (glGetShaderi(computeShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            String error = glGetShaderInfoLog(computeShader);
+            glDeleteShader(computeShader);
+            throw new IllegalStateException("Compute shader failed: " + error);
+        }
+        ID = glCreateProgram();
+        glAttachShader(ID, computeShader);
+        glLinkProgram(ID);
+        glDeleteShader(computeShader);
+        if (glGetProgrami(ID, GL_LINK_STATUS) == GL_FALSE) {
+            String error = glGetProgramInfoLog(ID);
+            glDeleteProgram(ID);
+            ID = 0;
+            throw new IllegalStateException("Compute program failed: " + error);
+        }
+        return true;
+    }
+
     public void dispatchCompute(int groupsX, int groupsY, int groupsZ) {
         glDispatchCompute(groupsX, groupsY, groupsZ);
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
     }
-
 }

@@ -19,6 +19,7 @@ public class Material {
 
     public Vector3f sheenColour = new Vector3f(1, 1, 1);
 
+    public Vector3f coralTint = new Vector3f(1);
     public Shader shader;
     public Texture albedoMap;
     public Texture roughnessMap;
@@ -46,6 +47,8 @@ public class Material {
         this.shader.setFloat("Displacement", this.displacement);
 
         this.shader.setVector3("SheenColour", this.sheenColour);
+        this.shader.setVector3("CoralTint",coralTint);
+        this.shader.setFloat("Growth",1);
     }
     public static final Vector4f DEFAULT_COLOR = new Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
 

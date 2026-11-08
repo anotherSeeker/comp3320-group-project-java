@@ -5,6 +5,7 @@ import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
 import static org.lwjgl.opengl.GL14.GL_DEPTH_COMPONENT24;
 import static org.lwjgl.opengl.GL30.*;
 
+import static org.lwjgl.opengl.GL33.*;
 import java.nio.ByteBuffer;
 
 import org.joml.Matrix4f;
@@ -18,6 +19,8 @@ public class ShadowMap {
 
     public int FBO;
     public int shadowTexture;
+    // PCSS reads raw depth and hardware comparisons from the same texture on separate units.
+    public final int rawDepthSampler = glGenSamplers();
 
     public int width;
     public int height;
@@ -28,6 +31,12 @@ public class ShadowMap {
         this.width = width;
         this.height = height;
 
+        glSamplerParameteri(rawDepthSampler, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+        glSamplerParameteri(rawDepthSampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glSamplerParameteri(rawDepthSampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glSamplerParameteri(rawDepthSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glSamplerParameteri(rawDepthSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glSamplerParameterfv(rawDepthSampler, GL_TEXTURE_BORDER_COLOR, new float[]{1,1,1,1});
         this.shadowTexture = glGenTextures();
 
         glBindTexture(GL_TEXTURE_2D, this.shadowTexture);
@@ -106,6 +115,12 @@ public class ShadowMap {
 
         shadowPass.use();
         shadowPass.setMatrix4("LightMatrix", lightMatrix);
+    }
+
+    public void close() {
+        glDeleteSamplers(rawDepthSampler);
+        glDeleteFramebuffers(FBO);
+        glDeleteTextures(shadowTexture);
     }
 
     public void end() {

@@ -14,6 +14,8 @@ import imgui.type.ImBoolean;
 import imgui.type.ImInt;
 
 public class PostProcess extends MonoScript {
+    private boolean showControls = true;
+    public void showUI(boolean enabled) { showControls = enabled; }
     Integer skyboxTexture = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/qwantani_dusk_2_puresky_1k.hdr"));
     Integer barSkybox = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/warm_restaurant_night_1k.hdr"));
     Integer nightSkybox = Assets.LoadCubeMap(Path.of("assets/textures/skyboxes/kloppenheim_02_puresky_1k.hdr"));
@@ -25,7 +27,7 @@ public class PostProcess extends MonoScript {
     @Override
     protected void Start() {
         Scene.SetSkyboxTexture(skyboxes.get(skyboxArray[skyboxIndex.get()]));
-        ImGui.setNextWindowPos(0.5f, 0.5f);
+
     }
 
     float[] lightColour = new float[] { 1, 1, 1 };
@@ -148,7 +150,10 @@ public class PostProcess extends MonoScript {
 
     @Override
     protected void Update(double deltaTime) {
-        ImGui.begin("debug window");
+        if (!showControls) return;
+        ImGui.setNextWindowPos(750, 12, imgui.flag.ImGuiCond.FirstUseEver);
+        ImGui.setNextWindowSize(335, 460, imgui.flag.ImGuiCond.FirstUseEver);
+        ImGui.begin("Scene and post processing");
 
         ImGui.text("Scene properties");
         ImGui.separator();
@@ -160,7 +165,10 @@ public class PostProcess extends MonoScript {
         }
         ;
 
-        ImGui.beginTabBar("Post processing");
+        boolean computeSupported = PostProcess.SupportsCompute();
+        if (!computeSupported) ImGui.textWrapped("Compute effects require OpenGL 4.3. HDR and lighting remain available.");
+        if (ImGui.beginTabBar("Post processing")) {
+        ImGui.beginDisabled(!computeSupported);
 
         if (ImGui.beginTabItem("Bloom")) {
             if (ImGui.checkbox("enable bloom", bloomEnabled)) {
@@ -212,6 +220,7 @@ public class PostProcess extends MonoScript {
             ImGui.endTabItem();
         }
 
+        ImGui.endDisabled();
         if (ImGui.beginTabItem("HDR")) {
 
             ImGui.sliderFloat("max brightness", maxBrightness, 0.3f, 20.0f);
@@ -227,6 +236,7 @@ public class PostProcess extends MonoScript {
         }
 
         ImGui.endTabBar();
+        }
 
         Scene.lightColour.x = lightColour[0];
         Scene.lightColour.y = lightColour[1];

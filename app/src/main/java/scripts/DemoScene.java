@@ -13,6 +13,20 @@ import engine.components.Transform;
 import engine.rendering.Mesh;
 
 public class DemoScene extends MonoScript {
+    private final boolean reefEnvironment;
+
+    public DemoScene() { this(false); }
+    public DemoScene(boolean reefEnvironment) { this.reefEnvironment = reefEnvironment; }
+
+    public java.util.List<coral.ReefLayout.Clearing> coralClearings() {
+        return java.util.List.of(
+                new coral.ReefLayout.Clearing(0, -5, 3),
+                new coral.ReefLayout.Clearing(-5, -5, 3),
+                new coral.ReefLayout.Clearing(0, -10, 3),
+                new coral.ReefLayout.Clearing(-5, -10, 3),
+                new coral.ReefLayout.Clearing(5, -5, 3));
+    }
+
 
     Integer uvSmoothID = Assets.LoadMesh(Path.of("assets/meshes/uvsmooth.obj"));
 
@@ -80,7 +94,9 @@ public class DemoScene extends MonoScript {
         floor.get(Transform.class).setOrientationEuler(new Vector3f((float) -Math.PI / 2.0f, 0.0f, 0.0f));
         floor.get(Transform.class).setScale(20.0f);
 
-        Assets.LoadIntoScene(Path.of("assets/DamagedHelmet.glb"), Scene, new Vector3f(0, 0, 0));
+        // Keep the playable spawn free in the combined scene; retain the original demo layout.
+        Assets.LoadIntoScene(Path.of("assets/DamagedHelmet.glb"), Scene,
+                reefEnvironment ? new Vector3f(5, 1, -5) : new Vector3f(0, 0, 0));
 
         ornament_Material.metallic = 1;
         ornament_Material.roughness = 0.3f;

@@ -196,12 +196,18 @@ public class AssetManager {
                 Path.of("assets/shaders/default.tese")
         );
 
-        this.loadInternalComputeShader(blurPostProcess, Path.of("assets/shaders/internal/blur.glsl"));
-        this.loadInternalComputeShader(bloomPostProcessA, Path.of("assets/shaders/internal/bloomA.glsl"));
-        this.loadInternalComputeShader(bloomPostProcessB, Path.of("assets/shaders/internal/bloomB.glsl"));
-        this.loadInternalComputeShader(vignettePostProcess, Path.of("assets/shaders/internal/vignette.glsl"));
-        this.loadInternalComputeShader(colourGradeProcess, Path.of("assets/shaders/internal/colour_grade.glsl"));
-        this.loadInternalComputeShader(fogProcess, Path.of("assets/shaders/internal/fog.glsl"));
+        if (org.lwjgl.opengl.GL.getCapabilities().OpenGL43) {
+            this.loadInternalComputeShader(blurPostProcess, Path.of("assets/shaders/internal/blur.glsl"));
+            this.loadInternalComputeShader(bloomPostProcessA, Path.of("assets/shaders/internal/bloomA.glsl"));
+            this.loadInternalComputeShader(bloomPostProcessB, Path.of("assets/shaders/internal/bloomB.glsl"));
+            this.loadInternalComputeShader(vignettePostProcess, Path.of("assets/shaders/internal/vignette.glsl"));
+            this.loadInternalComputeShader(colourGradeProcess, Path.of("assets/shaders/internal/colour_grade.glsl"));
+            this.loadInternalComputeShader(fogProcess, Path.of("assets/shaders/internal/fog.glsl"));
+        }
+
+        whiteData.flip();
+        blackData.flip();
+        normalData.flip();
 
         this.loadInternalTexture(perlinTexture, Path.of("assets/textures/internal/perlin.png"));
         this.loadInternalTexture(curlTexture, Path.of("assets/textures/internal/curl.png"));
@@ -592,11 +598,15 @@ public class AssetManager {
         return ID;
     }
 
+    public Integer LoadSolidTexture(int r,int g,int b,int a) {
+        int id=("SOLID_"+r+"_"+g+"_"+b+"_"+a).hashCode();
+        if(!textureIndex.containsKey(id)) {
+            ByteBuffer pixel=BufferUtils.createByteBuffer(4); pixel.put((byte)r).put((byte)g).put((byte)b).put((byte)a).flip();
+            textureIndex.put(id,new Texture(pixel,1,1,GL_RGBA,GL_RGBA));
+        }
+        return id;
+    }
 
-
-
-
-    
     public Integer LoadTexture(Path filePath) {
         Integer ID = filePath.toAbsolutePath().hashCode();
 

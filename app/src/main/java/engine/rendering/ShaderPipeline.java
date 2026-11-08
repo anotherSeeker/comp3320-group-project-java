@@ -27,6 +27,8 @@ public class ShaderPipeline {
     private int depthBuffer;
 
     private Mesh screenQuad;
+    private CoralGlow coralGlow;
+    public float CoralGlowIntensity = 0;
     private Shader framebufferShader;
 
     private Shader bloomA = assets.getShader(assets.bloomPostProcessA);
@@ -157,8 +159,10 @@ public class ShaderPipeline {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
+    public boolean SupportsCompute() { return org.lwjgl.opengl.GL.getCapabilities().OpenGL43; }
+
     public void Enable(int feature) {
-        featureMask |= feature;
+        if (SupportsCompute()) featureMask |= feature;
     }
 
     public void Disable(int feature) {
@@ -180,7 +184,7 @@ public class ShaderPipeline {
     }
 
     public void process() {
-        if (featureMask == 0) {
+        if (featureMask == 0 || !SupportsCompute()) {
             outputTexture = colourBuffer;
             return;
         }
@@ -245,6 +249,11 @@ public class ShaderPipeline {
     }
 
     public void render() {
+        int glowTexture = 0;
+        if (CoralGlowIntensity > 0) {
+            if (coralGlow == null) coralGlow = new CoralGlow();
+            glowTexture = coralGlow.render(outputTexture,screenWidth,screenHeight,screenQuad);
+        }
         unbind();
         glDisable(GL_DEPTH_TEST);
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -257,6 +266,11 @@ public class ShaderPipeline {
         framebufferShader.use();
 
         framebufferShader.setInt("screenTexture", 0);
+        glActiveTexture(GL_TEXTURE0+1);
+        // Keep every active sampler complete, including when the glow branch is disabled.
+        glBindTexture(GL_TEXTURE_2D,glowTexture==0?outputTexture:glowTexture);
+        framebufferShader.setInt("CoralGlow",1);
+        framebufferShader.setFloat("CoralGlowIntensity",CoralGlowIntensity);
 
         framebufferShader.setFloat("MaxBrightness", MaxBrightness);
         framebufferShader.setFloat("Contrast", Contrast);
@@ -268,5 +282,16 @@ public class ShaderPipeline {
         framebufferShader.setFloat("Whitepoint", Whitepoint);
         framebufferShader.setFloat("Exposure", Exposure);
         screenQuad.draw();
+    }
+
+    public void close() {
+        if (coralGlow != null) coralGlow.close();
+        ColourGradeCurve.delete();
+        screenQuad.delete();
+        glDeleteTextures(colourBuffer);
+        glDeleteTextures(pingBuffer);
+        glDeleteTextures(pongBuffer);
+        glDeleteTextures(depthBuffer);
+        glDeleteFramebuffers(FBO);
     }
 }
