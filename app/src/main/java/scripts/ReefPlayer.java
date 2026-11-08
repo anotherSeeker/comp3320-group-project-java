@@ -75,7 +75,7 @@ public final class ReefPlayer extends MonoScript {
         if (Input.IsKeyDown(GLFW_KEY_E)) move.y+=1;
         if (move.lengthSquared() > 0) {
             move.normalize();
-            if (move.x*move.x + move.z*move.z > .0001f) facing=(float)Math.atan2(-move.x,-move.z);
+            if (move.x*move.x + move.z*move.z > .0001f) facing=(float)Math.atan2(move.x,move.z);
             moveBy(move.mul(dt * (Input.IsKeyDown(GLFW_KEY_LEFT_SHIFT) ? 4 : 2)));
         }
     }
