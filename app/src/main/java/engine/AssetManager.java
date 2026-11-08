@@ -7,7 +7,6 @@ import engine.rendering.Mesh;
 import engine.rendering.Shader;
 import engine.rendering.Texture;
 import scripts.Animation.AnimImporter;
-import scripts.Animation.AnimImporter.AnimMeshData;
 import scripts.Animation.Model;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -27,7 +26,6 @@ import org.lwjgl.assimp.*;
 import static org.lwjgl.assimp.Assimp.*;
 
 import java.io.BufferedReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;

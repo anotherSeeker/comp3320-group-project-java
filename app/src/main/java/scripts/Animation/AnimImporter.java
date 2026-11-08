@@ -4,16 +4,9 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.lwjgl.PointerBuffer;
 
-import engine.components.Material;
-import engine.components.MaterialEntry;
-
 import org.lwjgl.assimp.*;
-import org.lwjgl.system.MemoryStack;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.IntBuffer;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -42,41 +35,17 @@ public class AnimImporter {
         if (!file.exists()) {
             throw new RuntimeException("Model path does not exist [" + modelPath + "]");
         }
-        String modelDir = file.getParent();
 
         AIScene aiScene = aiImportFile(modelPath, flags);
         if (aiScene == null) {
             throw new RuntimeException("Error loading model [modelPath: " + modelPath + "]");
         }
-        int numMaterials = aiScene.mNumMaterials();
-        List<Material> materialList = new ArrayList<>();
-        for (int i = 0; i < numMaterials; i++) {
-            AIMaterial aiMaterial = AIMaterial.create(aiScene.mMaterials().get(i));
-            materialList.add(processMaterial(aiMaterial, modelDir, textureCache));
-        }
 
-        int numMeshes = aiScene.mNumMeshes();
         PointerBuffer aiMeshes = aiScene.mMeshes();
-        Material defaultMaterial = new Material();
         List<Bone> boneList = new ArrayList<>();
         
-        //for (int i = 0; i < numMeshes; i++) {
-            AIMesh aiMesh = AIMesh.create(aiMeshes.get(0));
-            int meshid = processMesh(aiMesh, boneList, modelPath);
-            //int meshid = Assets.LoadMesh(Path.of(modelPath));
-            // int materialIdx = aiMesh.mMaterialIndex();
-            // Material material;
-            // if (materialIdx >= 0 && materialIdx < materialList.size()) {
-            //     material = materialList.get(materialIdx);
-            // } else {
-            //     material = defaultMaterial;
-            // }
-            //meshid= Assets.LoadMesh(mesh,modelPath);
-        //}
-
-        // if (!defaultMaterial.getMeshList().isEmpty()) {
-        //     materialList.add(defaultMaterial);
-        // }
+        AIMesh aiMesh = AIMesh.create(aiMeshes.get(0));
+        int meshid = processMesh(aiMesh, boneList, modelPath);
 
         List<Model.Animation> animations = new ArrayList<>();
         int numAnimations = aiScene.mNumAnimations();
@@ -88,7 +57,7 @@ public class AnimImporter {
 
         aiReleaseImport(aiScene);
 
-        return new Model(meshid, materialList, animations);
+        return new Model(meshid, animations);
 
     }
 
@@ -216,151 +185,13 @@ public class AnimImporter {
         return new AnimMeshData(Utils.listFloatToArray(weights), Utils.listIntToArray(boneIds));
     }
 
-    private static Material processMaterial(AIMaterial aiMaterial, String modelDir, Map<Integer, Texture> textureCache) {
-        MaterialEntry materialEntry = new MaterialEntry();
-            
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-
-            AIString aiTexturePath = AIString.calloc(stack);
-            aiGetMaterialTexture(aiMaterial, aiTextureType_DIFFUSE, 0, aiTexturePath, (IntBuffer) null,
-                    null, null, null, null, null);
-            String texturePath = aiTexturePath.dataString();
-            if (texturePath != null && texturePath.length() > 0) {
-                materialEntry.add("COLOUR", Assets.LoadTexture(Path.of(modelDir + File.separator + new File(texturePath).getName())));
-            }
-
-            AIString aiRoughnessMapPath = AIString.calloc(stack);
-            aiGetMaterialTexture(aiMaterial, aiTextureType_DIFFUSE_ROUGHNESS, 0, aiRoughnessMapPath, (IntBuffer) null,
-                    null, null, null, null, null);
-            String roughnessMapPath = aiRoughnessMapPath.dataString();
-            if (roughnessMapPath != null && roughnessMapPath.length() > 0) {
-                materialEntry.add("ROUGHNESS", Assets.LoadTexture(Path.of(modelDir + File.separator + new File(roughnessMapPath).getName())));
-            }
-
-            AIString aiNormalMapPath = AIString.calloc(stack);
-            aiGetMaterialTexture(aiMaterial, aiTextureType_NORMALS, 0, aiNormalMapPath, (IntBuffer) null,
-                    null, null, null, null, null);
-            String normalMapPath = aiNormalMapPath.dataString();
-            if (normalMapPath != null && normalMapPath.length() > 0) {
-                materialEntry.add("NORMAL", Assets.LoadTexture(Path.of(modelDir + File.separator + new File(normalMapPath).getName())));
-            }
-
-            Material material = Assets.createMaterial(materialEntry);
-            return material;
-        }
-    }
-
-    // private static float[] processNormals(AIMesh aiMesh) {
-    //     AIVector3D.Buffer buffer = aiMesh.mNormals();
-    //     float[] data = new float[buffer.remaining() * 3];
-    //     int pos = 0;
-    //     while (buffer.remaining() > 0) {
-    //         AIVector3D normal = buffer.get();
-    //         data[pos++] = normal.x();
-    //         data[pos++] = normal.y();
-    //         data[pos++] = normal.z();
-    //     }
-    //     return data;
-    // }
-
-    // private static float[] processBitangents(AIMesh aiMesh, float[] normals) {
-
-    //     AIVector3D.Buffer buffer = aiMesh.mBitangents();
-    //     float[] data = new float[buffer.remaining() * 3];
-    //     int pos = 0;
-    //     while (buffer.remaining() > 0) {
-    //         AIVector3D aiBitangent = buffer.get();
-    //         data[pos++] = aiBitangent.x();
-    //         data[pos++] = aiBitangent.y();
-    //         data[pos++] = aiBitangent.z();
-    //     }
-
-    //     // Assimp may not calculate tangents with models that do not have texture coordinates. Just create empty values
-    //     if (data.length == 0) {
-    //         data = new float[normals.length];
-    //     }
-    //     return data;
-    // }
-
-    // private static float[] processTangents(AIMesh aiMesh, float[] normals) {
-
-    //     AIVector3D.Buffer buffer = aiMesh.mTangents();
-    //     float[] data = new float[buffer.remaining() * 3];
-    //     int pos = 0;
-    //     while (buffer.remaining() > 0) {
-    //         AIVector3D aiTangent = buffer.get();
-    //         data[pos++] = aiTangent.x();
-    //         data[pos++] = aiTangent.y();
-    //         data[pos++] = aiTangent.z();
-    //     }
-
-    //     // Assimp may not calculate tangents with models that do not have texture coordinates. Just create empty values
-    //     if (data.length == 0) {
-    //         data = new float[normals.length];
-    //     }
-    //     return data;
-    // }
-
     private static Integer processMesh(AIMesh aiMesh, List<Bone> boneList, String modelPath) {
-        // float[] vertices = processVertices(aiMesh);
-        // float[] normals = processNormals(aiMesh);
-        // float[] textCoords = processTextCoords(aiMesh);
-        // int[] indices = processIndices(aiMesh);
         AnimMeshData animMeshData = processBones(aiMesh, boneList);
         int meshid = Assets.LoadMesh(Path.of(modelPath), animMeshData.boneIds, animMeshData.weights);
-        //int meshid = Assets.LoadMesh(Path.of(modelPath));
-
-        // Texture coordinates may not have been populated. We need at least the empty slots
-        // if (textCoords.length == 0) {
-        //     int numElements = (vertices.length / 3) * 2;
-        //     textCoords = new float[numElements];
-        // }
-        // float[] tangents = processTangents(aiMesh, normals);
-        // float[] bitangents = processBitangents(aiMesh, normals);
 
        return meshid;
     }
-    private static int[] processIndices(AIMesh aiMesh) {
-        List<Integer> indices = new ArrayList<>();
-        int numFaces = aiMesh.mNumFaces();
-        AIFace.Buffer aiFaces = aiMesh.mFaces();
-        for (int i = 0; i < numFaces; i++) {
-            AIFace aiFace = aiFaces.get(i);
-            IntBuffer buffer = aiFace.mIndices();
-            while (buffer.remaining() > 0) {
-                indices.add(buffer.get());
-            }
-        }
-        return indices.stream().mapToInt(Integer::intValue).toArray();
-    }
 
-    private static float[] processTextCoords(AIMesh aiMesh) {
-        AIVector3D.Buffer buffer = aiMesh.mTextureCoords(0);
-        if (buffer == null) {
-            return new float[]{};
-        }
-        float[] data = new float[buffer.remaining() * 2];
-        int pos = 0;
-        while (buffer.remaining() > 0) {
-            AIVector3D textCoord = buffer.get();
-            data[pos++] = textCoord.x();
-            data[pos++] = 1 - textCoord.y();
-        }
-        return data;
-    }
-
-    private static float[] processVertices(AIMesh aiMesh) {
-        AIVector3D.Buffer buffer = aiMesh.mVertices();
-        float[] data = new float[buffer.remaining() * 3];
-        int pos = 0;
-        while (buffer.remaining() > 0) {
-            AIVector3D textCoord = buffer.get();
-            data[pos++] = textCoord.x();
-            data[pos++] = textCoord.y();
-            data[pos++] = textCoord.z();
-        }
-        return data;
-    }
      public record AnimMeshData(float[] weights, int[] boneIds) {
     }
 
