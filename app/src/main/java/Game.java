@@ -9,7 +9,7 @@ public class Game {
             app.registerScript(new scripts.Camera());
             app.registerScript(new scripts.PostProcess());
             app.registerScript(new scripts.Feya());
-            app.registerScript(new scripts.ParticlesDemoScene());
+            app.registerScript(new scripts.Particles());
             app.run();
         }
 

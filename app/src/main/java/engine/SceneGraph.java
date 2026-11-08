@@ -30,6 +30,7 @@ import engine.rendering.Mesh;
 import engine.rendering.Shader;
 import scripts.Animation.Model;
 import engine.particles.*;
+import scripts.Animation.Model;
 import engine.rendering.ShadowMap;
 
 public class SceneGraph {
