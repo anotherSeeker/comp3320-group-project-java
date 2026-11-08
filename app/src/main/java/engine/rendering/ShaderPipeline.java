@@ -1,7 +1,6 @@
 package engine.rendering;
 
 import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL42.*;
 
