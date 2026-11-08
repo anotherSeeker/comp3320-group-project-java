@@ -72,10 +72,10 @@ public class WaterScene extends MonoScript {
         GLErrors.printIfError("setupTexMerge WScene");
 
         //render our maps to screen
-        //drawMapQuads(WaterFFT.dydxzIndexID, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
+        drawMapQuads(WaterFFT.dydxzIndexID, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.butterflyIndexID);
         //drawMapQuads(WaterFFT.butterflyIndexID, WaterFFT.waveVecIndexID, WaterFFT.h0IndexID, WaterFFT.dydxzIndexID);
 
-        makeWaterPlane(WaterFFT.displacementIndexID, WaterFFT.derivativeIndexID, WaterFFT.turbulenceIndexID);
+        //makeWaterPlane(WaterFFT.displacementIndexID, WaterFFT.derivativeIndexID, WaterFFT.turbulenceIndexID);
 
         setDrawCallbacks();
 
@@ -90,7 +90,7 @@ public class WaterScene extends MonoScript {
         waterUpdate(deltaTime);
         GLErrors.printIfError("waterUpdate");
 
-        //doWaterMapsPreview();
+        doWaterMapsPreview();
     }
 
     private boolean waterUpdate(double deltaTime)
@@ -98,8 +98,8 @@ public class WaterScene extends MonoScript {
         if (waterUpdateErr == 0)
         {
             WaterFFT.fourierComponentCompute();            
-            WaterFFT.computeWaveFFT();
-            WaterFFT.mergeWaveTextures(deltaTime);
+            //WaterFFT.computeWaveFFT();
+            //WaterFFT.mergeWaveTextures(deltaTime);
 
             waterUpdateErr = GLErrors.printIfError("waterUpdate WScene");
             return waterUpdateErr != 0;

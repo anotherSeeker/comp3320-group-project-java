@@ -31,13 +31,13 @@ void draw4Quads()
     }
 
     //proving to myself that we are actually doing something with the fourier components, and we are
-    // if (color.r == 0 && color.g == 0 && color.b == 0)
-    // {
-    //     if (color.a == 0)
-    //         color = vec4(1,0.25,1,1);
-    //     else
-    //         color = vec4(0.5,0.5,0.5,1);
-    // }
+    if (color.r == 0 && color.g == 0 && color.b == 0)
+    {
+        if (color.a == 0)
+            color = vec4(1,0.25,1,1);
+        else
+            color = vec4(0.5,0.5,0.5,1);
+    }
 
     //our displacement/derivative have none of their values == 0 but infuriatingly I haven't been able to make them visible no matter what i multiply by???
     //we might just need to try using them and pray it just works
