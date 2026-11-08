@@ -15,8 +15,8 @@ import engine.components.Transform;
 
 public class Feya extends MonoScript {
     Integer shaderID = Assets.LoadShader(
-            Path.of("assets/shaders/default.vert"),
-            Path.of("assets/shaders/default.frag")
+            Path.of("assets/shaders/anim.vert"),
+            Path.of("assets/shaders/anim.frag")
     );
 
     Integer characterModel = Assets.LoadModel(Path.of("assets/meshes/feya combined.glb"));
@@ -25,10 +25,10 @@ public class Feya extends MonoScript {
     //@formatter:off
     Material material = Assets.createMaterial(new MaterialEntry()
         .add("SHADER", shaderID)
-        .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Color.jpg")))
-        .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Roughness.jpg")))
-        .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_NormalGL.jpg")))
-        .add("METAL",Assets.LoadTexture(Path.of("assets/textures/Ornament/ChristmasTreeOrnament021_1K-JPG_Metalness.jpg")))
+        .add("COLOUR",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_Color.jpg")))
+        .add("ROUGHNESS",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_Roughness.jpg")))
+        .add("AMBIENT_OCCLUSION",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_AmbientOcclusion.jpg")))
+        .add("NORMAL",Assets.LoadTexture(Path.of("assets/textures/Concrete/Concrete042A_1K-JPG_NormalGL.jpg")))
     );
     //@formatter:on
 

@@ -28,6 +28,8 @@ public class Mesh {
     int VAO;
     int VBO;
     int EBO;
+    int VBOweights;
+    int VBObones;
 
     public Mesh(float[] positions, float[] uvs, float[] normals, float[] tangents, float[] bitangents, int[] indexes, int[] boneIndices, float[] weights) 
     {
@@ -303,19 +305,13 @@ public class Mesh {
         indiceCount = indexBuffer.remaining();
     }
 
-    public Mesh(FloatBuffer vertexBuffer, IntBuffer indexBuffer, int[] boneIndices, float[] weights) {
-         FloatBuffer weightsBuffer = MemoryUtil.memCallocFloat(weights.length);
-        weightsBuffer.put(weights);
-
-        IntBuffer boneIndicesBuffer = MemoryUtil.memCallocInt(boneIndices.length);
-        boneIndicesBuffer.put(boneIndices);
-
-        weightsBuffer.flip();
-        boneIndicesBuffer.flip();
-
+    public Mesh(FloatBuffer vertexBuffer, IntBuffer indexBuffer, IntBuffer boneIndicesBuffer, FloatBuffer weightsBuffer) {
         VAO = glGenVertexArrays();
         VBO = glGenBuffers();
         EBO = glGenBuffers();
+
+        VBOweights = glGenBuffers();
+        VBObones = glGenBuffers();
 
         glBindVertexArray(VAO);
 
@@ -323,23 +319,23 @@ public class Mesh {
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, weightsBuffer, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, boneIndicesBuffer, GL_STATIC_DRAW);
-
+        
         glVertexAttribPointer(0, 3, GL_FLOAT, false, stride, 0);
         glVertexAttribPointer(1, 3, GL_FLOAT, false, stride, 3 * Float.BYTES);
         glVertexAttribPointer(2, 2, GL_FLOAT, false, stride, 6 * Float.BYTES);
         glVertexAttribPointer(3, 3, GL_FLOAT, false, stride, 8 * Float.BYTES);
         glVertexAttribPointer(4, 3, GL_FLOAT, false, stride, 11 * Float.BYTES);
-        glVertexAttribPointer(5, 4, GL_FLOAT, false, stride, 14 * Float.BYTES);
-        glVertexAttribPointer(6, 4, GL_FLOAT, false, stride, 18 * Float.BYTES);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBOweights);
+        glBufferData(GL_ARRAY_BUFFER, weightsBuffer, GL_STATIC_DRAW);
+        glVertexAttribPointer(5, 4, GL_FLOAT, false, 0, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBObones);
+        glBufferData(GL_ARRAY_BUFFER, boneIndicesBuffer, GL_STATIC_DRAW);
+        glVertexAttribPointer(6, 4, GL_FLOAT, false, 0, 0);
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
@@ -350,15 +346,6 @@ public class Mesh {
         glEnableVertexAttribArray(6);
 
         indiceCount = indexBuffer.remaining();
-
-        memFree(weightsBuffer);
-        memFree(boneIndicesBuffer);
-
-        {try (FileWriter myWriter = new FileWriter("filename.txt")) {
-      myWriter.write("are you here?");
-    } catch (IOException e) {
-      e.printStackTrace();
-    }}
     }
 
     public static Mesh Cube() {
@@ -435,6 +422,8 @@ public class Mesh {
         glDeleteVertexArrays(VAO);
         glDeleteBuffers(VBO);
         glDeleteBuffers(EBO);
+        glDeleteBuffers(VBOweights);
+        glDeleteBuffers(VBObones);
     }
 
 }

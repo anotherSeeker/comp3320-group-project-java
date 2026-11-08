@@ -22,6 +22,7 @@ import org.lwjgl.PointerBuffer;
 
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.assimp.*;
 import static org.lwjgl.assimp.Assimp.*;
 
@@ -438,15 +439,25 @@ public class AssetManager {
             indices.put(faceIndices.get(2));
         }
 
+        FloatBuffer weightsBuffer = MemoryUtil.memCallocFloat(weights.length);
+        weightsBuffer.put(weights);
+
+        IntBuffer boneIndicesBuffer = MemoryUtil.memCallocInt(boneIndices.length);
+        boneIndicesBuffer.put(boneIndices);
+
+        weightsBuffer.flip();
+        boneIndicesBuffer.flip();
         vertices.flip();
         indices.flip();
 
-        //Mesh mesh = new Mesh(vertices, indices, boneIndices, weights);
-        Mesh mesh = new Mesh(vertices, indices);
+        Mesh mesh = new Mesh(vertices, indices, boneIndicesBuffer, weightsBuffer);
+        // Mesh mesh = new Mesh(vertices, indices);
 
 
         memFree(vertices);
         memFree(indices);
+        memFree(weightsBuffer);
+        memFree(boneIndicesBuffer);
 
         return mesh;
     }
