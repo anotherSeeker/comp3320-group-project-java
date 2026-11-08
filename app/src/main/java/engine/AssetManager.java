@@ -745,6 +745,14 @@ public class AssetManager {
         return material;
     }
 
+    public Material createMaterial (Integer shaderID, Integer albedoID) {
+        Material material = new Material();
+        material.shader = getShader(shaderID);
+        material.albedoMap = getTexture(albedoID);
+
+        return material;
+    }
+
     public void cleanup() {
         for (Mesh mesh : meshIndex.values()) {
             mesh.delete();

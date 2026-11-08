@@ -31,6 +31,8 @@ public class App {
     private int initWidth;
     private int initHeight;
 
+    private static boolean particlesEnabled = true;
+
     public boolean init(int width, int height, CharSequence title) {
         initWidth = width;
         initHeight = height;
@@ -123,6 +125,10 @@ public class App {
 
             scene.draw();
 
+            if (particlesEnabled) {
+                scene.drawParticles();
+            }
+            
             // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
             pipeline.Time += (float) deltaTime;
@@ -136,6 +142,10 @@ public class App {
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
+    }
+
+    public static void toggleParticles () {
+        App.particlesEnabled = App.particlesEnabled ? false : true;
     }
 
     public void close() {

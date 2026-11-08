@@ -412,6 +412,10 @@ public class Mesh {
         glDrawElements(GL_TRIANGLES, indiceCount, GL_UNSIGNED_INT, 0);
     }
 
+    public void drawParticles () {
+        glDrawElements(GL_TRIANGLES, indiceCount, GL_UNSIGNED_INT, 0);
+    }
+
     public void drawPatches() {
         bind();
         glPatchParameteri(GL_PATCH_VERTICES, 3);
