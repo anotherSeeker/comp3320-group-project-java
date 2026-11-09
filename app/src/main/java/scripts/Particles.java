@@ -38,6 +38,8 @@ public class Particles extends MonoScript {
 
     Entity P1;
     Entity P2;
+    Entity P3;
+    Entity P4;
 
     @Override
     protected void Start() {
@@ -62,13 +64,13 @@ public class Particles extends MonoScript {
         P1.get(BubbleParticleEmitter.class).setScaleRndRange(P1_scale_Min, P1_scale_Max);
         P1.get(BubbleParticleEmitter.class).setGrow();
 
-        P1.get(BubbleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(5.0f, 0, -10.0f));
+        P1.get(BubbleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(-5.0f, 0.5f, -11.0f));
 
 
-        Vector3f P2_particleVelocity = new Vector3f((float) (rand.nextFloat() + 2), 0.1f, (float) (rand.nextFloat() + 2));
-        long P2_ttl = 50000;
+        Vector3f P2_particleVelocity = new Vector3f((float) -(rand.nextFloat() + 0.1), 0.1f, (float) (rand.nextFloat() + 0.1));
+        long P2_ttl = 100000;
         int P2_maxParticles = 50;
-        long P2_creationPeriodMillis = 400;
+        long P2_creationPeriodMillis = 500;
         float P2_velocity_Min = 0.2f;
         float P2_velocity_Max = 0.5f;
         float P2_scale = 0.01f;
@@ -81,15 +83,58 @@ public class Particles extends MonoScript {
         P2.get(BubbleParticleEmitter.class).setVelocityRndRange(P2_velocity_Min, P2_velocity_Max);
         P2.get(BubbleParticleEmitter.class).setScaleRndRange(P2_scale_Min, P2_scale_Max);
 
-        P2.get(BubbleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(5.0f, 0, -5.0f));
+        P2.get(BubbleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(-1.0f, 0, 11.0f));
 
         
+        Vector3f P3_particleVelocity = new Vector3f((float) (rand.nextFloat() + 0.1), 0.1f, (float) (rand.nextFloat() + 0.1));
+        long P3_ttl = 100000;
+        int P3_maxParticles = 50;
+        long P3_creationPeriodMillis = 500;
+        float P3_velocity_Min = 0.2f;
+        float P3_velocity_Max = 0.5f;
+        float P3_scale = 0.01f;
+        float P3_scale_Min = 0.05f;
+        float P3_scale_Max = 0.15f;
+        int P3_blendFunction = GL_ONE_MINUS_SRC_ALPHA;
+
+        P3 = Scene.createParticleEmitter(SceneGraph.EmitterType.BUBBLE, particleID, bubbleMaterial, P3_scale, P3_scale_Max, P3_maxParticles, P3_creationPeriodMillis, P3_particleVelocity, P3_ttl, P3_blendFunction);
+
+        P3.get(BubbleParticleEmitter.class).setVelocityRndRange(P3_velocity_Min, P3_velocity_Max);
+        P3.get(BubbleParticleEmitter.class).setScaleRndRange(P3_scale_Min, P3_scale_Max);
+
+        P3.get(BubbleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(6.0f, 0f, 11.0f));
+        
+
+        Vector3f P4_particleVelocity = new Vector3f(0.0f, 0.1f, 0.0f);
+        long P4_ttl = 50000;
+        int P4_maxParticles = 20;
+        long P4_creationPeriodMillis = 2000;
+        float P4_velocity_Min = 0.4f;
+        float P4_velocity_Max = 0.5f;
+        float P4_scale = 0.0f;
+        float P4_scale_Min = 0.2f;
+        float P4_scale_Max = 0.5f;
+        int P4_blendFunction = GL_ONE_MINUS_SRC_ALPHA;
+
+        P4 = Scene.createParticleEmitter(SceneGraph.EmitterType.BUBBLE, particleID, bubbleMaterial, P4_scale, P4_scale_Max, P4_maxParticles, P4_creationPeriodMillis, P4_particleVelocity, P4_ttl, P4_blendFunction);
+
+        P4.get(BubbleParticleEmitter.class).setVelocityRndRange(P4_velocity_Min, P4_velocity_Max);
+        P4.get(BubbleParticleEmitter.class).setScaleRndRange(P4_scale_Min, P4_scale_Max);
+        P4.get(BubbleParticleEmitter.class).setGrow();
+
+        P4.get(BubbleParticleEmitter.class).baseParticle.transform.setPosition(new Vector3f(-12.0f, 0.5f, 7.5f));
+
         if (startEnabled) {
             P1.get(BubbleParticleEmitter.class).setActive();
             P2.get(BubbleParticleEmitter.class).setActive();
+            P3.get(BubbleParticleEmitter.class).setActive();
+            P4.get(BubbleParticleEmitter.class).setActive();
         }
 
-        Scene.setBubbleParticleEmitters(new BubbleParticleEmitter[] {P1.get(BubbleParticleEmitter.class), P2.get(BubbleParticleEmitter.class)});
+        Scene.setBubbleParticleEmitters(new BubbleParticleEmitter[] {P1.get(BubbleParticleEmitter.class), 
+                                                                     P2.get(BubbleParticleEmitter.class), 
+                                                                     P3.get(BubbleParticleEmitter.class),
+                                                                     P4.get(BubbleParticleEmitter.class)});
     }
 
     @Override
