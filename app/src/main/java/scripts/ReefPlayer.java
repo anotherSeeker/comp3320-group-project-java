@@ -17,7 +17,7 @@ public final class ReefPlayer extends MonoScript {
 
     public ReefPlayer() { this(null); }
     public ReefPlayer(Feya feya) { this.feya = feya; }
-    private final Vector3f position = new Vector3f(0, 0, 0);
+    private final Vector3f position = new Vector3f(0, 0, 15);
     private float facing;
     public TrunkCollision collisions;
 

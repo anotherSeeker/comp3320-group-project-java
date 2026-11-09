@@ -42,7 +42,7 @@ public class Feya extends MonoScript {
         animationData = new AnimationData(Assets.getModel(characterModel).getAnimationList().get(0));
         character = Scene.createAnimatedObject(material, characterModel);
         character.get(Transform.class).setAnimationData(animationData);
-        character.get(Transform.class).setPosition(new Vector3f(5f, 0f, 0f));
+        character.get(Transform.class).setPosition(new Vector3f(0,0,0f));
     }
 
     @Override

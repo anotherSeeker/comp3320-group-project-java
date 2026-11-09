@@ -39,6 +39,9 @@ public class Game {
                     feya = new Feya();
                     app.registerScript(feya);
                     app.registerScript(new Particles(org.lwjgl.glfw.GLFW.GLFW_KEY_U));
+                    app.registerScript(new scripts.SunkenCastleScene());   // instead of scripts.DemoScene
+                    app.registerScript(new scripts.UnderwaterLighting());
+                    app.registerScript(new scripts.WaterSurface());
                 }
                 ReefPlayer player=new ReefPlayer(feya);
                 ReefScene reef=new ReefScene(seed,environment.coralClearings());reef.player=player;
